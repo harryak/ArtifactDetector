@@ -2,8 +2,12 @@
 
   <PropertyGroup>
     <OutputType>Exe</OutputType>
-    <TargetFramework>netcoreapp2.1</TargetFramework>
+    <TargetFramework>net461</TargetFramework>
     <RootNamespace>Artifact_Detector</RootNamespace>
   </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="EMGU.CV" Version="3.4.3.3016" />
+  </ItemGroup>
 
 </Project>
