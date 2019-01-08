@@ -44,7 +44,11 @@ namespace ArtifactDetector.ArtifactDetector
                 new Stopwatch()
             );
 
-           return Draw(observedImage, artifactType, matches, mask, homography);
+#if DEBUG
+            return Draw(observedImage, artifactType, matches, mask, homography);
+#else
+            return null;
+#endif
         }
 
         /**
@@ -75,9 +79,49 @@ namespace ArtifactDetector.ArtifactDetector
         /**
          * Try to find a match between a model and an observed image.
          */
-        public virtual void FindMatch(ArtifactType artifactType, ObservedImage observedImage, out VectorOfVectorOfDMatch matches, out Mat mask, out Mat homography, Stopwatch stopwatch = null)
+        public void FindMatch(ArtifactType artifactType, ObservedImage observedImage, out VectorOfVectorOfDMatch matches, out Mat mask, out Mat homography, Stopwatch stopwatch = null)
         {
-            throw new NotImplementedException("This function must be implemented in the child class.");
+            //TODO: Move to config.
+            int k = 2;
+            double uniquenessThreshold = 0.80;
+
+            // Initialize out variables.
+            matches = new VectorOfVectorOfDMatch();
+            homography = null;
+            mask = new Mat();
+            
+            // Get the stopwatch for matching.
+            if (stopwatch != null)
+            {
+                stopwatch.Restart();
+            }
+
+            DescriptorMatcher.Add(artifactType.Descriptors);
+
+            DescriptorMatcher.KnnMatch(observedImage.Descriptors, matches, k, mask);
+            mask = new Mat(matches.Size, 1, DepthType.Cv8U, 1);
+            mask.SetTo(new MCvScalar(255));
+            Features2DToolbox.VoteForUniqueness(matches, uniquenessThreshold, mask);
+
+            int nonZeroCount = CvInvoke.CountNonZero(mask);
+            if (nonZeroCount >= 4)
+            {
+                nonZeroCount = Features2DToolbox.VoteForSizeAndOrientation(
+                    artifactType.KeyPoints, observedImage.KeyPoints,
+                    matches, mask, 1.5, 20);
+                if (nonZeroCount >= 4)
+                {
+                    homography = Features2DToolbox.GetHomographyMatrixFromMatchedFeatures(
+                            artifactType.KeyPoints, observedImage.KeyPoints, matches, mask, 2
+                        );
+                }
+            }
+
+            if (stopwatch != null)
+            {
+                stopwatch.Stop();
+                Logger.LogDebug("Matching finished in {0} ms.", stopwatch.ElapsedMilliseconds);
+            }
         }
 
         /**

@@ -34,8 +34,10 @@ namespace ArtifactDetector
         [STAThread]
         static void Main(string[] args)
         {
+#if DEBUG
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
+#endif
 
             // Setup logging.
             ILoggerProvider loggerProvider = new NLogLoggerProvider();
@@ -83,14 +85,16 @@ namespace ArtifactDetector
 
             // Launch actual program.
             logger.LogDebug("Call the actual comparison.");
-            IArtifactDetector detector = new KazeArtifactDetector(loggerFactory);
+            IArtifactDetector detector = new OrbArtifactDetector(loggerFactory);
 
             Stopwatch stopwatch = new Stopwatch();
             ArtifactType artifactType = new ArtifactType(detector.ExtractFeatures(artifactGoal, stopwatch));
 
             Mat result = detector.AnalyzeImage(detector.ExtractFeatures(screenshotPath, stopwatch), artifactType);
 
+#if DEBUG
             Application.Run(new ImageViewer(result));
+#endif
         }
     }
 }
