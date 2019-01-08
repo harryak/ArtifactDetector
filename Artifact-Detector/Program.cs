@@ -4,12 +4,13 @@
  * For license, please see "License-LGPL.txt".
  */
 
+using ArtifactDetector.ArtifactDetector;
+using ArtifactDetector.Model;
 using Microsoft.Extensions.Logging;
 using Mono.Options;
-using NLog.Config;
 using NLog.Extensions.Logging;
 using System;
-using System.Collections.Generic;
+using System.Diagnostics;
 
 namespace ArtifactDetector
 {
@@ -70,10 +71,17 @@ namespace ArtifactDetector
                 ShowHelp(options);
                 return;
             }
+            // We got the info.
+            logger.LogInformation("We got the path {screenshotPath} and the artifact goal {artifactGoal}.", screenshotPath, artifactGoal);
 
             // Launch actual program.
-            logger.LogInformation("We got the path {screenshotPath} and the artifact goal {artifactGoal}.", screenshotPath, artifactGoal);
             logger.LogDebug("Call the actual comparison.");
+            IArtifactDetector detector = new FastArtifactDetector(loggerFactory);
+
+            Stopwatch stopwatch = new Stopwatch();
+            ArtifactType artifactType = new ArtifactType(detector.ExtractFeatures(artifactGoal, stopwatch));
+
+            detector.AnalyzeScreenshot(detector.ExtractFeatures(screenshotPath, stopwatch), artifactType);
         }
     }
 }

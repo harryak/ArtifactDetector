@@ -1,0 +1,9 @@
+0. Preparations, setup of Emgu (-> problems)
+   - Use Nuget Package
+   - Implement Base Progam.cs: Logger + ArgumentParser
+1. Implementing Models ArtifactType + ObservedImage
+2. Implementing ArtifactDetector
+   - BaseClass + Interface
+   - Overwrite only by Constructor + 1 matching function
+   - Use Feature Detector: SURF (-> nonfree), FAST
+   - Pattern Matching Using BF + Knn

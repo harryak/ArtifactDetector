@@ -1,0 +1,6 @@
+ - Windows Media Feature Pack: Completely ambigous error message when calling CVInvoke and using Windows 10 Pro N without the proper Media Feature Pack installed.
+    very hard to find out, install pack matching for Windows build version
+ - NONFREE: The nuget-package obviously excludes the "nonfree" flag on build (-> SURF)
+    no documentation, build emguCV by hand and inject the resulting "cvextern" into the nuget folder
+    -> not working, can't include cvextern although all dependencies are in the right folder
+    -> contact Emgu Team
