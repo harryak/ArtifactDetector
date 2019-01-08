@@ -7,3 +7,11 @@
    - Overwrite only by Constructor + 1 matching function
    - Use Feature Detector: SURF (-> nonfree), FAST
    - Pattern Matching Using BF + Knn
+-- cut: EmguCV is the fucked up son of a bitch and won't compile or run right --
+3. Reimplementing everything for Accord.NET
+   - Idea:
+     1. Use BagOfVisualWords to "learn" the Artifacts with e.g. SURF
+     2. Use e.g. SURF on screenshot to extract features
+     3. Match using KNN
+     4. ...?
+     5. Profit

@@ -15,8 +15,8 @@ namespace ArtifactDetector.ArtifactDetector
     {
         ObservedImage ExtractFeatures(string imagePath, Stopwatch stopwatch = null);
 
-        bool AnalyzeScreenshot(ObservedImage observedImage, ArtifactType artifactType);
+        Mat AnalyzeImage(ObservedImage observedImage, ArtifactType artifactType);
 
-        void FindMatch(ObservedImage observedImage, ArtifactType artifactType, out VectorOfVectorOfDMatch matches, out Mat mask, out Mat homography, Stopwatch stopwatch = null);
+        void FindMatch(ArtifactType artifactType, ObservedImage observedImage, out VectorOfVectorOfDMatch matches, out Mat mask, out Mat homography, Stopwatch stopwatch = null);
     }
 }

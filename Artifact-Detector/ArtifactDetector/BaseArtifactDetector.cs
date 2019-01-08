@@ -8,9 +8,9 @@ using ArtifactDetector.Model;
 using Emgu.CV;
 using Emgu.CV.CvEnum;
 using Emgu.CV.Features2D;
+using Emgu.CV.Flann;
 using Emgu.CV.Structure;
 using Emgu.CV.Util;
-using Emgu.Util;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Diagnostics;
@@ -29,26 +29,22 @@ namespace ArtifactDetector.ArtifactDetector
          * Analyze a screenshot with respect to the given parameter type.
          * Also draws results (Debug only).
          */
-        public bool AnalyzeScreenshot(ObservedImage observedImage, ArtifactType artifactType)
+        public Mat AnalyzeImage(ObservedImage observedImage, ArtifactType artifactType)
         {
             VectorOfVectorOfDMatch matches = new VectorOfVectorOfDMatch();
             Mat mask = new Mat();
             Mat homography = new Mat();
 
             FindMatch(
-                observedImage,
                 artifactType,
+                observedImage,
                 out matches,
                 out mask,
                 out homography,
                 new Stopwatch()
             );
 
-# if DEBUG
-            Draw(observedImage, artifactType, matches, mask, homography);
-# endif
-
-            return true;
+           return Draw(observedImage, artifactType, matches, mask, homography);
         }
 
         /**
@@ -56,15 +52,32 @@ namespace ArtifactDetector.ArtifactDetector
          */
         public ObservedImage ExtractFeatures(string imagePath, Stopwatch stopwatch = null)
         {
-            throw new NotImplementedException("This function can't be implemented in the base class.");
+            if (stopwatch != null)
+            {
+                stopwatch.Restart();
+            }
+
+            Mat image = LoadImage(imagePath);
+
+            VectorOfKeyPoint keyPoints = new VectorOfKeyPoint();
+            Mat descriptors = new Mat();
+            FeatureDetector.DetectAndCompute(image.GetUMat(AccessType.Read), null, keyPoints, descriptors, false);
+
+            if (stopwatch != null)
+            {
+                stopwatch.Stop();
+                Logger.LogDebug("Extracted features from image in {0} ms.", stopwatch.ElapsedMilliseconds);
+            }
+
+            return new ObservedImage(image, keyPoints, descriptors);
         }
 
         /**
          * Try to find a match between a model and an observed image.
          */
-        public void FindMatch(ObservedImage observedImage, ArtifactType artifactType, out VectorOfVectorOfDMatch matches, out Mat mask, out Mat homography, Stopwatch stopwatch = null)
+        public virtual void FindMatch(ArtifactType artifactType, ObservedImage observedImage, out VectorOfVectorOfDMatch matches, out Mat mask, out Mat homography, Stopwatch stopwatch = null)
         {
-            throw new NotImplementedException("This function can't be implemented in the base class.");
+            throw new NotImplementedException("This function must be implemented in the child class.");
         }
 
         /**

@@ -6,11 +6,14 @@
 
 using ArtifactDetector.ArtifactDetector;
 using ArtifactDetector.Model;
+using ArtifactDetector.Viewer;
+using Emgu.CV;
 using Microsoft.Extensions.Logging;
 using Mono.Options;
 using NLog.Extensions.Logging;
 using System;
 using System.Diagnostics;
+using System.Windows.Forms;
 
 namespace ArtifactDetector
 {
@@ -28,8 +31,12 @@ namespace ArtifactDetector
             options.WriteOptionDescriptions(Console.Out);
         }
 
+        [STAThread]
         static void Main(string[] args)
         {
+            Application.EnableVisualStyles();
+            Application.SetCompatibleTextRenderingDefault(false);
+
             // Setup logging.
             ILoggerProvider loggerProvider = new NLogLoggerProvider();
             ILoggerFactory loggerFactory = new LoggerFactory();
@@ -76,12 +83,14 @@ namespace ArtifactDetector
 
             // Launch actual program.
             logger.LogDebug("Call the actual comparison.");
-            IArtifactDetector detector = new FastArtifactDetector(loggerFactory);
+            IArtifactDetector detector = new KazeArtifactDetector(loggerFactory);
 
             Stopwatch stopwatch = new Stopwatch();
             ArtifactType artifactType = new ArtifactType(detector.ExtractFeatures(artifactGoal, stopwatch));
 
-            detector.AnalyzeScreenshot(detector.ExtractFeatures(screenshotPath, stopwatch), artifactType);
+            Mat result = detector.AnalyzeImage(detector.ExtractFeatures(screenshotPath, stopwatch), artifactType);
+
+            Application.Run(new ImageViewer(result));
         }
     }
 }
