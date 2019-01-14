@@ -136,8 +136,11 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="ArtifactDetector\BaseArtifactDetector.cs" />
+    <Compile Include="ArtifactDetector\BriskArtifactDetector.cs" />
+    <Compile Include="ArtifactDetector\AkazeArtifactDetector.cs" />
     <Compile Include="ArtifactDetector\OrbArtifactDetector.cs" />
     <Compile Include="ArtifactDetector\KazeArtifactDetector.cs" />
+    <Compile Include="Model\ArtifactLibrary.cs" />
     <Compile Include="Model\ObservedImage.cs" />
     <Compile Include="Model\ArtifactType.cs" />
     <Compile Include="ArtifactDetector\IDetector.cs" />

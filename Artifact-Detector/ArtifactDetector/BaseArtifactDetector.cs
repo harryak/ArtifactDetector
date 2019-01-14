@@ -8,7 +8,6 @@ using ArtifactDetector.Model;
 using Emgu.CV;
 using Emgu.CV.CvEnum;
 using Emgu.CV.Features2D;
-using Emgu.CV.Flann;
 using Emgu.CV.Structure;
 using Emgu.CV.Util;
 using Microsoft.Extensions.Logging;
@@ -18,42 +17,19 @@ using System.Drawing;
 
 namespace ArtifactDetector.ArtifactDetector
 {
-    /**
-     * Base class for all detectors. Contains setup, if needed.
-     */
-    class BaseArtifactDetector : IArtifactDetector
+    /// <summary>
+    /// Base class for all artifact detectors.
+    /// </summary>
+    abstract class BaseArtifactDetector : IArtifactDetector
     {
         protected ILogger Logger { get; set; }
 
-        /**
-         * Analyze a screenshot with respect to the given parameter type.
-         * Also draws results (Debug only).
-         */
-        public Mat AnalyzeImage(ObservedImage observedImage, ArtifactType artifactType)
-        {
-            VectorOfVectorOfDMatch matches = new VectorOfVectorOfDMatch();
-            Mat mask = new Mat();
-            Mat homography = new Mat();
-
-            FindMatch(
-                artifactType,
-                observedImage,
-                out matches,
-                out mask,
-                out homography,
-                new Stopwatch()
-            );
-
-#if DEBUG
-            return Draw(observedImage, artifactType, matches, mask, homography);
-#else
-            return null;
-#endif
-        }
-
-        /**
-         * Extracts features of a model image, given by its path.
-         */
+        /// <summary>
+        /// Extract features of the given image using an OpenCV feature extractor.
+        /// </summary>
+        /// <param name="imagePath"></param>
+        /// <param name="stopwatch">An optional stopwatch used for evaluation.</param>
+        /// <returns>The observed image with keypoints and descriptors.</returns>
         public ObservedImage ExtractFeatures(string imagePath, Stopwatch stopwatch = null)
         {
             if (stopwatch != null)
@@ -76,14 +52,50 @@ namespace ArtifactDetector.ArtifactDetector
             return new ObservedImage(image, keyPoints, descriptors);
         }
 
-        /**
-         * Try to find a match between a model and an observed image.
-         */
-        public void FindMatch(ArtifactType artifactType, ObservedImage observedImage, out VectorOfVectorOfDMatch matches, out Mat mask, out Mat homography, Stopwatch stopwatch = null)
+        /// <summary>
+        /// Analyze the given observed image, whether the artifact type can be found within.
+        /// </summary>
+        /// <param name="observedImage">The observed image.</param>
+        /// <param name="artifactType">The artifact type containing visual information.</param>
+        /// <param name="stopwatch">An optional stopwatch used for evaluation.</param>
+        /// <returns>A homography or null if none was found.</returns>
+        public Mat AnalyzeImage(ObservedImage observedImage, ArtifactType artifactType, Stopwatch stopwatch = null)
+        {
+            VectorOfVectorOfDMatch matches = new VectorOfVectorOfDMatch();
+            Mat mask = new Mat();
+            Mat homography = new Mat();
+
+            FindMatch(
+                observedImage,
+                artifactType,
+                out matches,
+                out mask,
+                out homography,
+                stopwatch
+            );
+
+#if DEBUG
+            return Draw(observedImage, artifactType, matches, mask, homography);
+#else
+            return null;
+#endif
+        }
+
+        /// <summary>
+        /// Matching function using the DescriptorMatcher and voting/filtering the matches.
+        /// </summary>
+        /// <param name="observedImage">The observed image.</param>
+        /// <param name="artifactType">The artifact type containing visual information.</param>
+        /// <param name="matches">Reference to a match vector.</param>
+        /// <param name="mask">Reference to the used result mask.</param>
+        /// <param name="homography">Reference to a possible homography.</param>
+        /// <param name="stopwatch">An optional stopwatch used for evaluation.</param>
+        public void FindMatch(ObservedImage observedImage, ArtifactType artifactType, out VectorOfVectorOfDMatch matches, out Mat mask, out Mat homography, Stopwatch stopwatch = null)
         {
             //TODO: Move to config.
             int k = 2;
             double uniquenessThreshold = 0.80;
+            ObservedImage artifactImage = artifactType.Images[0];
 
             // Initialize out variables.
             matches = new VectorOfVectorOfDMatch();
@@ -96,7 +108,7 @@ namespace ArtifactDetector.ArtifactDetector
                 stopwatch.Restart();
             }
 
-            DescriptorMatcher.Add(artifactType.Descriptors);
+            DescriptorMatcher.Add(artifactImage.Descriptors);
 
             DescriptorMatcher.KnnMatch(observedImage.Descriptors, matches, k, mask);
             mask = new Mat(matches.Size, 1, DepthType.Cv8U, 1);
@@ -107,12 +119,12 @@ namespace ArtifactDetector.ArtifactDetector
             if (nonZeroCount >= 4)
             {
                 nonZeroCount = Features2DToolbox.VoteForSizeAndOrientation(
-                    artifactType.KeyPoints, observedImage.KeyPoints,
+                    artifactImage.KeyPoints, observedImage.KeyPoints,
                     matches, mask, 1.5, 20);
                 if (nonZeroCount >= 4)
                 {
                     homography = Features2DToolbox.GetHomographyMatrixFromMatchedFeatures(
-                            artifactType.KeyPoints, observedImage.KeyPoints, matches, mask, 2
+                            artifactImage.KeyPoints, observedImage.KeyPoints, matches, mask, 2
                         );
                 }
             }
@@ -124,16 +136,24 @@ namespace ArtifactDetector.ArtifactDetector
             }
         }
 
-        /**
-         * Draws the found matches.
-         */
+        /// <summary>
+        /// Helper function for debug purposes.
+        /// </summary>
+        /// <param name="observedImage">The observed image.</param>
+        /// <param name="artifactType">The artifact type containing visual information.</param>
+        /// <param name="matches">Reference to a match vector.</param>
+        /// <param name="mask">Reference to the used result mask.</param>
+        /// <param name="homography">Reference to a possible homography.</param>
+        /// <returns>The result of DrawMatches.</returns>
         public Mat Draw(ObservedImage observedImage, ArtifactType artifactType, VectorOfVectorOfDMatch matches, Mat mask, Mat homography)
         {
+            ObservedImage artifactImage = artifactType.Images[0];
+
             //Draw the matched keypoints
             Mat result = new Mat();
             Features2DToolbox.DrawMatches(
-                artifactType.Image,
-                artifactType.KeyPoints,
+                artifactImage.Image,
+                artifactImage.KeyPoints,
                 observedImage.Image,
                 observedImage.KeyPoints,
                 matches,
@@ -146,7 +166,7 @@ namespace ArtifactDetector.ArtifactDetector
             if (homography != null)
             {
                 //draw a rectangle along the projected model
-                Rectangle rect = new Rectangle(Point.Empty, artifactType.Image.Size);
+                Rectangle rect = new Rectangle(Point.Empty, artifactImage.Image.Size);
                 PointF[] pts = new PointF[]
                 {
                     new PointF(rect.Left, rect.Bottom),
@@ -166,9 +186,11 @@ namespace ArtifactDetector.ArtifactDetector
             return result;
         }
 
-        /**
-         *  Prepares an image to yield a Mat.
-         */
+        /// <summary>
+        /// Shorthand to load an image from a file.
+        /// </summary>
+        /// <param name="imagePath">Path to the image.</param>
+        /// <returns>A EmguCV Mat.</returns>
         public Mat LoadImage(string imagePath)
         {
             Mat image = CvInvoke.Imread(imagePath, ImreadModes.Grayscale);

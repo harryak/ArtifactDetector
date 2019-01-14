@@ -9,13 +9,13 @@ using Microsoft.Extensions.Logging;
 
 namespace ArtifactDetector.ArtifactDetector
 {
-    class OrbArtifactDetector : BaseArtifactDetector, IArtifactDetector
+    class AkazeArtifactDetector : BaseArtifactDetector, IArtifactDetector
     {
-        public OrbArtifactDetector(ILoggerFactory _loggerFactory)
+        public AkazeArtifactDetector(ILoggerFactory _loggerFactory)
         {
-            Logger = _loggerFactory.CreateLogger("OrbArtifactDetector");
+            Logger = _loggerFactory.CreateLogger("AkazeArtifactDetector");
 
-            FeatureDetector = new ORBDetector();
+            FeatureDetector = new AKAZE();
 
             //LshIndexParams indexParams = new LshIndexParams(6, 12, 1);
             //SearchParams searchParams = new SearchParams();
