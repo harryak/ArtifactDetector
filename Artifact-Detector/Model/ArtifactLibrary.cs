@@ -5,6 +5,7 @@
  */
 
 using ArtifactDetector.ArtifactDetector;
+using ArtifactDetector.Helper;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
@@ -23,15 +24,21 @@ namespace ArtifactDetector.Model
     [Serializable]
     class ArtifactLibrary
     {
+        [NonSerialized]
+        private IArtifactDetector _artifactDetector;
+        [NonSerialized]
+        private ILogger _logger;
+        [NonSerialized]
+        private string _filePath;
+
         /// <summary>
         /// This map is a storage for already processed features.
         /// </summary>
-        private Dictionary<string, ArtifactType> Library;
+        private Dictionary<string, ArtifactType> Library { get; set; }
 
-        public string FilePath { get; set; }
-        public IArtifactDetector ArtifactDetector { get; set; }
-
-        private ILogger Logger { get; set; }
+        public string FilePath { get => _filePath; set => _filePath = value; }
+        public IArtifactDetector ArtifactDetector { get => _artifactDetector; set => _artifactDetector = value; }
+        public ILogger Logger { get => _logger; set => _logger = value; }
 
         /// <summary>
         /// Needs a file path to operate in and an artifact detector.
@@ -45,8 +52,11 @@ namespace ArtifactDetector.Model
                 throw new ArgumentNullException(nameof(filePath));
 
             // Make sure the path is set right.
-            FilePath = AddDirectorySeparator(filePath);
+            FilePath = FileHelper.AddDirectorySeparator(filePath);
             ArtifactDetector = artifactDetector ?? throw new ArgumentNullException(nameof(artifactDetector));
+
+            // Instantiate library.
+            Library = new Dictionary<string, ArtifactType>();
 
             Logger = _loggerFactory.CreateLogger("ArtifactLibrary");
         }
@@ -71,7 +81,7 @@ namespace ArtifactDetector.Model
             if (!Library.ContainsKey(name))
             {
                 //TODO: Read from different file.
-                Library[name] = new ArtifactType(ArtifactDetector.ExtractFeatures(FilePath + name));
+                Library[name] = new ArtifactType(ArtifactDetector.ExtractFeatures(FilePath + name + ".jpg"));
             }
 
             if (stopwatch != null)
@@ -87,10 +97,14 @@ namespace ArtifactDetector.Model
         /// Extracts a saved library from the given file.
         /// </summary>
         /// <param name="fileName">Filename to load the library from.</param>
+        /// <param name="artifactDetector">A new artifact detector for the loaded instance.</param>
         /// <param name="stopwatch">An optional stopwatch for evaluation.</param>
+        /// <param name="logger">A logging factory.</param>
         /// <returns>The read artifact library.</returns>
-        public static ArtifactLibrary FromFile(string fileName, Stopwatch stopwatch = null, ILogger logger = null)
+        public static ArtifactLibrary FromFile(string fileName, IArtifactDetector artifactDetector, Stopwatch stopwatch = null, ILoggerFactory loggerFactory = null)
         {
+            ILogger logger = loggerFactory.CreateLogger("ArtifactLibrary");
+
             if (fileName == null)
                 throw new ArgumentNullException(nameof(fileName));
 
@@ -98,13 +112,15 @@ namespace ArtifactDetector.Model
                 stopwatch.Restart();
 
             ArtifactLibrary artifactLibrary = null;
-            
-            using (Stream stream = File.Open(fileName, FileMode.Create))
+
+            using (Stream stream = File.Open(fileName, FileMode.Open))
             {
                 var binaryFormatter = new BinaryFormatter();
 
                 artifactLibrary = (ArtifactLibrary) binaryFormatter.Deserialize(stream);
                 artifactLibrary.FilePath = Path.GetFullPath(fileName);
+                artifactLibrary.ArtifactDetector = artifactDetector;
+                artifactLibrary.Logger = logger;
             }
 
             if (stopwatch != null)
@@ -116,7 +132,7 @@ namespace ArtifactDetector.Model
 
             return artifactLibrary;
         }
-        
+
         /// <summary>
         /// Exports this library to a file.
         /// </summary>
@@ -131,50 +147,13 @@ namespace ArtifactDetector.Model
             if (filePath == null)
                 filePath = FilePath;
             else
-                filePath = AddDirectorySeparator(filePath);
+                filePath = FileHelper.AddDirectorySeparator(filePath);
 
             using (Stream stream = File.Open(filePath + fileName, FileMode.Create))
             {
                 var binaryFormatter = new BinaryFormatter();
                 binaryFormatter.Serialize(stream, this);
                 stream.Close();
-            }
-        }
-
-        /// <summary>
-        /// Helper function to ensure a path is ending with the right slash
-        /// or backslash.
-        /// </summary>
-        /// <param name="path"></param>
-        /// <returns>The path with a trailing directory separator.</returns>
-        private string AddDirectorySeparator(string path)
-        {
-            if (path == null)
-                throw new ArgumentNullException(nameof(path));
-
-            path = path.TrimEnd();
-
-            if (PathEndsWithDirectorySeparator())
-                return path;
-
-            return path + GetDirectorySeparatorUsedInPath();
-
-            bool PathEndsWithDirectorySeparator()
-            {
-                if (path.Length == 0)
-                    return false;
-
-                char lastChar = path[path.Length - 1];
-                return lastChar == Path.DirectorySeparatorChar
-                    || lastChar == Path.AltDirectorySeparatorChar;
-            }
-
-            char GetDirectorySeparatorUsedInPath()
-            {
-                if (path.Contains(Path.AltDirectorySeparatorChar.ToString()))
-                    return Path.AltDirectorySeparatorChar;
-
-                return Path.DirectorySeparatorChar;
             }
         }
     }

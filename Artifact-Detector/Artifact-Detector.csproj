@@ -140,6 +140,7 @@
     <Compile Include="ArtifactDetector\AkazeArtifactDetector.cs" />
     <Compile Include="ArtifactDetector\OrbArtifactDetector.cs" />
     <Compile Include="ArtifactDetector\KazeArtifactDetector.cs" />
+    <Compile Include="Helper\FileHelper.cs" />
     <Compile Include="Model\ArtifactLibrary.cs" />
     <Compile Include="Model\ObservedImage.cs" />
     <Compile Include="Model\ArtifactType.cs" />

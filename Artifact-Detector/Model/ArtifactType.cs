@@ -36,8 +36,11 @@ namespace ArtifactDetector.Model
             if (image == null)
                 throw new ArgumentNullException(nameof(image));
 
-            // Add first observed image to be not empty.
-            Images.Add(image);
+            // Instantiate Images and add first observed image so list is never empty.
+            Images = new List<ObservedImage>
+            {
+                image
+            };
         }
     }
 }

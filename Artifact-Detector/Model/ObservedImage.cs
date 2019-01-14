@@ -6,9 +6,11 @@
 
 using Emgu.CV;
 using Emgu.CV.Util;
+using System;
 
 namespace ArtifactDetector.Model
 {
+    [Serializable]
     public class ObservedImage
     {
         public ObservedImage(Mat image, VectorOfKeyPoint keyPoints, Mat descriptors)

@@ -5,6 +5,7 @@
  */
 
 using ArtifactDetector.ArtifactDetector;
+using ArtifactDetector.Helper;
 using ArtifactDetector.Model;
 using ArtifactDetector.Viewer;
 using Emgu.CV;
@@ -15,6 +16,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
+using System.Runtime.Serialization;
 using System.Windows.Forms;
 
 namespace ArtifactDetector
@@ -68,7 +70,7 @@ namespace ArtifactDetector
             // Setup command line arguments.
             var screenshotPath = "";
             var artifactGoal = "";
-            var workingDirectory = Path.GetFullPath(".");
+            var workingDirectory = FileHelper.AddDirectorySeparator(Path.GetFullPath("."));
             var detectorSelection = "orb";  // Initialize with standard detector
             var shouldShowHelp = false;
             var shouldEvaluate = false;
@@ -78,7 +80,7 @@ namespace ArtifactDetector
             {
                 { "s|screenshot=", "the path to the screenshot to search in.", p => screenshotPath = p },
                 { "a|artifact=", "name of the artifact to look for.", a => artifactGoal = a },
-                { "f|filepath", "path to the working directory (default is current directory).", f => workingDirectory = Path.GetFullPath(f) },
+                { "f|filepath", "path to the working directory (default is current directory).", f => workingDirectory = FileHelper.AddDirectorySeparator(Path.GetFullPath(f)) },
                 { "d|detector=", "detector to use (default: orb). [akaze, brisk, kaze, orb]", d => detectorSelection = d},
                 { "h|help", "show this message and exit.", h => shouldShowHelp = h != null },
                 { "e|evaluate", "include stopwatch.", e => shouldEvaluate = e != null },
@@ -86,14 +88,13 @@ namespace ArtifactDetector
             };
 
             // Parse the command line.
-            logger.LogDebug("Try to parse the command line");
+            logger.LogDebug("Parsing the command line.");
             try
             {
                 options.Parse(args);
             } catch (OptionException e)
             {
                 logger.LogError("Error ocurred while parsing the options: {0} with option {1}.", e.Message, e.OptionName);
-                Console.Error.Write("Error: " + e.Message);
                 shouldShowHelp = true;
             }
 
@@ -144,9 +145,39 @@ namespace ArtifactDetector
                 stopwatch = new Stopwatch();
             }
 
-            // Launch actual program.
+            ArtifactLibrary artifactLibrary = null;
+
+            // Should we use a cache for the artifact library?
+            if (shouldCache)
+            {
+                // Get the artifact library from a file.
+                if (File.Exists(workingDirectory + libraryFileName))
+                {
+                    try
+                    {
+                        artifactLibrary = ArtifactLibrary.FromFile(workingDirectory + libraryFileName, detector, stopwatch, loggerFactory);
+                        logger.LogDebug("Loaded artifact library from file.");
+                    }
+                    catch (SerializationException)
+                    {
+                        logger.LogWarning("Deserialization of artifact library failed.");
+                    }
+                }
+                else
+                {
+                    logger.LogDebug("Artifact library file not found at {0}.", workingDirectory + libraryFileName);
+                }
+            }
+
+            // Some error occurred, get an empty library.
+            if (artifactLibrary == null)
+            {
+                logger.LogDebug("Creating new artifact library instance.");
+                artifactLibrary = new ArtifactLibrary(workingDirectory, detector, loggerFactory);
+            }
+
+            // Launch the actual program.
             logger.LogDebug("Call the actual comparison.");
-            ArtifactLibrary artifactLibrary = ArtifactLibrary.FromFile(workingDirectory + libraryFileName, stopwatch, logger);
             ArtifactType artifactType = artifactLibrary.GetArtifactType(artifactGoal, stopwatch);
             ObservedImage observedImage = detector.ExtractFeatures(screenshotPath, stopwatch);
 
@@ -155,6 +186,15 @@ namespace ArtifactDetector
 #if DEBUG
             Application.Run(new ImageViewer(result));
 #endif
+
+            // Chache the artifact library.
+            if (shouldCache)
+            {
+                artifactLibrary.ExportToFile(libraryFileName);
+                logger.LogInformation("Exported artifact library to {libraryFileName}", libraryFileName);
+            }
+
+            return;
         }
     }
 }
