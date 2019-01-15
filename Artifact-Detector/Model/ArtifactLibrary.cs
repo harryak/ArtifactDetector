@@ -35,6 +35,7 @@ namespace ArtifactDetector.Model
         /// This map is a storage for already processed features.
         /// </summary>
         private Dictionary<string, ArtifactType> Library { get; set; }
+        private List<string> Types { get; set; }
 
         public string FilePath { get => _filePath; set => _filePath = value; }
         public IArtifactDetector ArtifactDetector { get => _artifactDetector; set => _artifactDetector = value; }
@@ -59,6 +60,9 @@ namespace ArtifactDetector.Model
             Library = new Dictionary<string, ArtifactType>();
 
             Logger = _loggerFactory.CreateLogger("ArtifactLibrary");
+
+            // Parse available artifact types from folder.
+            ImportAvailableArtifactTypes();
         }
 
         /// <summary>
@@ -74,14 +78,22 @@ namespace ArtifactDetector.Model
             if (name == null)
                 throw new ArgumentNullException(nameof(name));
 
+            if (!Types.Contains(name))
+                throw new NotImplementedException("Artifact type was not found.");
+
             if (stopwatch != null)
                 stopwatch.Restart();
 
             // Either read from library, or generate.
             if (!Library.ContainsKey(name))
             {
-                //TODO: Read from different file.
-                Library[name] = new ArtifactType(ArtifactDetector.ExtractFeatures(FilePath + name + ".jpg"));
+                // Generate artifact object freshly.
+                Library[name] = new ArtifactType(_name: name);
+
+                foreach (string imageFile in GetImageFilesForArtifactType(name))
+                {
+                    Library[name].Images.Add(ArtifactDetector.ExtractFeatures(imageFile));
+                }
             }
 
             if (stopwatch != null)
@@ -91,6 +103,30 @@ namespace ArtifactDetector.Model
             }
 
             return Library[name];
+        }
+
+        /// <summary>
+        /// Extracts all available artifact types extracted from recipes in FilePath.
+        /// </summary>
+        private void ImportAvailableArtifactTypes()
+        {
+            Types = new List<string>();
+            foreach (string file in Directory.EnumerateFiles(FilePath, "*.yml"))
+            {
+                // The type name is only the filename without extension.
+                string type = Path.GetFileNameWithoutExtension(file);
+
+                // Add directory separator plus "screenshot" to check if the corresponding folder exists.
+                if (Directory.Exists(FileHelper.AddDirectorySeparator(FilePath + type) + "screenshot"))
+                {
+                    Types.Add(type);
+                }
+            }
+        }
+
+        private string[] GetImageFilesForArtifactType(string artifactType)
+        {
+            return Directory.GetFiles(FileHelper.AddDirectorySeparator(FilePath + artifactType) + "screenshot", "*.png");
         }
 
         /// <summary>

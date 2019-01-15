@@ -29,18 +29,24 @@ namespace ArtifactDetector.Model
         /// </summary>
         /// <param name="image"></param>
         /// <param name="_name"></param>
-        public ArtifactType(ObservedImage image, string _name = "")
+        public ArtifactType(ObservedImage image = null, string _name = "")
         {
             name = _name;
 
-            if (image == null)
-                throw new ArgumentNullException(nameof(image));
+            //if (image == null)
+            //    throw new ArgumentNullException(nameof(image));
 
             // Instantiate Images and add first observed image so list is never empty.
-            Images = new List<ObservedImage>
+            if (image != null)
             {
-                image
-            };
+                Images = new List<ObservedImage>
+                {
+                    image
+                };
+            } else
+            {
+                Images = new List<ObservedImage>();
+            }
         }
     }
 }

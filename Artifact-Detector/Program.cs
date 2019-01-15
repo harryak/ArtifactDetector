@@ -80,7 +80,7 @@ namespace ArtifactDetector
             {
                 { "s|screenshot=", "the path to the screenshot to search in.", p => screenshotPath = p },
                 { "a|artifact=", "name of the artifact to look for.", a => artifactGoal = a },
-                { "f|filepath", "path to the working directory (default is current directory).", f => workingDirectory = FileHelper.AddDirectorySeparator(Path.GetFullPath(f)) },
+                { "f|filepath=", "path to the working directory (default is current directory).", f => workingDirectory = FileHelper.AddDirectorySeparator(Path.GetFullPath(f)) },
                 { "d|detector=", "detector to use (default: orb). [akaze, brisk, kaze, orb]", d => detectorSelection = d},
                 { "h|help", "show this message and exit.", h => shouldShowHelp = h != null },
                 { "e|evaluate", "include stopwatch.", e => shouldEvaluate = e != null },
@@ -156,7 +156,7 @@ namespace ArtifactDetector
                     try
                     {
                         artifactLibrary = ArtifactLibrary.FromFile(workingDirectory + libraryFileName, detector, stopwatch, loggerFactory);
-                        logger.LogDebug("Loaded artifact library from file.");
+                        logger.LogDebug("Loaded artifact library from file {0}.", workingDirectory + libraryFileName);
                     }
                     catch (SerializationException)
                     {
@@ -178,7 +178,17 @@ namespace ArtifactDetector
 
             // Launch the actual program.
             logger.LogDebug("Call the actual comparison.");
-            ArtifactType artifactType = artifactLibrary.GetArtifactType(artifactGoal, stopwatch);
+            ArtifactType artifactType = null;
+            try
+            {
+                artifactType = artifactLibrary.GetArtifactType(artifactGoal, stopwatch);
+            }
+            catch (NotImplementedException e)
+            {
+                logger.LogError(e.Message);
+                return;
+            }
+
             ObservedImage observedImage = detector.ExtractFeatures(screenshotPath, stopwatch);
 
             Mat result = detector.AnalyzeImage(observedImage, artifactType, stopwatch);
@@ -190,8 +200,8 @@ namespace ArtifactDetector
             // Chache the artifact library.
             if (shouldCache)
             {
-                artifactLibrary.ExportToFile(libraryFileName);
-                logger.LogInformation("Exported artifact library to {libraryFileName}", libraryFileName);
+                artifactLibrary.ExportToFile(libraryFileName, workingDirectory);
+                logger.LogInformation("Exported artifact library to {libraryFileName}", workingDirectory + libraryFileName);
             }
 
             return;
