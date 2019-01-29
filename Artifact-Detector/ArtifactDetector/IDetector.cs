@@ -26,8 +26,9 @@ namespace ArtifactDetector.ArtifactDetector
         /// </summary>
         /// <param name="observedImage">The observed image.</param>
         /// <param name="artifactType">The artifact type containing visual information.</param>
+        /// <param name="drawingResult">The resulting image to draw in a window.</param>
         /// <param name="stopwatch">An optional stopwatch used for evaluation.</param>
-        /// <returns>A homography.</returns>
-        Mat AnalyzeImage(ObservedImage observedImage, ArtifactType artifactType, Stopwatch stopwatch = null);
+        /// <returns>Whether a match was found.</returns>
+        bool ImageContainsArtifactType(ObservedImage observedImage, ArtifactType artifactType, out Mat drawingResult, Stopwatch stopwatch = null);
     }
 }

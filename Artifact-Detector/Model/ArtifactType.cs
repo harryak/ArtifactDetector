@@ -33,9 +33,6 @@ namespace ArtifactDetector.Model
         {
             name = _name;
 
-            //if (image == null)
-            //    throw new ArgumentNullException(nameof(image));
-
             // Instantiate Images and add first observed image so list is never empty.
             if (image != null)
             {

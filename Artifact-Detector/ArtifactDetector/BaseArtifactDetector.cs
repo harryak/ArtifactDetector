@@ -59,7 +59,7 @@ namespace ArtifactDetector.ArtifactDetector
         /// <param name="artifactType">The artifact type containing visual information.</param>
         /// <param name="stopwatch">An optional stopwatch used for evaluation.</param>
         /// <returns>A homography or null if none was found.</returns>
-        public Mat AnalyzeImage(ObservedImage observedImage, ArtifactType artifactType, Stopwatch stopwatch = null)
+        public bool ImageContainsArtifactType(ObservedImage observedImage, ArtifactType artifactType, out Mat drawingResult, Stopwatch stopwatch = null)
         {
             VectorOfVectorOfDMatch matches = new VectorOfVectorOfDMatch();
             Mat mask = new Mat();
@@ -75,10 +75,9 @@ namespace ArtifactDetector.ArtifactDetector
             );
 
 #if DEBUG
-            return Draw(observedImage, artifactType, matches, mask, homography);
-#else
-            return null;
+            drawingResult = Draw(observedImage, artifactType, matches, mask, homography);
 #endif
+            return homography != null;
         }
 
         /// <summary>
