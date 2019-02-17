@@ -145,7 +145,7 @@ namespace ArtifactDetector
         /// Get the artifact library from a file.
         /// </summary>
         /// <param name="logger"></param>
-        private static void FetchArtifactLibrary(ILogger logger)
+        private static void FetchArtifactLibrary(ILogger logger, Stopwatch stopwatch = null)
         {
             // Get the artifact library from a file.
             if (File.Exists(workingDirectory + libraryFileName))
@@ -221,7 +221,7 @@ namespace ArtifactDetector
             // Should we use a cache for the artifact library?
             if (shouldCache)
             {
-                FetchArtifactLibrary(logger);
+                FetchArtifactLibrary(logger, stopwatch);
             }
 
             // Some error occurred, get an empty library.
@@ -251,7 +251,8 @@ namespace ArtifactDetector
 
 #if DEBUG
             // Show the results in a window.
-            Application.Run(new ImageViewer(drawingResult));
+            if (drawingResult != null)
+                Application.Run(new ImageViewer(drawingResult));
 #endif
 
             // Chache the artifact library.

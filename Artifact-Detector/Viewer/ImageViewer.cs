@@ -11,7 +11,7 @@ namespace ArtifactDetector.Viewer
         {
             InitializeComponent();
 
-            Text = "Testwindow";
+            Text = "DebugWindow: Show Matches";
 
             if (image != null)
             {

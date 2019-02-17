@@ -12,6 +12,7 @@ using Emgu.CV.Structure;
 using Emgu.CV.Util;
 using Microsoft.Extensions.Logging;
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Drawing;
 
@@ -74,8 +75,10 @@ namespace ArtifactDetector.ArtifactDetector
                 stopwatch
             );
 
+            drawingResult = null;
 #if DEBUG
-            drawingResult = Draw(observedImage, artifactType, matches, mask, homography);
+            if (homography != null)
+                drawingResult = Draw(observedImage, artifactType, matches, mask, homography);
 #endif
             return homography != null;
         }
@@ -89,15 +92,18 @@ namespace ArtifactDetector.ArtifactDetector
         /// <param name="mask">Reference to the used result mask.</param>
         /// <param name="homography">Reference to a possible homography.</param>
         /// <param name="stopwatch">An optional stopwatch used for evaluation.</param>
-        public void FindMatch(ObservedImage observedImage, ArtifactType artifactType, out VectorOfVectorOfDMatch matches, out Mat mask, out Mat homography, Stopwatch stopwatch = null)
+        public virtual void FindMatch(ObservedImage observedImage, ArtifactType artifactType, out VectorOfVectorOfDMatch matches, out Mat mask, out Mat homography, Stopwatch stopwatch = null)
         {
             //TODO: Move to config.
             int k = 2;
+            int minMatches = 100;
             double uniquenessThreshold = 0.80;
             ObservedImage artifactImage = artifactType.Images[0];
 
             // Initialize out variables.
             matches = new VectorOfVectorOfDMatch();
+            VectorOfVectorOfDMatch filteredMatches = new VectorOfVectorOfDMatch();
+
             homography = null;
             mask = new Mat();
             
@@ -109,18 +115,19 @@ namespace ArtifactDetector.ArtifactDetector
 
             DescriptorMatcher.Add(artifactImage.Descriptors);
 
-            DescriptorMatcher.KnnMatch(observedImage.Descriptors, matches, k, mask);
+            DescriptorMatcher.KnnMatch(observedImage.Descriptors, matches, k, null);
+
             mask = new Mat(matches.Size, 1, DepthType.Cv8U, 1);
             mask.SetTo(new MCvScalar(255));
             Features2DToolbox.VoteForUniqueness(matches, uniquenessThreshold, mask);
 
             int nonZeroCount = CvInvoke.CountNonZero(mask);
-            if (nonZeroCount >= 4)
+            if (nonZeroCount >= minMatches)
             {
                 nonZeroCount = Features2DToolbox.VoteForSizeAndOrientation(
                     artifactImage.KeyPoints, observedImage.KeyPoints,
                     matches, mask, 1.5, 20);
-                if (nonZeroCount >= 4)
+                if (nonZeroCount >= minMatches)
                 {
                     homography = Features2DToolbox.GetHomographyMatrixFromMatchedFeatures(
                             artifactImage.KeyPoints, observedImage.KeyPoints, matches, mask, 2
@@ -157,8 +164,8 @@ namespace ArtifactDetector.ArtifactDetector
                 observedImage.KeyPoints,
                 matches,
                 result,
-                new MCvScalar(255, 255, 255),
-                new MCvScalar(255, 255, 255),
+                new MCvScalar(0, 128, 0),
+                new MCvScalar(0, 255, 255),
                 mask
             );
 
@@ -178,7 +185,7 @@ namespace ArtifactDetector.ArtifactDetector
                 Point[] points = Array.ConvertAll(pts, Point.Round);
                 using (VectorOfPoint vp = new VectorOfPoint(points))
                 {
-                    CvInvoke.Polylines(result, vp, true, new MCvScalar(255, 0, 0, 255), 5);
+                    CvInvoke.Polylines(result, vp, true, new MCvScalar(255, 255, 0, 255), 5);
                 }
             }
 

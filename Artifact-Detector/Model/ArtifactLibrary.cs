@@ -154,7 +154,7 @@ namespace ArtifactDetector.Model
                 var binaryFormatter = new BinaryFormatter();
 
                 artifactLibrary = (ArtifactLibrary) binaryFormatter.Deserialize(stream);
-                artifactLibrary.FilePath = Path.GetFullPath(fileName);
+                artifactLibrary.FilePath = Path.GetDirectoryName(fileName);
                 artifactLibrary.ArtifactDetector = artifactDetector;
                 artifactLibrary.Logger = logger;
             }
