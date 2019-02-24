@@ -11,9 +11,9 @@ using System;
 namespace ArtifactDetector.Model
 {
     [Serializable]
-    public class ObservedImage
+    public class ProcessedImage
     {
-        public ObservedImage(Mat image, VectorOfKeyPoint keyPoints, Mat descriptors)
+        public ProcessedImage(Mat image, VectorOfKeyPoint keyPoints, Mat descriptors)
         {
             Image = image;
             KeyPoints = keyPoints;

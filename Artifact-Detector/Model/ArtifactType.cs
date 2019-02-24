@@ -22,27 +22,27 @@ namespace ArtifactDetector.Model
         /// <summary>
         /// A set of observed images associated with this artifact type.
         /// </summary>
-        public List<ObservedImage> Images { get; private set; }
+        public List<ProcessedImage> Images { get; private set; }
 
         /// <summary>
         /// Constructor needs at least one observed image for this artifact type.
         /// </summary>
         /// <param name="image"></param>
         /// <param name="_name"></param>
-        public ArtifactType(ObservedImage image = null, string _name = "")
+        public ArtifactType(ProcessedImage image = null, string _name = "")
         {
             name = _name;
 
             // Instantiate Images and add first observed image so list is never empty.
             if (image != null)
             {
-                Images = new List<ObservedImage>
+                Images = new List<ProcessedImage>
                 {
                     image
                 };
             } else
             {
-                Images = new List<ObservedImage>();
+                Images = new List<ProcessedImage>();
             }
         }
     }

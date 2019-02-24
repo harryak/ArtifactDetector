@@ -19,7 +19,7 @@ namespace ArtifactDetector.ArtifactDetector
         /// <param name="imagePath"></param>
         /// <param name="stopwatch">An optional stopwatch used for evaluation.</param>
         /// <returns>The observed image with keypoints and descriptors.</returns>
-        ObservedImage ExtractFeatures(string imagePath, Stopwatch stopwatch = null);
+        ProcessedImage ExtractFeatures(string imagePath, Stopwatch stopwatch = null);
 
         /// <summary>
         /// Analyze the given observed image, whether the artifact type can be found within.
@@ -29,6 +29,6 @@ namespace ArtifactDetector.ArtifactDetector
         /// <param name="drawingResult">The resulting image to draw in a window.</param>
         /// <param name="stopwatch">An optional stopwatch used for evaluation.</param>
         /// <returns>Whether a match was found.</returns>
-        bool ImageContainsArtifactType(ObservedImage observedImage, ArtifactType artifactType, out Mat drawingResult, Stopwatch stopwatch = null);
+        bool ImageContainsArtifactType(ProcessedImage observedImage, ArtifactType artifactType, out Mat drawingResult, Stopwatch stopwatch = null);
     }
 }

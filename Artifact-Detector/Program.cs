@@ -245,7 +245,7 @@ namespace ArtifactDetector
             }
 
             // Extract the features of the given image for comparison.
-            ObservedImage observedImage = detector.ExtractFeatures(screenshotPath, stopwatch);
+            ProcessedImage observedImage = detector.ExtractFeatures(screenshotPath, stopwatch);
 
             bool artifactFound = detector.ImageContainsArtifactType(observedImage, artifactType, out Mat drawingResult, stopwatch);
 
