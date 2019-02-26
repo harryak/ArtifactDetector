@@ -72,13 +72,13 @@ namespace ArtifactDetector
 
             return new OptionSet
             {
-                { "s|screenshot=", "the path to the screenshot to search in.", p => screenshotPath = p },
-                { "a|artifact=", "name of the artifact to look for.", a => artifactGoal = a },
-                { "f|filepath=", "path to the working directory (default is current directory).", f => workingDirectory = FileHelper.AddDirectorySeparator(Path.GetFullPath(f)) },
-                { "d|detector=", "detector to use (default: orb). [akaze, brisk, kaze, orb]", d => detectorSelection = d},
-                { "h|help", "show this message and exit.", h => shouldShowHelp = h != null },
-                { "e|evaluate", "include stopwatch.", e => shouldEvaluate = e != null },
-                { "c|cache", "cache the artifact types.", c => shouldCache = c != null }
+                { "h|help", "Show this message and exit.", h => shouldShowHelp = h != null },
+                { "s|screenshot=", "The path to the screenshot to search in (required).", p => screenshotPath = p },
+                { "a|artifact=", "Name of the artifact to look for (required).", a => artifactGoal = a },
+                { "f|filepath=", "Path to the working directory (default is current directory).", f => workingDirectory = FileHelper.AddDirectorySeparator(Path.GetFullPath(f)) },
+                { "c|cache", "Cache the artifact types.", c => shouldCache = c != null },
+                { "d|detector=", "Detector to use (default: orb). [akaze, brisk, kaze, orb]", d => detectorSelection = d},
+                { "e|evaluate", "Include stopwatch.", e => shouldEvaluate = e != null },
             };
         }
 
@@ -264,7 +264,7 @@ namespace ArtifactDetector
 
             logger.LogInformation("The comparison yielded {0}.", artifactFound);
 
-            return artifactFound ? 1 : 0;
+            return artifactFound ? 0 : 1;
         }
     }
 }
