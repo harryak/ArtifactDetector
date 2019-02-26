@@ -29,6 +29,7 @@ Options:
 ```
 
 The parameters should be explained if one knows the idea of this program. Those who don't can find an extra explaination here:
+
 Parameter | Explaination
 ----------|-------------
 -s | This is an absolute or relative path for an image file.
