@@ -8,7 +8,16 @@ The Artifact Detector recognizes the visual information of ITS.APE artifact type
 
 ## Installation
 
-Compile the solution using *Release|x86* configuration. Then browse to the output directory and run program or run installer.
+After installing the dependencies, one can compile the Artifact Detector.
+
+### Dependencies
+
+Install the developer pack of the .NET Framework in version 4.7.2 [e.g. using this direct link](https://dotnet.microsoft.com/download/thank-you/net472-developer-pack).
+Then, in Microsoft Visual Studio (version 2017 or later), open the solution and install the NuGet packages using the wizard.
+
+### Compilation
+
+Compile the solution in MS VS Studio using *Release|x86* configuration. Then browse to the output directory and run the program or run the installer.
 
 ## Usage
 
