@@ -4,10 +4,10 @@
  * For license, please see "License-LGPL.txt".
  */
 
-using ArtifactDetector.ArtifactDetector;
-using ArtifactDetector.Helper;
-using ArtifactDetector.Model;
-using ArtifactDetector.Viewer;
+using VisualArtifactDetector.VisualArtifactDetector;
+using VisualArtifactDetector.Helper;
+using VisualArtifactDetector.Model;
+using VisualArtifactDetector.Viewer;
 using Emgu.CV;
 using Microsoft.Extensions.Logging;
 using Mono.Options;
@@ -19,7 +19,7 @@ using System.IO;
 using System.Runtime.Serialization;
 using System.Windows.Forms;
 
-namespace ArtifactDetector
+namespace VisualArtifactDetector
 {
     class Program
     {
@@ -75,10 +75,10 @@ namespace ArtifactDetector
                 { "h|help", "Show this message and exit.", h => shouldShowHelp = h != null },
                 { "s|screenshot=", "The path to the screenshot to search in (required).", p => screenshotPath = p },
                 { "a|artifact=", "Name of the artifact to look for (required).", a => artifactGoal = a },
-                { "f|filepath=", "Path to the working directory (default is current directory).", f => workingDirectory = FileHelper.AddDirectorySeparator(Path.GetFullPath(f)) },
+                { "f|filepath=", "Path to the working directory (default is current directory). The recipes must be in this folder!", f => workingDirectory = FileHelper.AddDirectorySeparator(Path.GetFullPath(f)) },
                 { "c|cache", "Cache the artifact types.", c => shouldCache = c != null },
                 { "d|detector=", "Detector to use (default: orb). [akaze, brisk, kaze, orb]", d => detectorSelection = d},
-                { "e|evaluate", "Include stopwatch.", e => shouldEvaluate = e != null },
+                { "e|evaluate", "Include stopwatch output.", e => shouldEvaluate = e != null },
             };
         }
 
@@ -145,7 +145,7 @@ namespace ArtifactDetector
         /// Get the artifact library from a file.
         /// </summary>
         /// <param name="logger"></param>
-        private static void FetchArtifactLibrary(ILogger logger, Stopwatch stopwatch = null)
+        private static void FetchArtifactLibrary(ILogger logger, VADStopwatch stopwatch = null)
         {
             // Get the artifact library from a file.
             if (File.Exists(workingDirectory + libraryFileName))
@@ -211,11 +211,11 @@ namespace ArtifactDetector
             }
 
             // Determine if we use a stopwatch in this run.
-            Stopwatch stopwatch = null;
+            VADStopwatch stopwatch = null;
             if (shouldEvaluate)
             {
                 // Get stopwatch for evaluation.
-                stopwatch = new Stopwatch();
+                stopwatch = VADStopwatch.GetInstance();
             }
 
             // Should we use a cache for the artifact library?
@@ -263,6 +263,14 @@ namespace ArtifactDetector
             }
 
             logger.LogInformation("The comparison yielded {0}.", artifactFound);
+
+            if (shouldEvaluate)
+            {
+                using (StreamWriter file = new StreamWriter("output.csv", true))
+                {
+                    file.WriteLine(stopwatch.TimesToCSVinNS() + "," + artifactFound);
+                }
+            }
 
             return artifactFound ? 0 : 1;
         }

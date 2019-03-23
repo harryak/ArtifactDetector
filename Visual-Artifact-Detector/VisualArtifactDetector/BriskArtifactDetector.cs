@@ -8,7 +8,7 @@ using Emgu.CV.Features2D;
 using Emgu.CV.Flann;
 using Microsoft.Extensions.Logging;
 
-namespace ArtifactDetector.ArtifactDetector
+namespace VisualArtifactDetector.VisualArtifactDetector
 {
     class BriskArtifactDetector : BaseArtifactDetector, IArtifactDetector
     {

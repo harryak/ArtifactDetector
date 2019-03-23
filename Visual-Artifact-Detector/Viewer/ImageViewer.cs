@@ -3,7 +3,7 @@ using Emgu.CV.UI;
 using System.Drawing;
 using System.Windows.Forms;
 
-namespace ArtifactDetector.Viewer
+namespace VisualArtifactDetector.Viewer
 {
     public partial class ImageViewer : Form
     {

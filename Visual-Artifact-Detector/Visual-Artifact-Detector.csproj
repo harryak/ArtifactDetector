@@ -6,8 +6,8 @@
     <Platform Condition=" '$(Platform)' == '' ">x86</Platform>
     <ProjectGuid>{39FE248A-DF58-49B7-8716-4C4CF220C20D}</ProjectGuid>
     <OutputType>Exe</OutputType>
-    <RootNamespace>ArtifactDetector</RootNamespace>
-    <AssemblyName>Artifact-Detector</AssemblyName>
+    <RootNamespace>VisualArtifactDetector</RootNamespace>
+    <AssemblyName>Visual-Artifact-Detector</AssemblyName>
     <TargetFrameworkVersion>v4.7.2</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
@@ -36,7 +36,7 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <PropertyGroup>
-    <StartupObject>ArtifactDetector.Program</StartupObject>
+    <StartupObject>VisualArtifactDetector.Program</StartupObject>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|x64'">
     <DebugSymbols>true</DebugSymbols>
@@ -159,16 +159,17 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="ArtifactDetector\BaseArtifactDetector.cs" />
-    <Compile Include="ArtifactDetector\BriskArtifactDetector.cs" />
-    <Compile Include="ArtifactDetector\AkazeArtifactDetector.cs" />
-    <Compile Include="ArtifactDetector\OrbArtifactDetector.cs" />
-    <Compile Include="ArtifactDetector\KazeArtifactDetector.cs" />
+    <Compile Include="VisualArtifactDetector\BaseArtifactDetector.cs" />
+    <Compile Include="VisualArtifactDetector\BriskArtifactDetector.cs" />
+    <Compile Include="VisualArtifactDetector\AkazeArtifactDetector.cs" />
+    <Compile Include="VisualArtifactDetector\OrbArtifactDetector.cs" />
+    <Compile Include="VisualArtifactDetector\KazeArtifactDetector.cs" />
     <Compile Include="Helper\FileHelper.cs" />
+    <Compile Include="Helper\VADStopwatch.cs" />
     <Compile Include="Model\ArtifactLibrary.cs" />
     <Compile Include="Model\ProcessedImage.cs" />
     <Compile Include="Model\ArtifactType.cs" />
-    <Compile Include="ArtifactDetector\IDetector.cs" />
+    <Compile Include="VisualArtifactDetector\IDetector.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Viewer\ImageViewer.cs">

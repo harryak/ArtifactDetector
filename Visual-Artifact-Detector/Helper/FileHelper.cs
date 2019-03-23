@@ -7,7 +7,7 @@
 using System;
 using System.IO;
 
-namespace ArtifactDetector.Helper
+namespace VisualArtifactDetector.Helper
 {
     class FileHelper
     {
@@ -45,6 +45,26 @@ namespace ArtifactDetector.Helper
                     return Path.AltDirectorySeparatorChar;
 
                 return Path.DirectorySeparatorChar;
+            }
+        }
+
+        /// <summary>
+        /// Writes to a file using the write action.
+        /// </summary>
+        /// <param name="filename">The filename to write to.</param>
+        /// <param name="writeAction">An action writing to the stream.</param>
+        /// <param name="fileMode"></param>
+        public static void WriteToFile(string filename, Action<Stream> writeAction, FileMode fileMode = FileMode.OpenOrCreate)
+        {
+            Stream stream = null;
+            try
+            {
+                stream = File.Open(filename, fileMode);
+                writeAction(stream);
+            }
+            finally
+            {
+                if (stream != null) stream.Dispose();
             }
         }
     }

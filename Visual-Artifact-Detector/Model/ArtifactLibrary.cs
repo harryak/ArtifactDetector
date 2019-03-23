@@ -4,8 +4,8 @@
  * For license, please see "License-LGPL.txt".
  */
 
-using ArtifactDetector.ArtifactDetector;
-using ArtifactDetector.Helper;
+using VisualArtifactDetector.VisualArtifactDetector;
+using VisualArtifactDetector.Helper;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
@@ -13,7 +13,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Runtime.Serialization.Formatters.Binary;
 
-namespace ArtifactDetector.Model
+namespace VisualArtifactDetector.Model
 {
     /// <summary>
     /// This class manages type info of artifacts.
@@ -73,7 +73,7 @@ namespace ArtifactDetector.Model
         /// <param name="name">Name of the artifact</param>
         /// <param name="stopwatch">An optional stopwatch for evaluation.</param>
         /// <returns>The retrieved artifact type.</returns>
-        public ArtifactType GetArtifactType(string name, Stopwatch stopwatch = null)
+        public ArtifactType GetArtifactType(string name, VADStopwatch stopwatch = null)
         {
             if (name == null)
                 throw new ArgumentNullException(nameof(name));
@@ -137,7 +137,7 @@ namespace ArtifactDetector.Model
         /// <param name="stopwatch">An optional stopwatch for evaluation.</param>
         /// <param name="logger">A logging factory.</param>
         /// <returns>The read artifact library.</returns>
-        public static ArtifactLibrary FromFile(string fileName, IArtifactDetector artifactDetector, Stopwatch stopwatch = null, ILoggerFactory loggerFactory = null)
+        public static ArtifactLibrary FromFile(string fileName, IArtifactDetector artifactDetector, VADStopwatch stopwatch = null, ILoggerFactory loggerFactory = null)
         {
             ILogger logger = loggerFactory.CreateLogger("ArtifactLibrary");
 
@@ -162,8 +162,7 @@ namespace ArtifactDetector.Model
             if (stopwatch != null)
             {
                 stopwatch.Stop();
-                if (logger != null)
-                    logger.LogDebug("Retrieved full artifact library in {0} ms.", stopwatch.ElapsedMilliseconds);
+                logger.LogDebug("Retrieved full artifact library in {0} ms.", stopwatch.ElapsedMilliseconds);
             }
 
             return artifactLibrary;
@@ -185,12 +184,8 @@ namespace ArtifactDetector.Model
             else
                 filePath = FileHelper.AddDirectorySeparator(filePath);
 
-            using (Stream stream = File.Open(filePath + fileName, FileMode.Create))
-            {
-                var binaryFormatter = new BinaryFormatter();
-                binaryFormatter.Serialize(stream, this);
-                stream.Close();
-            }
+            var binaryFormatter = new BinaryFormatter();
+            FileHelper.WriteToFile(filePath + fileName, stream => binaryFormatter.Serialize(stream, this), FileMode.Create);
         }
     }
 }

@@ -7,7 +7,7 @@
 using System;
 using System.Collections.Generic;
 
-namespace ArtifactDetector.Model
+namespace VisualArtifactDetector.Model
 {
     /// <summary>
     /// All data belonging to a single artifact type.

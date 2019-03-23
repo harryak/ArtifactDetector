@@ -22,8 +22,8 @@ Options:
   -h, --help                 Show this message and exit.
   -s, --screenshot=VALUE     The path to the screenshot to search in (required).
   -a, --artifact=VALUE       Name of the artifact to look for (required).
+  -f, --filepath=VALUE       Path to the working directory (default is current directory). The recipes must be in this folder!
   -c, --cache                Cache the artifact types.
-  -f, --filepath=VALUE       Path to the working directory (default is current directory).
   -d, --detector=VALUE       Detector to use (default: orb). [akaze, brisk, kaze, orb]
   -e, --evaluate             Include stopwatch.
 ```

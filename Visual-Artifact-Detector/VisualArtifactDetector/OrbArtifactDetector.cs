@@ -8,7 +8,7 @@ using Emgu.CV.Features2D;
 using Emgu.CV.Flann;
 using Microsoft.Extensions.Logging;
 
-namespace ArtifactDetector.ArtifactDetector
+namespace VisualArtifactDetector.VisualArtifactDetector
 {
     class OrbArtifactDetector : BaseArtifactDetector, IArtifactDetector
     {
@@ -16,11 +16,11 @@ namespace ArtifactDetector.ArtifactDetector
         {
             Logger = _loggerFactory.CreateLogger("OrbArtifactDetector");
 
-            /*IIndexParams indexParams = new LshIndexParams(6, 12, 1);
-            SearchParams searchParams = new SearchParams();
-            DescriptorMatcher = new FlannBasedMatcher(indexParams, searchParams);*/
+            //IIndexParams indexParams = new LshIndexParams(6, 12, 1);
+            //SearchParams searchParams = new SearchParams();
+            //DescriptorMatcher = new FlannBasedMatcher(indexParams, searchParams);
 
-            FeatureDetector = new ORBDetector(500, 1.2f, 4, 50, 0, 2, ORBDetector.ScoreType.Harris, 50);
+            FeatureDetector = new ORBDetector(1000);
             DescriptorMatcher = new BFMatcher(DistanceType.Hamming);
         }
     }

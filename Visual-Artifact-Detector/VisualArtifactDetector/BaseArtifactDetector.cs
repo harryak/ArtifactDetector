@@ -4,7 +4,7 @@
 * For license, please see "License-LGPL.txt".
 */
 
-using ArtifactDetector.Model;
+using VisualArtifactDetector.Model;
 using Emgu.CV;
 using Emgu.CV.CvEnum;
 using Emgu.CV.Features2D;
@@ -12,11 +12,11 @@ using Emgu.CV.Structure;
 using Emgu.CV.Util;
 using Microsoft.Extensions.Logging;
 using System;
-using System.Collections.Generic;
-using System.Diagnostics;
 using System.Drawing;
+using System.IO;
+using VisualArtifactDetector.Helper;
 
-namespace ArtifactDetector.ArtifactDetector
+namespace VisualArtifactDetector.VisualArtifactDetector
 {
     /// <summary>
     /// Base class for all artifact detectors.
@@ -31,17 +31,27 @@ namespace ArtifactDetector.ArtifactDetector
         /// <param name="imagePath"></param>
         /// <param name="stopwatch">An optional stopwatch used for evaluation.</param>
         /// <returns>The observed image with keypoints and descriptors.</returns>
-        public ProcessedImage ExtractFeatures(string imagePath, Stopwatch stopwatch = null)
+        public ProcessedImage ExtractFeatures(string imagePath, VADStopwatch stopwatch = null)
         {
             if (stopwatch != null)
             {
                 stopwatch.Restart();
             }
 
-            Mat image = LoadImage(imagePath);
+            Mat image;
+            try
+            {
+                image = LoadImage(imagePath);
+            }
+            catch (Exception e)
+            {
+                Logger.LogError("Could not load the image at {0}: {1}", imagePath, e.Message);
+                return null;
+            }
 
             VectorOfKeyPoint keyPoints = new VectorOfKeyPoint();
             Mat descriptors = new Mat();
+
             FeatureDetector.DetectAndCompute(image.GetUMat(AccessType.Read), null, keyPoints, descriptors, false);
 
             if (stopwatch != null)
@@ -60,7 +70,7 @@ namespace ArtifactDetector.ArtifactDetector
         /// <param name="artifactType">The artifact type containing visual information.</param>
         /// <param name="stopwatch">An optional stopwatch used for evaluation.</param>
         /// <returns>A homography or null if none was found.</returns>
-        public bool ImageContainsArtifactType(ProcessedImage observedImage, ArtifactType artifactType, out Mat drawingResult, Stopwatch stopwatch = null)
+        public bool ImageContainsArtifactType(ProcessedImage observedImage, ArtifactType artifactType, out Mat drawingResult, VADStopwatch stopwatch = null)
         {
             // Only needed for debugging purposes, otherwise will always be null.
             drawingResult = null;
@@ -84,7 +94,7 @@ namespace ArtifactDetector.ArtifactDetector
             if (homography != null)
                 drawingResult = Draw(observedImage, matchedArtifact, matches, matchesMask, homography);
 #endif
-            return matchedArtifact != null;
+            return homography != null;
         }
 
         /// <summary>
@@ -97,11 +107,11 @@ namespace ArtifactDetector.ArtifactDetector
         /// <param name="homography">Reference to a possible homography.</param>
         /// <param name="stopwatch">An optional stopwatch used for evaluation.</param>
         /// <returns>A matched artifact image, if available.</returns>
-        public ProcessedImage FindMatch(ProcessedImage observedImage, ArtifactType artifactType, out VectorOfVectorOfDMatch matches, out Mat matchesMask, out Mat homography, Stopwatch stopwatch = null)
+        public ProcessedImage FindMatch(ProcessedImage observedImage, ArtifactType artifactType, out VectorOfVectorOfDMatch matches, out Mat matchesMask, out Mat homography, VADStopwatch stopwatch = null)
         {
             //TODO: Move to config.
             int k = 2;
-            int minMatches = 100;
+            int minMatches = 10;
             double uniquenessThreshold = 0.80;
             ProcessedImage matchingArtifact = null;
 
@@ -140,10 +150,9 @@ namespace ArtifactDetector.ArtifactDetector
                     // Still enough matches?
                     if (nonZeroCount >= minMatches)
                     {
-#if DEBUG
-                        // Get the homography of this match if we are in Debug mode, for displaying it.
+                        // Can we find a homography? Then it's a match.
                         homography = Features2DToolbox.GetHomographyMatrixFromMatchedFeatures(currentArtifactImage.KeyPoints, observedImage.KeyPoints, matches, matchesMask, 2);
-#endif
+
                         // Assign the match.
                         matchingArtifact = currentArtifactImage;
                         break;
@@ -214,10 +223,18 @@ namespace ArtifactDetector.ArtifactDetector
         /// Shorthand to load an image from a file.
         /// </summary>
         /// <param name="imagePath">Path to the image.</param>
+        /// <exception cref="FileNotFoundException">If the file doesn't exist.</exception>
         /// <returns>A EmguCV Mat.</returns>
         public Mat LoadImage(string imagePath)
         {
-            Mat image = CvInvoke.Imread(imagePath, ImreadModes.Grayscale);
+            Mat image;
+
+            if (File.Exists(imagePath)) {
+                image = CvInvoke.Imread(imagePath, ImreadModes.Grayscale);
+            } else
+            {
+                throw new FileNotFoundException("The image couldn't be found");
+            }
 
             if (image.IsEmpty)
             {

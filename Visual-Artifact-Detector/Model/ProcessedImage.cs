@@ -8,7 +8,7 @@ using Emgu.CV;
 using Emgu.CV.Util;
 using System;
 
-namespace ArtifactDetector.Model
+namespace VisualArtifactDetector.Model
 {
     [Serializable]
     public class ProcessedImage
