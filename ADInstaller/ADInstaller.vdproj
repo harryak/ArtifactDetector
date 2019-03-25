@@ -21,6 +21,12 @@
         }
         "Entry"
         {
+        "MsmKey" = "8:_05E9E847620040C79E3346D4AF952F23"
+        "OwnerKey" = "8:_UNDEFINED"
+        "MsmSig" = "8:_UNDEFINED"
+        }
+        "Entry"
+        {
         "MsmKey" = "8:_08F7E31FE7D5A4D5108176E34B73FA93"
         "OwnerKey" = "8:_FA82921F2F6546AA905F825815B45437"
         "MsmSig" = "8:_UNDEFINED"
@@ -243,8 +249,8 @@
         }
         "Entry"
         {
-        "MsmKey" = "8:_358CCC8F40B4ADFFE70B5C3345B1A18A"
-        "OwnerKey" = "8:_93648468D9E365F96AA051BCE0CA7DCC"
+        "MsmKey" = "8:_370C78E3CB494353800B6A63D1A04889"
+        "OwnerKey" = "8:_UNDEFINED"
         "MsmSig" = "8:_UNDEFINED"
         }
         "Entry"
@@ -323,12 +329,6 @@
         {
         "MsmKey" = "8:_56B1036F981169B2C7F9C9DCA48A5132"
         "OwnerKey" = "8:_358CCC8F40B4ADFFE70B5C3345B1A18A"
-        "MsmSig" = "8:_UNDEFINED"
-        }
-        "Entry"
-        {
-        "MsmKey" = "8:_5B93384001829FA941D3AA684790AB27"
-        "OwnerKey" = "8:_D4E058B5E860245BA1FCE57D7C7C85CB"
         "MsmSig" = "8:_UNDEFINED"
         }
         "Entry"
@@ -436,12 +436,6 @@
         "Entry"
         {
         "MsmKey" = "8:_8127BD446D0926B5F1099FDF022123C9"
-        "OwnerKey" = "8:_93648468D9E365F96AA051BCE0CA7DCC"
-        "MsmSig" = "8:_UNDEFINED"
-        }
-        "Entry"
-        {
-        "MsmKey" = "8:_8127BD446D0926B5F1099FDF022123C9"
         "OwnerKey" = "8:_A81FFCB62440DD2896283654188974A2"
         "MsmSig" = "8:_UNDEFINED"
         }
@@ -489,12 +483,6 @@
         }
         "Entry"
         {
-        "MsmKey" = "8:_85C5C99A7F91D2712AAC308A1C776288"
-        "OwnerKey" = "8:_E67FA26A220CFC581D15B1BBC7B05A30"
-        "MsmSig" = "8:_UNDEFINED"
-        }
-        "Entry"
-        {
         "MsmKey" = "8:_876DEE481482908BB4AE6AF7459382B3"
         "OwnerKey" = "8:_FA82921F2F6546AA905F825815B45437"
         "MsmSig" = "8:_UNDEFINED"
@@ -515,6 +503,12 @@
         {
         "MsmKey" = "8:_8BE7AE24A0147116BA4726B6A859E41A"
         "OwnerKey" = "8:_FA82921F2F6546AA905F825815B45437"
+        "MsmSig" = "8:_UNDEFINED"
+        }
+        "Entry"
+        {
+        "MsmKey" = "8:_8CEBA662FAC740649B70FE99AF53F593"
+        "OwnerKey" = "8:_UNDEFINED"
         "MsmSig" = "8:_UNDEFINED"
         }
         "Entry"
@@ -551,12 +545,6 @@
         {
         "MsmKey" = "8:_948254915D1A49448F5D9DF059FBF2E3"
         "OwnerKey" = "8:_358CCC8F40B4ADFFE70B5C3345B1A18A"
-        "MsmSig" = "8:_UNDEFINED"
-        }
-        "Entry"
-        {
-        "MsmKey" = "8:_948254915D1A49448F5D9DF059FBF2E3"
-        "OwnerKey" = "8:_93648468D9E365F96AA051BCE0CA7DCC"
         "MsmSig" = "8:_UNDEFINED"
         }
         "Entry"
@@ -749,6 +737,12 @@
         {
         "MsmKey" = "8:_C842A926F8EBA2D60FAA5829186A1D4A"
         "OwnerKey" = "8:_FA82921F2F6546AA905F825815B45437"
+        "MsmSig" = "8:_UNDEFINED"
+        }
+        "Entry"
+        {
+        "MsmKey" = "8:_C919648071C3409F88E89FB123AC8C87"
+        "OwnerKey" = "8:_UNDEFINED"
         "MsmSig" = "8:_UNDEFINED"
         }
         "Entry"
@@ -975,8 +969,8 @@
         }
         "Entry"
         {
-        "MsmKey" = "8:_FA019587C1F6BA8BB1050A89C9923D22"
-        "OwnerKey" = "8:_D4E058B5E860245BA1FCE57D7C7C85CB"
+        "MsmKey" = "8:_F9FF45C99761418DAA33AC823E698B5B"
+        "OwnerKey" = "8:_UNDEFINED"
         "MsmSig" = "8:_UNDEFINED"
         }
         "Entry"
@@ -1847,6 +1841,26 @@
             "Register" = "3:1"
             "Exclude" = "11:FALSE"
             "IsDependency" = "11:TRUE"
+            "IsolateTo" = "8:"
+            }
+            "{1FB2D0AE-D3B9-43D4-B9DD-F88EC61E35DE}:_05E9E847620040C79E3346D4AF952F23"
+            {
+            "SourcePath" = "8:..\\Visual-Artifact-Detector\\bin\\x86\\Release\\x86\\concrt140.dll"
+            "TargetName" = "8:concrt140.dll"
+            "Tag" = "8:"
+            "Folder" = "8:_D7D2660374274A77B973011FA6D080E9"
+            "Condition" = "8:"
+            "Transitive" = "11:FALSE"
+            "Vital" = "11:TRUE"
+            "ReadOnly" = "11:FALSE"
+            "Hidden" = "11:FALSE"
+            "System" = "11:FALSE"
+            "Permanent" = "11:FALSE"
+            "SharedLegacy" = "11:FALSE"
+            "PackageAs" = "3:1"
+            "Register" = "3:1"
+            "Exclude" = "11:FALSE"
+            "IsDependency" = "11:FALSE"
             "IsolateTo" = "8:"
             }
             "{9F6F8455-1EF1-4B85-886A-4223BCC8E7F7}:_08F7E31FE7D5A4D5108176E34B73FA93"
@@ -2870,6 +2884,26 @@
             "Register" = "3:1"
             "Exclude" = "11:FALSE"
             "IsDependency" = "11:TRUE"
+            "IsolateTo" = "8:"
+            }
+            "{1FB2D0AE-D3B9-43D4-B9DD-F88EC61E35DE}:_370C78E3CB494353800B6A63D1A04889"
+            {
+            "SourcePath" = "8:..\\Visual-Artifact-Detector\\bin\\x86\\Release\\x86\\msvcp140.dll"
+            "TargetName" = "8:msvcp140.dll"
+            "Tag" = "8:"
+            "Folder" = "8:_D7D2660374274A77B973011FA6D080E9"
+            "Condition" = "8:"
+            "Transitive" = "11:FALSE"
+            "Vital" = "11:TRUE"
+            "ReadOnly" = "11:FALSE"
+            "Hidden" = "11:FALSE"
+            "System" = "11:FALSE"
+            "Permanent" = "11:FALSE"
+            "SharedLegacy" = "11:FALSE"
+            "PackageAs" = "3:1"
+            "Register" = "3:1"
+            "Exclude" = "11:FALSE"
+            "IsDependency" = "11:FALSE"
             "IsolateTo" = "8:"
             }
             "{9F6F8455-1EF1-4B85-886A-4223BCC8E7F7}:_3C6CA93E063560DA7B0224A4E596BCAC"
@@ -3957,6 +3991,26 @@
             "IsDependency" = "11:TRUE"
             "IsolateTo" = "8:"
             }
+            "{1FB2D0AE-D3B9-43D4-B9DD-F88EC61E35DE}:_8CEBA662FAC740649B70FE99AF53F593"
+            {
+            "SourcePath" = "8:..\\Visual-Artifact-Detector\\bin\\x86\\Release\\x86\\opencv_ffmpeg343.dll"
+            "TargetName" = "8:opencv_ffmpeg343.dll"
+            "Tag" = "8:"
+            "Folder" = "8:_D7D2660374274A77B973011FA6D080E9"
+            "Condition" = "8:"
+            "Transitive" = "11:FALSE"
+            "Vital" = "11:TRUE"
+            "ReadOnly" = "11:FALSE"
+            "Hidden" = "11:FALSE"
+            "System" = "11:FALSE"
+            "Permanent" = "11:FALSE"
+            "SharedLegacy" = "11:FALSE"
+            "PackageAs" = "3:1"
+            "Register" = "3:1"
+            "Exclude" = "11:FALSE"
+            "IsDependency" = "11:FALSE"
+            "IsolateTo" = "8:"
+            }
             "{9F6F8455-1EF1-4B85-886A-4223BCC8E7F7}:_8F6976A9D0D2CA5027FCB0471B0CCB24"
             {
             "AssemblyRegister" = "3:1"
@@ -5042,6 +5096,26 @@
             "IsDependency" = "11:TRUE"
             "IsolateTo" = "8:"
             }
+            "{1FB2D0AE-D3B9-43D4-B9DD-F88EC61E35DE}:_C919648071C3409F88E89FB123AC8C87"
+            {
+            "SourcePath" = "8:..\\Visual-Artifact-Detector\\bin\\x86\\Release\\x86\\cvextern.dll"
+            "TargetName" = "8:cvextern.dll"
+            "Tag" = "8:"
+            "Folder" = "8:_D7D2660374274A77B973011FA6D080E9"
+            "Condition" = "8:"
+            "Transitive" = "11:FALSE"
+            "Vital" = "11:TRUE"
+            "ReadOnly" = "11:FALSE"
+            "Hidden" = "11:FALSE"
+            "System" = "11:FALSE"
+            "Permanent" = "11:FALSE"
+            "SharedLegacy" = "11:FALSE"
+            "PackageAs" = "3:1"
+            "Register" = "3:1"
+            "Exclude" = "11:FALSE"
+            "IsDependency" = "11:FALSE"
+            "IsolateTo" = "8:"
+            }
             "{9F6F8455-1EF1-4B85-886A-4223BCC8E7F7}:_CB255BBA0E5B434318B9C19351CA3997"
             {
             "AssemblyRegister" = "3:1"
@@ -5755,6 +5829,26 @@
             "IsDependency" = "11:TRUE"
             "IsolateTo" = "8:"
             }
+            "{1FB2D0AE-D3B9-43D4-B9DD-F88EC61E35DE}:_F9FF45C99761418DAA33AC823E698B5B"
+            {
+            "SourcePath" = "8:..\\Visual-Artifact-Detector\\bin\\x86\\Release\\x86\\vcruntime140.dll"
+            "TargetName" = "8:vcruntime140.dll"
+            "Tag" = "8:"
+            "Folder" = "8:_D7D2660374274A77B973011FA6D080E9"
+            "Condition" = "8:"
+            "Transitive" = "11:FALSE"
+            "Vital" = "11:TRUE"
+            "ReadOnly" = "11:FALSE"
+            "Hidden" = "11:FALSE"
+            "System" = "11:FALSE"
+            "Permanent" = "11:FALSE"
+            "SharedLegacy" = "11:FALSE"
+            "PackageAs" = "3:1"
+            "Register" = "3:1"
+            "Exclude" = "11:FALSE"
+            "IsDependency" = "11:FALSE"
+            "IsolateTo" = "8:"
+            }
             "{9F6F8455-1EF1-4B85-886A-4223BCC8E7F7}:_FA019587C1F6BA8BB1050A89C9923D22"
             {
             "AssemblyRegister" = "3:1"
@@ -5886,6 +5980,17 @@
             "Property" = "8:TARGETDIR"
                 "Folders"
                 {
+                    "{9EF0B969-E518-4E46-987F-47570745A589}:_D7D2660374274A77B973011FA6D080E9"
+                    {
+                    "Name" = "8:x86"
+                    "AlwaysCreate" = "11:FALSE"
+                    "Condition" = "8:"
+                    "Transitive" = "11:FALSE"
+                    "Property" = "8:_575448B6157547EBA2222B5E3C3AA7F0"
+                        "Folders"
+                        {
+                        }
+                    }
                 }
             }
         }
@@ -5903,9 +6008,9 @@
         "Product"
         {
         "Name" = "8:Microsoft Visual Studio"
-        "ProductName" = "8:Artifact Detector"
+        "ProductName" = "8:Visual Artifact Detector"
         "ProductCode" = "8:{062943E0-6278-4AD9-B698-632CF9FD3C5E}"
-        "PackageCode" = "8:{88EC2E5E-3036-48BB-9DE8-7D70B2CC5BBF}"
+        "PackageCode" = "8:{CA67DE02-B2E3-4326-8494-43516B142F22}"
         "UpgradeCode" = "8:{3D92DF20-0269-4610-AFBF-AFF1FCF44660}"
         "AspNetVersion" = "8:4.0.30319.0"
         "RestartWWWService" = "11:FALSE"
@@ -5916,11 +6021,11 @@
         "Manufacturer" = "8:ITS.APE"
         "ARPHELPTELEPHONE" = "8:"
         "ARPHELPLINK" = "8:"
-        "Title" = "8:ADInstaller (Artifact Detector)"
+        "Title" = "8:VADInstaller (Visual Artifact Detector)"
         "Subject" = "8:"
         "ARPCONTACT" = "8:Felix Rossmann"
         "Keywords" = "8:"
-        "ARPCOMMENTS" = "8:Setup for ITS.APE's artifact detector."
+        "ARPCOMMENTS" = "8:Setup for ITS.APE's visual artifact detector."
         "ARPURLINFOABOUT" = "8:"
         "ARPPRODUCTICON" = "8:"
         "ARPIconIndex" = "3:0"
@@ -6424,9 +6529,37 @@
         }
         "ProjectOutput"
         {
+            "{5259A561-127C-4D43-A0A1-72F10C7B3BF8}:_73DA2A6D64B44F00B955169DF3E4F57A"
+            {
+            "SourcePath" = "8:"
+            "TargetName" = "8:"
+            "Tag" = "8:"
+            "Folder" = "8:_ABDD876FC1534CF6A60C9AF41AABAF86"
+            "Condition" = "8:"
+            "Transitive" = "11:FALSE"
+            "Vital" = "11:TRUE"
+            "ReadOnly" = "11:FALSE"
+            "Hidden" = "11:FALSE"
+            "System" = "11:FALSE"
+            "Permanent" = "11:FALSE"
+            "SharedLegacy" = "11:FALSE"
+            "PackageAs" = "3:1"
+            "Register" = "3:1"
+            "Exclude" = "11:FALSE"
+            "IsDependency" = "11:FALSE"
+            "IsolateTo" = "8:"
+            "ProjectOutputGroupRegister" = "3:1"
+            "OutputConfiguration" = "8:"
+            "OutputGroupCanonicalName" = "8:ReferenceCopyLocalPaths"
+            "OutputProjectGuid" = "8:{39FE248A-DF58-49B7-8716-4C4CF220C20D}"
+            "ShowKeyOutput" = "11:TRUE"
+                "ExcludeFilters"
+                {
+                }
+            }
             "{5259A561-127C-4D43-A0A1-72F10C7B3BF8}:_FA82921F2F6546AA905F825815B45437"
             {
-            "SourcePath" = "8:..\\Artifact-Detector\\obj\\x64\\Release\\Visual-Artifact-Detector.exe"
+            "SourcePath" = "8:..\\Visual-Artifact-Detector\\obj\\x86\\Release\\Visual-Artifact-Detector.exe"
             "TargetName" = "8:"
             "Tag" = "8:"
             "Folder" = "8:_ABDD876FC1534CF6A60C9AF41AABAF86"

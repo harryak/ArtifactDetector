@@ -1,0 +1,8 @@
+1. Install VAD from shared Folder
+2. Give User write permissions on C:\Program Files\ITS.APE\Visual Artifact Detector
+3. Make sure other folders are mounted
+4. Open cmd.exe
+  cd C:\Program Files\ITS.APE\Visual Artifact Detector
+  Visual-Artifact-Detector.exe -s \\VBOXSVR\evaluation_screenshots\not_artifacts-1-1.png -a 06_Versichertenkarte-Schwer -f \\VBOXSVR\recipes -e
+  -- OR --
+  Copy .bat and execute that one

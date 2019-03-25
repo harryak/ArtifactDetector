@@ -1,0 +1,260 @@
+% ------------------------------------------------  Needed for float packages
+\usepackage{scrhack}
+
+% ---------------------------------------------------------------------  utf8
+\usepackage[T1]{fontenc}
+
+% -----------------------------------------------------------------  language
+\usepackage{ifthen}
+\ifthenelse{\equal{\thesislanguage}{german}}{\usepackage[ngerman]{babel}}{}
+
+% --------------------------------------------------------------------  Fonts
+\usepackage[osf,sc]{mathpazo}
+\usepackage[oldstylenums]{kpfonts}
+\usepackage{microtype}
+\renewcommand*{\ttdefault}{cmtt}
+% make texttt never be bold or italic... It is slated for a reason!
+\let\OldTexttt\texttt
+\renewcommand{\texttt}[1]{\textnormal{\OldTexttt{#1}}}
+\KOMAoption{fontsize}{10pt}
+\recalctypearea
+% -----------------------------------------------------------------  Spacings
+\usepackage{setspace}
+%\renewcommand{\baselinestretch}{1.25} % linespacing
+\linespread{1.23}
+\setlength{\parskip}{.8em} % Paragraph spacing
+\usepackage{typearea}
+\areaset{43em}{61\baselineskip}
+% \usepackage[top=15mm,bottom=1cm]{geometry}
+
+% -------------------------------------------------------------------  Colors
+\usepackage[usenames,dvipsnames,svgnames]{xcolor}
+\ifthenelse{\equal{\thesismonochrome}{true}}%
+    {\definecolor[named]{uboBlue}{cmyk}{0,0,0,1}}%
+    {\definecolor[named]{uboBlue}{cmyk}{1,.7,0,0}}
+
+\definecolor[named]{uboYellow}{cmyk}{0,.3,1,0}
+\definecolor[named]{uboGrey}{cmyk}{0,0,.15,.55}
+
+% -------------------------------------------------------------------  TOC,TOF,TOL,
+\usepackage{listings}
+\usepackage[figure,table,lstlisting]{totalcount}
+\usepackage[nottoc, notlot, notlof]{tocbibind}
+\usepackage{lstautogobble}  % Fix relative indenting
+\usepackage{zi4}            % Nice font
+
+
+\lstset{literate=
+  {ö}{{\"o}}1 {ü}{{\"u}}1 {Ä}{{\"A}}1 {ä}{{\"a}}1 {Ö}{{\"O}}1 {Ü}{{\"U}}1
+  {ß}{{\ss}}1
+}
+
+% ------------------------------------------------------------------- Style lstlisting,
+
+\lstset{
+  backgroundcolor=\color{white},   % choose the background color; you must add \usepackage{color} or \usepackage{xcolor}; should come as last argument
+  basicstyle=\footnotesize\ttfamily,        % the size of the fonts that are used for the code
+  breakatwhitespace=false,         % sets if automatic breaks should only happen at whitespace
+  breaklines,                      % sets automatic line breaking
+  breakautoindent,
+  %postbreak=.,
+  autogobble,
+  captionpos=b,                    % sets the caption-position to bottom
+  commentstyle=\itshape, %\color{mygreen},    % comment style
+  deletekeywords={...},            % if you want to delete keywords from the given language
+  escapeinside={\%*}{*)},          % if you want to add LaTeX within your code
+%  extendedchars=true,              % lets you use non-ASCII characters; for 8-bits encodings only, does not work with UTF-8
+  frame=l,	                   % adds a frame around the code
+  %framesep=6pt,
+  keepspaces=true,                 % keeps spaces in text, useful for keeping indentation of code (possibly needs columns=flexible)
+  keywordstyle=\color{uboBlue},       % keyword style
+  language=C,                 % the language of the code
+  morekeywords={*,...},            % if you want to add more keywords to the set
+  numbers=left,                    % where to put the line-numbers; possible values are (none, left, right)
+  numberstyle=\scriptsize\oldstylenums\sffamily,%\textcolor[rgb]{0.5,0.5,1.0}, % the style that is used for the line-numbers
+  rulecolor=\color{uboBlue},         % if not set, the frame-color may be changed on line-breaks within not-black text (e.g. comments (green here))
+  showspaces=false,                % show spaces everywhere adding particular underscores; it overrides 'showstringspaces'
+  showstringspaces=false,          % underline spaces within strings only
+  showtabs=false,                  % show tabs within strings adding particular underscores
+  stepnumber=1,                    % the step between two line-numbers. If it's 1, each line will be numbered
+%  stringstyle=\color{mymauve},     % string literal style
+  tabsize=2,	                   % sets default tabsize to 2 spaces
+%  title=\caption,                  % show the filename of files included with \lstinputlisting; also try caption instead of title
+%  framexleftmargin=1.5em,         % framelines over line numbers
+  xleftmargin=2em                  % fit line numbers in textwidth
+}
+
+
+% -------------------------------------------------------------------  Titles
+% Kapitelüberschrift anpassen.
+\setkomafont{chapter}{\normalfont\bfseries\huge\scshape\color{uboBlue}}
+\renewcommand\chapterformat{\normalfont\bfseries\Huge\color{black}\thechapter\hspace{1.4ex}}
+
+\setkomafont{section}{\normalfont\bfseries\Large\scshape\color{uboBlue}}
+\renewcommand\sectionformat{\normalfont\bfseries\Large\color{black}\thesection~}
+
+\setkomafont{subsection}{\normalfont\bfseries\large\scshape\color{uboBlue}}
+\renewcommand\subsectionformat{\normalfont\bfseries\large\color{black}\thesubsection~}
+
+\setkomafont{subsubsection}{\normalfont\bfseries\normalsize\scshape\color{uboBlue}}
+\renewcommand\subsubsectionformat{\normalfont\bfseries\normalsize\color{black}\thesubsubsection~}
+
+\RedeclareSectionCommand[
+    beforeskip=4\baselineskip,
+    afterskip=3\baselineskip]{chapter}
+\RedeclareSectionCommand[
+    beforeskip=-\baselineskip,
+    afterskip=1pt]{section}
+\RedeclareSectionCommand[
+    beforeskip=-.75\baselineskip,
+    afterskip=1pt]{subsection}
+\RedeclareSectionCommand[
+    beforeskip=-.5\baselineskip,
+    afterskip=1pt]{subsubsection}
+
+% change TOC accordingly
+\setkomafont{chapterentry}{\normalfont\bfseries\scshape}
+
+% --------------------------------------------------------------------  Lists
+\usepackage{enumitem}
+\setlist{itemsep=-5pt}
+\newcommand{\localtextbulletone}{\textcolor{uboBlue}{{\tiny$\blacksquare$} }}
+\renewcommand{\labelitemi}{\localtextbulletone}
+\setlist[enumerate]{label=\textbf{\color{uboBlue}{\arabic*.}}}
+\setlist[description]{font=\normalfont\scshape\bfseries\textcolor{uboBlue},itemsep=2pt}
+
+% -----------------------------------------------  captions, figures & tables
+\usepackage{chngcntr}
+\counterwithout{figure}{chapter}
+\counterwithout{figure}{section}
+\counterwithout{table}{chapter}
+\usepackage{subfigure}
+\setkomafont{captionlabel}{\normalfont\scshape\bfseries\textcolor{uboBlue}}
+\setkomafont{caption}{\normalfont\itshape}
+\usepackage{floatrow}
+\floatsetup[table]{capposition=top}
+
+% ----------------------------------------------------------  PDF & Hyperrefs
+% Note: hyperref should be "last package"
+\usepackage[pdftex]{graphicx}
+\usepackage{url}
+% Allow to break links after / and after -
+\def\UrlBreaks{\do\/\do-}
+
+% -------------------------------------------------  Headers & Page Numbering
+\usepackage[automark]{scrlayer-scrpage}
+\clearscrheadfoot
+\automark[section]{chapter}
+\ohead{\scshape\rightmark}
+\ofoot[\scshape\pagemark]{\scshape\pagemark}
+
+% --------------------------------------------------------------  Definitions
+\usepackage{amsthm}
+\newtheoremstyle{thesisdefinition}%
+    {\topsep}%
+    {\topsep}%
+    {\normalfont}%
+    {0ex}%
+    {\scshape\bfseries\color{uboBlue}}%
+    {:}%
+    {1ex}%
+    {}
+\newtheoremstyle{thesisplain}%
+    {\topsep}%
+    {\topsep}%
+    {\normalfont\itshape}%
+    {0ex}%
+    {\scshape\bfseries\color{uboBlue}}%
+    {:}%
+    {1ex}%
+    {}
+\newtheoremstyle{thesisremark}%
+    {\topsep}%
+    {\topsep}%
+    {\normalfont}%
+    {0ex}%
+    {\scshape\itshape\color{uboBlue}}%
+    {:}%
+    {1ex}%
+    {}
+
+% Definitions
+\theoremstyle{thesisdefinition}
+\newtheorem{definition}{Definition}
+\newtheorem*{definition*}{Definition}
+% Theorems
+\theoremstyle{thesisplain}
+\newtheorem{theorem}[definition]{Theorem}
+\newtheorem*{theorem*}{Theorem}
+\newtheorem{proposition}[definition]{Proposition}
+\newtheorem*{proposition*}{Proposition}
+\newtheorem{lemma}[definition]{Lemma}
+\newtheorem*{lemma*}{Lemma}
+% Remarks
+\theoremstyle{thesisremark}
+\newtheorem{remark}[definition]{Remark}
+\newtheorem*{remark*}{Remark}
+
+% -------------------------------------------------------------------  Quotes
+\usepackage{csquotes}
+\newcommand{\smallquote}[2]{%
+  \emph{»#1«} #2
+}
+\def\signed #1{{\leavevmode\unskip\nobreak\hfil\penalty50\hskip2em%
+  \hbox{}\hfil#1%
+  \parfillskip=0pt \finalhyphendemerits=0 \endgraf}}
+\newsavebox\mybox
+\newenvironment{bigquote}[1]
+  {\savebox\mybox{#1}\begin{quote}\itshape»}%
+  {«\normalfont\signed{\usebox\mybox}\end{quote}}
+
+% -----------------------------------------------------------------  Algorithms
+\ifthenelse{\equal{\thesislanguage}{german}}{%
+  \usepackage[linesnumbered,lined,ngerman,german,figure]{algorithm2e}%
+}{%
+  \usepackage[linesnumbered,lined,figure]{algorithm2e}%
+}%
+\setlength{\algomargin}{4em}
+\SetAlgoSkip{bigskip}
+\SetAlgoInsideSkip{medskip}
+% -------------------------------------------------------------------  Examples
+\usepackage{tcolorbox}
+\newenvironment{example}{}{}
+\tcbuselibrary{skins}
+\tcbuselibrary{breakable}
+\tcolorboxenvironment{example}{blanker,breakable,left=5mm,%
+before skip=10pt,after skip=10pt,borderline west={1.2mm}{0pt}{uboBlue!50!white}}
+
+% ----------------------------------------------- Restrict widows and orphans
+\clubpenalty = 10000
+\widowpenalty = 10000
+\displaywidowpenalty = 10000
+% ----------------------------------------------------------------- Marginpar
+\let\oldmarginpar\marginpar
+\renewcommand{\marginpar}[1]{%
+    \oldmarginpar{\em\color{Grey}#1}
+}
+
+% ----------------------------------------------------------------- Bibliography
+\ifthenelse{\equal{\thesisreferencestyle}{number}}{%
+  \usepackage[backend=biber,style=numeric]{biblatex}%
+}{
+  \usepackage[backend=biber,style=alphabetic]{biblatex}%
+}
+
+\addbibresource{tpl/rfc.bib}
+\addbibresource{bibliography.bib}
+
+% ------------------------------------------------- hyperref should be "last package"
+\usepackage{hyperref}
+\hypersetup{
+    colorlinks=true,
+    unicode=true,
+    pdftitle={\thesistitle},
+    pdfauthor={\thesisauthor},
+    pdfsubject={\thesissubtitle},
+    urlcolor=uboBlue,
+    linkcolor=black,
+    citecolor=uboBlue
+}
+\usepackage[all]{hypcap}        % Convenience: Let hyperref jump to the figure instead to the caption only.

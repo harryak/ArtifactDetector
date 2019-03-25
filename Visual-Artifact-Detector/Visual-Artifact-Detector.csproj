@@ -159,6 +159,7 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="MatchingSettings.cs" />
     <Compile Include="VisualArtifactDetector\BaseArtifactDetector.cs" />
     <Compile Include="VisualArtifactDetector\BriskArtifactDetector.cs" />
     <Compile Include="VisualArtifactDetector\AkazeArtifactDetector.cs" />

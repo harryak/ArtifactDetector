@@ -120,6 +120,11 @@ namespace VisualArtifactDetector
                 logger.LogError("Can not write to working directory {workingDirectory} with error: {0}.", workingDirectory, e.Message);
                 return false;
             }
+            catch (IOException e)
+            {
+                logger.LogError("Can not write to working directory {workingDirectory} with error: {0}.", workingDirectory, e.Message);
+                return false;
+            }
 
             return true;
         }
@@ -228,7 +233,15 @@ namespace VisualArtifactDetector
             if (artifactLibrary == null)
             {
                 logger.LogDebug("Creating new artifact library instance.");
-                artifactLibrary = new ArtifactLibrary(workingDirectory, detector, loggerFactory);
+                try
+                {
+                    artifactLibrary = new ArtifactLibrary(workingDirectory, detector, loggerFactory);
+                }
+                catch (Exception e)
+                {
+                    logger.LogError("Could not instantiate artifact library: {0}", e.Message);
+                    return -1;
+                }
             }
 
             // Launch the actual program.
@@ -238,9 +251,9 @@ namespace VisualArtifactDetector
             {
                 artifactType = artifactLibrary.GetArtifactType(artifactGoal, stopwatch);
             }
-            catch (NotImplementedException e)
+            catch (Exception e)
             {
-                logger.LogError(e.Message);
+                logger.LogError("Could not get artifact type: {0}", e.Message);
                 return -1;
             }
 
@@ -266,9 +279,16 @@ namespace VisualArtifactDetector
 
             if (shouldEvaluate)
             {
-                using (StreamWriter file = new StreamWriter("output.csv", true))
+                try
                 {
-                    file.WriteLine(stopwatch.TimesToCSVinNS() + "," + artifactFound);
+                    using (StreamWriter file = new StreamWriter("output.csv", true))
+                    {
+                        file.WriteLine(detectorSelection + "," + screenshotPath + "," + artifactGoal + "," + stopwatch.TimesToCSVinNS() + "," + artifactFound);
+                    }
+                }
+                catch (Exception e)
+                {
+                    logger.LogError("Could not write to output.csv: {0}", e.Message);
                 }
             }
 

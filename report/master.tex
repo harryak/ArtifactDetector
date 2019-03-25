@@ -1,0 +1,108 @@
+\documentclass[10pt,a4paper,chapterprefix=false,openright,bibliography=totocnumbered,headinclude,cleardoublepage=plain]{scrreprt}
+\usepackage[utf8]{inputenc}
+
+\input{cfg.tex}
+\input{tpl/pkg.tex}
+
+\begin{document}
+% ------------------------------------------------------------------------- Init
+\setcounter{page}{0}
+\hypersetup{pageanchor=false}
+\sloppy
+\KOMAoptions{twoside = false}
+\input{tpl/titlepage.tex}
+\ifthenelse{\equal{\thesisprintingstyle}{twoside}}{
+    \KOMAoptions{twoside = true}
+    \cleardoublepage
+}{}
+\pagestyle{scrheadings}
+\setcounter{page}{7}
+\pagenumbering{gobble}
+\pagenumbering{roman}
+
+% ----------------------------------------------------------------------- Thanks
+\ifthenelse{\equal{\thesisthankyou}{true}}{
+    \cleardoublepage
+    \chapter*{\ifthenelse{\equal{\thesislanguage}{german}}%
+        {Danksagung}%
+        {Acknowledgement}}
+    \input{thanks.tex}}
+    \cleardoublepage
+{}%
+
+% --------------------------------------------------------------------- Abstract
+\ifthenelse{\equal{\thesisabstract}{true}}{
+    \cleardoublepage
+    \chapter*{\ifthenelse{\equal{\thesislanguage}{german}}%
+        {Kurzfassung}%
+        {Abstract}}
+    \input{abstract.tex}
+    %\vspace*{\fill}
+    %\thispagestyle{empty}
+}{}
+\clearpage
+
+% ----------------------------------------------------------------------- Tables
+\addtocontents{toc}{\vskip -2em}
+\addtocontents{lof}{\vskip -2em}
+\addtocontents{lot}{\vskip -2em}
+\begingroup
+\let\clearpage\relax
+\tableofcontents
+\clearpage
+\ifthenelse{\equal{\thesistableposition}{beginning}}{%
+    \iftotalfigures%
+        \addcontentsline{toc}{chapter}{\listfigurename}%
+        \listoffigures%
+        \clearpage
+    \fi%
+    \iftotaltables%
+        \addcontentsline{toc}{chapter}{\listtablename}%
+        \listoftables%
+        \clearpage
+    \fi%
+    \iftotallstlistings%
+        \addcontentsline{toc}{chapter}{\lstlistingname}%
+        \lstlistoflistings%
+        \clearpage
+    \fi%
+}{}
+\endgroup
+\cleardoublepage
+\pagenumbering{arabic}
+\hypersetup{pageanchor=true}
+
+% ------------------------------------------------------------ Add Chapters here
+\input{content.tex}
+
+
+% ---------------------------------------------------------- Add .bib files here
+\printbibliography*
+
+%------------------------------------------------------------ Table of Figures and Tables if Position is 'end'
+\clearpage
+\ifthenelse{\equal{\thesistableposition}{end}}{%
+    \iftotalfigures%
+        \addcontentsline{toc}{chapter}{\listfigurename}%
+        \listoffigures%
+        \clearpage
+    \fi%
+    \iftotaltables%
+        \addcontentsline{toc}{chapter}{\listtablename}%
+        \listoftables%
+        \clearpage
+    \fi%
+    \iftotallstlistings%
+        \addcontentsline{toc}{chapter}{\lstlistingname}%
+        \lstlistoflistings%
+        \clearpage
+    \fi%
+}{}
+
+% ------------------------------------------------------------------ Declaration
+\ifthenelse{\equal{\thesisprintdeclaration}{true}}{%
+\input{tpl/declaration.tex}
+\cleardoublepage
+}{}%
+
+\end{document}

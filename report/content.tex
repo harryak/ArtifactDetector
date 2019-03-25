@@ -1,0 +1,134 @@
+\chapter{Introduction}\label{ch:intro}
+
+The \emph{IT-Security Awareness Penetration Testing Environment} (\ape)\cite{itsape} is a tool to analyse the awareness of a computer's user regarding IT-security. It measures the user's response to certain deployed \emph{artifacts} which differ from the user's familiar environment. Most of them are similar to real-world attack scenarios or share certain aspects with them.
+
+There are multiple aspects to the user's response, one of them being the reaction speed. For measuring the user's reaction speed, one must determine the exact point in time from which on it is possible for him or her to interact with the artifact. As \ape~is a tool for the Microsoft Windows operating systems (which focus on a graphical user interface), a user is able interact with an artifact as soon as he or she can visually perceive it on the screen, or in Windows terms: on the \emph{desktop}.
+
+The process of finding this point in time can not be done reliably by observing the currently running processes or even meta information about it. Only the visual information of the current desktop is useful in this case: An extra feature or tool was needed to perform an image detection algorithm on the current screen and decide whether the visual cues of the currently deployed artifact are present on the user's desktop.
+
+The most important measure for this tool would be the \emph{sensitivity} of the classification, meaning the probability of successful detection of artifacts when they are actually present (\emph{true positives}). This term will be called \emph{detection rate} in the rest of this work. The counter-measure for this is the \emph{specificity} which describes the rate of \emph{true negatives}. A second, equally important measure is the resource consumption for execution, especially the execution time. As the detection rate is an obvious measure for such a tool, the execution time and resources are almost equally important to not disrupt the user's experience or distort the reaction analysis by \ape. The limitation on the resources is given by the environment that \ape~is mainly used in: low-tier office hardware.
+
+The work at hand describes the design considerations and implementation details of such a tool, called \vad~(\vd), and presents the results of an evaluation given the previously proposed measures. For this, chapter \ref{ch:rel-work} outlines some related publications and the differences to our approach. In chapter \ref{ch:methods}, the software design and technical details of the \vd~are explained. The evaluation setup and results can then be found in chapter \ref{ch:results}, followed by a conclusion in \ref{ch:conclusion}.
+
+As \ape~is designed for computers running \emph{Windows 7} in the 32-bit version, the \vd~was built for this operating system specifically but can run on newer Windows versions as well. Written in C\#, it uses Microsoft's \emph{.NET framework} in version 4.7.2 \cite{dotnet4_7_2} and the \emph{OpenCV}-wrapper \emph{Emgu CV} in version 3.4.3 \cite{emgucv}.
+
+\chapter{Related Work}\label{ch:rel-work}
+
+In their paper about evaluation of UI patterns Bakaev et al. \cite{ref_web-uis} use image recognition functions to analyse the screenshot of a website and produce a machine-readable representation of it. This approach processes the screenshot in multiple steps: A black and white version of the screenshot is used for rectangle detection. Next, text sections are identified and recognized, before detecting special UI element types using a trained feature extractor. The results are then used to analyse composite structures and output a textual representation of the website.
+
+While the task seems similar to the one presented in this report, the proposed analysis of screenshots has different goals and does not suit the requirements for the \vd: The full classification of the user's desktop screenshot before identifying possible candidates for artifacts would imply a high demand on resources and is not a necessary step. Since those candidates would then be compared to reference images of artifacts, one can skip the classification steps and use an image feature detector on the screenshots directly.
+
+Aradhye et al. \cite{ref_spam-mails} present a way to classify image-based e-mails as spam using image analysis. Their approach features a way to analyse even for complex backgrounds and contents without using OCR: First, text regions are extracted by thresholding the intensity of the grayscale image several times and performing connectivity analysis on the outcomes. With these regions identified, they categorize the image based on features regarding text-density, color saturation and color heterogeneity. The features are then used to train \emph{Support Vector Machines} (\emph{SVMs}) to distinguish between different mail classes.
+
+The key advantage of this way to classify images is that the spam images have distinct features to distinguish them from other images in mails. On one hand the \ape~artifact database is diverse and training SVMs for every artifact type would be a large task by itself. On the other hand it is not easy to distinguish the more advanced \ape~artifacts from \emph{normal applications} by a rigidly defined feature set. This is because the goal of most of the artifacts \ape~employs is an imitation of a usual application.
+
+Since none of the related work matches the goals for the \vad, a new tool had to be implemented.
+
+\chapter{Methods}\label{ch:methods}
+
+This chapter begins with a description of the general software design, including a brief requirement analysis and the resulting decisions regarding the implementation. The second part introduces the technical backgrounds and algorithms used, and especially explains the choice and the details of the image recognition algorithms.
+
+\section{Software Design}\label{sec:software-design}
+
+The client of \ape~that gathers the user's reaction to the deployed artifacts runs on the user's PCs as a Windows service. Instead of implementing the \vad~as an additional feature of the \ape~service it is implemented as an external tool. This is to keep a modular approach in which software parts can easily be exchanged, and secondly to be able to give the individual processes an independent priority for execution, thus guaranteeing enough resources for the execution of the \ape~service.
+
+The main reason the \vd~was designed to run on the same machines as the \ape~service instead of e.g. a server infrastructure with better hardware or other external hardware was the user's privacy:  As \ape~aims to collect the data anonymously or pseudonymously, transactions of highly sensitive data (such as screenshots of the current desktop) would contradict this goal.
+
+The information on artifact types to detect are provided by a \emph{recipes repository} on the same computer containing reference images of the artifacts to be deployed. Furthermore, the \vd~only has to look for visual cues of a single artifact type per run, as the \ape~service will call it with information on the currently deployed artifact type.
+
+\subsection{Requirement analysis}
+
+To implement the \vd, the following main requirements were identified:
+
+\begin{enumerate}
+	\item \label{itm:req-detection} Robust and high detection rate for visual cues of artifact in screenshots of a Windows desktop.
+	\item \label{itm:req-lowruntime} Low runtime of at most few seconds on low-tier office hardware.
+\end{enumerate}
+
+These requirements reflect the measures given for this task in chapter \ref{ch:intro}. The \ref{itm:req-detection} requirement mainly has influence on the choice of image recognition algorithms, while the \ref{itm:req-lowruntime} contradicts the use of a very resource-heavy algorithm (which would provide better results, generally speaking) and has influence on the parameters of the used algorithm. This could lead to a trade-off between the \ref{itm:req-detection} and the \ref{itm:req-lowruntime} requirement which is referred to in \ref{sec:tech-bg}.
+
+Further analysis of the nature of \ape~and refinement of the main requirements lead to the following secondary requirements:
+
+\begin{enumerate}\setcounter{enumi}{2}
+	\item \label{itm:req-nocuda} No usage of parallel computing on the graphics card (e.g. with the CUDA Toolkit\cite{cuda}), CPU only.
+	\item \label{itm:req-win7console} Windows 7 console program (32-bit).
+\end{enumerate}
+
+The \ref{itm:req-nocuda} requirement is a specification of the \ref{itm:req-lowruntime}, as low-tier office computers usually don't include a CUDA-enabled graphics card or a non-integrated graphics card at all. This requirement results in better versatility of the tool, but comes at cost of a higher runtime.
+
+Given the deployment area for \ape~in the present and near future, the \ref{itm:req-win7console} requirement is due to the environment \ape~is mainly run in.
+
+Finally, while easy maintainability of the source code is certainly desirable for all projects, it should be an extra focus of this project, as further development is most probably not done by the original author.
+
+\subsection{Implementation decisions}
+
+The choice for an image recognition library fell to OpenCV, as it is licensed as \emph{Open Source} under the BSD license and arguably the most maintained and popular of such libraries with almost 20 million downloads. \cite{opencv_downloads} There are other libraries for similar tasks, but either focus more on machine learning like \emph{Google's Tensorflow} \cite{tensorflow}, are web-based APIs (mostly non-free) like \emph{Google's Vision API} \cite{vision_api} or \emph{Amazon Rekognition} \cite{rekognition}, or are not well maintained, such as \emph{VLFeat} \cite{vlfeat}.
+
+Because the runtime performance is so important for this tool, it was not suitable to implement the program using an interpreted programming language. The usage of OpenCV limits the available compiled languages to C, C++ or Java, and using the wrapper Emgu CV also allows to use C\#.
+
+The advantage of C\# is the possibility to use Microsoft's \emph{.NET framework} \cite{dotnet4_7_2}. It allows to write efficient source code while having a vast collection of existing packages at one's disposal. The \emph{redistributable packages} of .NET 4.7.2 needed for executing .NET 4.7.2 programs are available per default on an (up-to-date) Windows 7 or later system. Furthermore, the speed differences between the execution of .NET's intermediate language in their \emph{Just-in-Time} (\emph{JIT}) compiler are nowadays insignificant to programs written in e.g. native C++. Therefore the \vd~is written in C\# and .NET 4.7.2, using OpenCV 3.4.3 via the Emgu CV wrapper.
+
+\section{Technical backgrounds}\label{sec:tech-bg}
+
+% Base process
+The process of image recognition in the \emph{Artifact Detector} takes two input images per run, one model image and one observed image, and tries to recognize the model in the observed image. The model image is a reference image of the current artifact and the observed image is a screenshot provided to the program at execution time. Since the artifact may have multiple reference images for several characteristics, this process might be performed as many times as there are reference images, but exits as soon as a match between a reference and the screenshot was found.
+
+% 3 steps
+There are three major steps involved in the image recognition process (similar to those in \cite{orb_comparison}). Those are: \emph{Feature detection and description}, \emph{feature matching} and \emph{outlier rejection}.
+
+The first step yields a set of features extracted from the screenshot. This is also done for all of the artifact's reference images, but their feature set may be fetched from a cache if extracted in a previous run (see chapter \ref{ch:results}). The features are represented as a variant of \emph{BRIEF} feature descriptors (see \ref{subsec:feature-detection}). In the second part of the process, the descriptors of the screenshot are then matched with the reference image's descriptors, resulting in a set of candidates for features found in both images. These are then post-processed during outlier rejection to find a valid transformation matrix from one feature set to the other to match the most candidates. If there is such a matrix fitting to 95\%\footnote{adjust} of the candidates the \vd~will return the successful detection of the artifact (return value $0$). Otherwise, it will return that no match was found (return value $1$).
+
+The following sections will describe the choice of algorithms for each step and the details of the chosen one.
+
+\subsection{Feature detection with ORB}\label{sec:tech-bg:subsec:feature-detection}
+
+The set of available algorithms for feature detection were provided by the implementations in Emgu CV, respectively OpenCV. From those, \emph{AKAZE}, \emph{BRISK}, \emph{KAZE}, and \emph{ORB} were chosen for implementation, as they are all of the available feature extracting algorithms in OpenCV that do not have copyright restrictions for usage. As shown in secondary literature, such as Tareen et al. \cite{orb_comparison}, ORB configured to find a limited amount of features provides the best combination of execution time and result quality compared to the other three algorithms. This has been confirmed for the task at hand, but nevertheless the other feature detection algorithms can be used via command line arguments for the tool.
+
+% Orb explanation.
+The ORB (\emph{Oriented FAST and Rotated BRIEF}) keypoint detector and descriptor is a ``very fast binary descriptor based on BRIEF [...], which is rotation invariant and resistant to noise'' \cite[p.~1]{orb}. It is specifically designed for real-time systems and low computing power, thus being faster than most of the other currently available methods. \cite{orb, orb_comparison} As the name states, it combines an enhanced version of the \emph{FAST}\cite{fast} keypoint detector with \emph{rotation-aware BRIEF}\cite{brief} descriptors, two fast and performance-saving techniques for themselves. \cite{orb, fast, brief}
+
+The FAST (\emph{Features from Accelerated Segment Test}) detector \cite{fast} is a corner detector designed for real-time applications, working on pixel-regions with fixed radius around a corner candidate $p$. With testing as few pixels as possible in the patch around $p$ it achieves a high decision speed. \cite{fast} The ORB detector utilizes an extended version of the FAST detector with a patch radius of $9$. This radius has proven to yield the most reliable results, where reliability is defined as the rate of detecting the same corners in multiple views of an object. \cite{fast, orb}
+
+The extended FAST detector employed in ORB is used to detect corners on a pyramid scheme for scale variants \cite{scale_pyramids} of the image.  After detection, a \emph{Harris corner filter} \cite{harris_corner} for rejecting edges is applied to the top $N$ keypoints with the strongest FAST responses, as the original paper found that FAST responds too much to edges.\cite{orb} Additionally, ORB uses \emph{intensity centroid} \cite{intensity_centroids} to add information about the detected corner's orientation. With this method, the angle measure between the intensity centroid of the patch (which is assumed to be offset from the corner itself \cite{intensity_centroids}) and the center of the detected corner is used as the orientation of the feature. The feature finding and filtering process in the Emgu CV implementation of ORB is done until a configured amount of features are found. This is set to $1000$ features per image for the \vd.
+
+Features found by this modified FAST detector are represented using rotation-aware BRIEF (\emph{Binary robust independent elementary features}) \emph{brief} descriptors (called \emph{rBRIEF}). The BRIEF descriptors are a binary string representation of binary intensity tests in smoothed $31 x 31$ pixel patches. For ORB the length of those strings are set to $256$ and a Gaussian distribution is used for the distribution of binary tests. Since standard BRIEF descriptors do not perform well when matching rotated versions of the detected corners, \emph{rBRIEF} was developed to include the orientation information. \cite{brief, orb}
+
+\subsection{Descriptor matching}\label{sec:tech-bg:subsec:descriptor-matching}
+
+For feature matching, there are only two possibilities implemented in Emgu CV: Brute-force matching and \emph{FLANN} (\emph{Fast Library for Approximate Nearest Neighbor}) based matching. There are different matching algorithms implemented for both of them, such as the \emph{k-nearest-neighbor} algorithm (\emph{k-NN}).
+
+FLANN based \emph{k}-NN-matching performs better for large datasets with high dimensionality, but is less likely to find all possible candidates for matches.\footnote{Do I have to find a reference for this?} The trade-off between speed and accuracy mentioned in section \ref{sec:software-design} lead to the use of FLANN based k-NN-matching to result in better runtime performance. For the \vd~ $k$ was set to $2$, so that for each descriptor of the observed image, the $2$ nearest-neighbors are obtained -- if possible.
+
+\subsection{Outlier rejection}\label{sec:tech-bg:subsec:outlier-rejection}
+
+The first test applied to each of the query-descriptors is \emph{Lowe's ratio test} \cite{lowes_ratio}
+
+\chapter{Results}\label{ch:results}
+
+The \emph{Artifact Detector} was evaluated in an environment that should closely resemble the real world application domain of \ape. In section \ref{sec:eval-env} the evaluation setup is explained in detail.
+
+The \ref{itm:req-lowruntime} requirement resulted in the implementation of a \emph{cache} for already processed data of artifact images from previous runs. This leads to drastic runtime improvements in consecutive runs, as up to about 40\% of the runtime can be saved when reusing the previously calculated data. This is shown in section \ref{sec:eval-results}.
+
+% first: qualitative?
+
+\section{Evaluation setup}\label{sec:eval-env}
+
+For the evaluation, Windows 7 was setup on a virtual machine using Oracle VM VirtualBox\cite{virtualbox}. This allowed an easy setup and quick configuration of the available hardware. All official Windows 7 updates were installed on this VM up to those available at 25.03.2019.
+
+The virtual machine was run with 2GB of RAM available and one core of an Intel Core i5-6600K CPU (3,50 GHz) set to a 40\% execution cap, resulting in a single virtual CPU at a speed of 1.4 GHz. These hardware settings were thought to approximate low-tier office hardware sufficiently enough to allow conclusions for the real-world application domain of \ape.
+
+After installing the \vd~in the virtual machine using the installer provided a Batch-script runs it using data supplied in shared folders by the host system.
+
+\section{Evaluation results}\label{sec:eval-results}
+
+There are two aspects for the evaluation, reflecting the measures given in chapter \ref{ch:intro}: First, a quantitative analysis of the execution resources is presented, also proving the efficiency and runtime advantage of the implemented cache. Then a qualitative analysis of the detection rate (sensitivity and specificity) follows.
+
+\subsection{Execution resources}
+
+Since the tests are run in a virtual machine, built-in tools for VirtualBox have been used for measuring the resource consumptions.
+
+\subsection{Detection rate}
+
+\chapter{Conclusion}\label{ch:conclusion}
+
+Possibly successful.

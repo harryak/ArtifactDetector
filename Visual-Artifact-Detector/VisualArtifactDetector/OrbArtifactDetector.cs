@@ -17,7 +17,7 @@ namespace VisualArtifactDetector.VisualArtifactDetector
             Logger = _loggerFactory.CreateLogger("OrbArtifactDetector");
 
             //IIndexParams indexParams = new LshIndexParams(6, 12, 1);
-            //SearchParams searchParams = new SearchParams();
+            //SearchParams searchParams = new SearchParams(50);
             //DescriptorMatcher = new FlannBasedMatcher(indexParams, searchParams);
 
             FeatureDetector = new ORBDetector(1000);
