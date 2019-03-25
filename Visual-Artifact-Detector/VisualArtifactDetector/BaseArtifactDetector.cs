@@ -56,8 +56,14 @@ namespace VisualArtifactDetector.VisualArtifactDetector
 
             if (stopwatch != null)
             {
-                stopwatch.Stop();
+                stopwatch.Stop("features_extracted");
                 Logger.LogDebug("Extracted features from image in {0} ms.", stopwatch.ElapsedMilliseconds);
+            }
+
+            if (descriptors.Width < 1)
+            {
+                Logger.LogError("Could not load any descriptors for image {0}.", imagePath);
+                return null;
             }
 
             return new ProcessedImage(image, keyPoints, descriptors);
@@ -68,9 +74,11 @@ namespace VisualArtifactDetector.VisualArtifactDetector
         /// </summary>
         /// <param name="observedImage">The observed image.</param>
         /// <param name="artifactType">The artifact type containing visual information.</param>
+        /// <param name="drawingResult">The result of the drawing (for Debug).</param>
+        /// <param name="matchCount">Count of matches, if found.</param>
         /// <param name="stopwatch">An optional stopwatch used for evaluation.</param>
         /// <returns>A homography or null if none was found.</returns>
-        public bool ImageContainsArtifactType(ProcessedImage observedImage, ArtifactType artifactType, out Mat drawingResult, VADStopwatch stopwatch = null)
+        public bool ImageContainsArtifactType(ProcessedImage observedImage, ArtifactType artifactType, out Mat drawingResult, out int matchCount, VADStopwatch stopwatch = null)
         {
             // Only needed for debugging purposes, otherwise will always be null.
             drawingResult = null;
@@ -78,7 +86,7 @@ namespace VisualArtifactDetector.VisualArtifactDetector
             // Same.
             VectorOfVectorOfDMatch matches = new VectorOfVectorOfDMatch();
             Mat matchesMask = new Mat();
-            Mat homography = new Mat();
+            Matrix<float> homography = new Matrix<float>(3, 3);
 
             // Get a matched artifact image or null.
             ProcessedImage matchedArtifact = FindMatch(
@@ -87,6 +95,7 @@ namespace VisualArtifactDetector.VisualArtifactDetector
                 out matches,
                 out matchesMask,
                 out homography,
+                out matchCount,
                 stopwatch
             );
 
@@ -107,10 +116,11 @@ namespace VisualArtifactDetector.VisualArtifactDetector
         /// <param name="homography">Reference to a possible homography.</param>
         /// <param name="stopwatch">An optional stopwatch used for evaluation.</param>
         /// <returns>A matched artifact image, if available.</returns>
-        public ProcessedImage FindMatch(ProcessedImage observedImage, ArtifactType artifactType, out VectorOfVectorOfDMatch goodMatches, out Mat matchesMask, out Mat homography, VADStopwatch stopwatch = null)
+        public ProcessedImage FindMatch(ProcessedImage observedImage, ArtifactType artifactType, out VectorOfVectorOfDMatch goodMatches, out Mat matchesMask, out Matrix<float> homography, out int matchCount, VADStopwatch stopwatch = null)
         {
             int minMatches = VADConfig.MinimumMatchesRequired;
             double uniquenessThreshold = VADConfig.MatchUniquenessThreshold;
+            double distanceThreshold = VADConfig.MatchDistanceThreshold;
 
             ProcessedImage matchingArtifact = null;
 
@@ -119,6 +129,8 @@ namespace VisualArtifactDetector.VisualArtifactDetector
 
             VectorOfVectorOfDMatch matches;
             matchesMask = new Mat();
+            matchCount  = 0;
+
             // Only needed for debugging output, otherwise will always be null.
             homography = null;
             
@@ -136,21 +148,27 @@ namespace VisualArtifactDetector.VisualArtifactDetector
                 matches = new VectorOfVectorOfDMatch();
                 DescriptorMatcher.KnnMatch(observedImage.Descriptors, matches, 2, null);
 
-                // Apply Lowe's ratio test for 0.7 to the matches.
-                // Also, look if the distance is < 80 ().
+                // Is the best matche's distance below the threshold?
+                // Also: Apply Lowe's ratio test for 0.7 to the matches.
                 MDMatch[][] matchesArray = matches.ToArrayOfArray();
                 foreach (MDMatch[] match in matchesArray)
                 {
                     // FLANN does not always output two matching points.
                     if (match.Length > 1)
                     {
-                        if (match[0].Distance < 0.7 * match[1].Distance && match[1].Distance < 80)
+                        if (match[0].Distance < distanceThreshold)
                         {
-                            goodMatches.Push(new VectorOfDMatch(match));
+                            if (match[0].Distance < 0.7 * match[1].Distance)
+                            {
+                                goodMatches.Push(new VectorOfDMatch(match));
+                            }
                         }
                     }
                 }
+                // Get rid of the original matches object, no need now.
                 matches.Dispose();
+
+                MatchFilter matchFilter = new MatchFilter();
 
                 // Check the matches, only take unique ones.
                 matchesMask = new Mat(goodMatches.Size, 1, DepthType.Cv8U, 1);
@@ -159,7 +177,9 @@ namespace VisualArtifactDetector.VisualArtifactDetector
 
                 // Do we have a minimum amount of unique matches?
                 int nonZeroCount = CvInvoke.CountNonZero(matchesMask);
-                if (nonZeroCount >= minMatches)
+                double sizeRatio = GetSizeRatio(observedImage.Image, currentArtifactImage.Image);
+
+                if (nonZeroCount >= minMatches / sizeRatio)
                 {
                     // Filter further for size and orientation of the matches.
                     try
@@ -173,20 +193,16 @@ namespace VisualArtifactDetector.VisualArtifactDetector
                     }
 
                     // Still enough matches?
-                    if (nonZeroCount >= minMatches)
+                    if (nonZeroCount >= minMatches / sizeRatio)
                     {
                         // Can we find a homography? Then it's a match.
-                        Mat stupidMask = new Mat();
-                        matchesMask.CopyTo(stupidMask);
+                        homography = matchFilter.GetRanSaCTransformationMatrix(currentArtifactImage.KeyPoints, observedImage.KeyPoints, goodMatches, ref matchesMask, 1000, 0.85, 3);//Features2DToolbox.GetHomographyMatrixFromMatchedFeatures(currentArtifactImage.KeyPoints, observedImage.KeyPoints, goodMatches, stupidMask, 1);
 
-                        homography = Features2DToolbox.GetHomographyMatrixFromMatchedFeatures(currentArtifactImage.KeyPoints, observedImage.KeyPoints, goodMatches, stupidMask, 1);
-
-                        if (IsHomographyApplicable(homography, currentArtifactImage, observedImage))
-                        {
-                            // Assign the match.
-                            matchingArtifact = currentArtifactImage;
-                            break;
-                        }
+                        // Assign the match.
+                        matchingArtifact = currentArtifactImage;
+                        matchCount = CvInvoke.CountNonZero(matchesMask);
+                        // Break, we do not need further searching.
+                        break;
                     }
                 }
 
@@ -195,35 +211,23 @@ namespace VisualArtifactDetector.VisualArtifactDetector
 
             if (stopwatch != null)
             {
-                stopwatch.Stop();
+                stopwatch.Stop("matching_finished");
                 Logger.LogDebug("Matching finished in {0} ms.", stopwatch.ElapsedMilliseconds);
             }
 
             return matchingArtifact;
         }
 
-        private Mat GetRanSaCTransformationMatrix(Mat modelKeyPoints, Mat imageKeyPoints, Mat matches, Mat matchesMask, int iterations)
+        private double GetSizeRatio(Mat image1, Mat image2)
         {
-            return null;
-        }
+            double ratio = 1;
+            int area1 = image1.Width * image1.Height;
+            int area2 = image2.Width * image2.Height;
 
-        private bool IsHomographyApplicable(Mat homography, ProcessedImage modelImage, ProcessedImage observedImage)
-        {
-            int modelHeight = modelImage.Image.Height;
-            int modelWidth  = modelImage.Image.Width;
-            int modelArea = modelHeight * modelWidth;
+            if (area1 < area2) ratio = Math.Sqrt(area2 / area1);
+            else ratio = Math.Sqrt(area1 / area2);
 
-            Rectangle modelRectangle = new Rectangle(Point.Empty, modelImage.Image.Size);
-            PointF[] modelRectanglePoints = new PointF[]
-                {
-                    new PointF(modelRectangle.Left, modelRectangle.Bottom),
-                    new PointF(modelRectangle.Right, modelRectangle.Bottom),
-                    new PointF(modelRectangle.Right, modelRectangle.Top),
-                    new PointF(modelRectangle.Left, modelRectangle.Top)
-                };
-            PointF[] observedRectanglePoints = CvInvoke.PerspectiveTransform(modelRectanglePoints, homography);
-
-            return true;
+            return ratio;
         }
 
         /// <summary>
@@ -235,10 +239,12 @@ namespace VisualArtifactDetector.VisualArtifactDetector
         /// <param name="matchesMask">Reference to the used result mask.</param>
         /// <param name="homography">Reference to a possible homography.</param>
         /// <returns>The result of DrawMatches.</returns>
-        public Mat Draw(ProcessedImage observedImage, ProcessedImage artifactImage, VectorOfVectorOfDMatch matches, Mat matchesMask, Mat homography)
+        public Mat Draw(ProcessedImage observedImage, ProcessedImage artifactImage, VectorOfVectorOfDMatch matches, Mat matchesMask, Matrix<float> homography)
         {
             //Draw the matched keypoints
             Mat result = new Mat();
+            Matrix<byte> test = new Matrix<byte>(matchesMask.GetData());
+
             Features2DToolbox.DrawMatches(
                 artifactImage.Image,
                 artifactImage.KeyPoints,
@@ -262,16 +268,27 @@ namespace VisualArtifactDetector.VisualArtifactDetector
                     new PointF(rect.Right, rect.Top),
                     new PointF(rect.Left, rect.Top)
                 };
-                pts = CvInvoke.PerspectiveTransform(pts, homography);
+                pts = Transform(pts, homography);
 
                 Point[] points = Array.ConvertAll(pts, Point.Round);
                 using (VectorOfPoint vp = new VectorOfPoint(points))
                 {
-                    CvInvoke.Polylines(result, vp, true, new MCvScalar(255, 255, 0, 255), 5);
+                    CvInvoke.Polylines(result, vp, true, new MCvScalar(255, 255, 0, 255), 1);
                 }
             }
 
             return result;
+        }
+
+        private PointF[] Transform(PointF[] input, Matrix<float> matrix)
+        {
+            for (int i = 0; i < input.Length; i++)
+            {
+                input[i].X = input[i].X * matrix[0, 0] + input[i].Y * matrix[1, 0] + matrix[2, 0];
+                input[i].Y = input[i].X * matrix[0, 1] + input[i].Y * matrix[1, 1] + matrix[2, 1];
+            }
+
+            return input;
         }
 
         /// <summary>

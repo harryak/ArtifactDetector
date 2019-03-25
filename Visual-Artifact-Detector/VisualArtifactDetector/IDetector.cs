@@ -26,8 +26,9 @@ namespace VisualArtifactDetector.VisualArtifactDetector
         /// <param name="observedImage">The observed image.</param>
         /// <param name="artifactType">The artifact type containing visual information.</param>
         /// <param name="drawingResult">The resulting image to draw in a window.</param>
+        /// <param name="matchCount">Count of matches, if one was found.</param>
         /// <param name="stopwatch">An optional stopwatch used for evaluation.</param>
         /// <returns>Whether a match was found.</returns>
-        bool ImageContainsArtifactType(ProcessedImage observedImage, ArtifactType artifactType, out Mat drawingResult, VADStopwatch stopwatch = null);
+        bool ImageContainsArtifactType(ProcessedImage observedImage, ArtifactType artifactType, out Mat drawingResult, out int matchCount, VADStopwatch stopwatch = null);
     }
 }

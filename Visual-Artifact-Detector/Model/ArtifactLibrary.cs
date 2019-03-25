@@ -92,13 +92,14 @@ namespace VisualArtifactDetector.Model
 
                 foreach (string imageFile in GetImageFilesForArtifactType(name))
                 {
-                    Library[name].Images.Add(ArtifactDetector.ExtractFeatures(imageFile));
+                    ProcessedImage image =ArtifactDetector.ExtractFeatures(imageFile);
+                    if (image != null) Library[name].Images.Add(image);
                 }
             }
 
             if (stopwatch != null)
             {
-                stopwatch.Stop();
+                stopwatch.Stop("artifacttype_retrieved");
                 Logger.LogDebug("Retrieved artifact type in {0} ms.", stopwatch.ElapsedMilliseconds);
             }
 
@@ -154,14 +155,14 @@ namespace VisualArtifactDetector.Model
                 var binaryFormatter = new BinaryFormatter();
 
                 artifactLibrary = (ArtifactLibrary) binaryFormatter.Deserialize(stream);
-                artifactLibrary.FilePath = Path.GetDirectoryName(fileName);
+                artifactLibrary.FilePath = FileHelper.AddDirectorySeparator(Path.GetDirectoryName(fileName));
                 artifactLibrary.ArtifactDetector = artifactDetector;
                 artifactLibrary.Logger = logger;
             }
 
             if (stopwatch != null)
             {
-                stopwatch.Stop();
+                stopwatch.Stop("library_retrieved");
                 logger.LogDebug("Retrieved full artifact library in {0} ms.", stopwatch.ElapsedMilliseconds);
             }
 

@@ -163,6 +163,7 @@
     <Compile Include="VisualArtifactDetector\BaseArtifactDetector.cs" />
     <Compile Include="VisualArtifactDetector\BriskArtifactDetector.cs" />
     <Compile Include="VisualArtifactDetector\AkazeArtifactDetector.cs" />
+    <Compile Include="VisualArtifactDetector\MatchFilter.cs" />
     <Compile Include="VisualArtifactDetector\OrbArtifactDetector.cs" />
     <Compile Include="VisualArtifactDetector\KazeArtifactDetector.cs" />
     <Compile Include="Helper\FileHelper.cs" />
@@ -181,7 +182,9 @@
     </Compile>
   </ItemGroup>
   <ItemGroup>
-    <None Include="App.config" />
+    <None Include="App.config">
+      <SubType>Designer</SubType>
+    </None>
     <Content Include="face-monkey.ico" />
     <Content Include="License-LGPL.txt" />
     <Content Include="NLog.config">

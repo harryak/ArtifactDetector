@@ -257,10 +257,20 @@ namespace VisualArtifactDetector
                 return -1;
             }
 
+            if (artifactType.Images.Count < 1)
+            {
+                logger.LogError("Could not get any images for the artifact type.");
+                return -1;
+            }
+
             // Extract the features of the given image for comparison.
             ProcessedImage observedImage = detector.ExtractFeatures(screenshotPath, stopwatch);
+            if (observedImage == null)
+            {
+                return -1;
+            }
 
-            bool artifactFound = detector.ImageContainsArtifactType(observedImage, artifactType, out Mat drawingResult, stopwatch);
+            bool artifactFound = detector.ImageContainsArtifactType(observedImage, artifactType, out Mat drawingResult, out int matchCount, stopwatch);
 
 #if DEBUG
             // Show the results in a window.
@@ -281,9 +291,13 @@ namespace VisualArtifactDetector
             {
                 try
                 {
+                    bool printHeader = false;
+                    if (!File.Exists("output.csv")) printHeader = true;
                     using (StreamWriter file = new StreamWriter("output.csv", true))
                     {
-                        file.WriteLine(detectorSelection + "," + screenshotPath + "," + artifactGoal + "," + stopwatch.TimesToCSVinNS() + "," + artifactFound);
+                        if (printHeader) file.WriteLine("detector;screenshot_path;artifact_goal;" + stopwatch.LabelsToCSV() + ";found;match_count");
+
+                        file.WriteLine(detectorSelection + ";" + screenshotPath + ";" + artifactGoal + ";" + stopwatch.TimesToCSVinNSprecision() + ";" + artifactFound + ";" + matchCount);
                     }
                 }
                 catch (Exception e)

@@ -25,5 +25,12 @@ namespace VisualArtifactDetector
                 return Convert.ToDouble(ConfigurationManager.AppSettings.Get("MatchUniquenessThreshold"));
             }
         }
+        public static double MatchDistanceThreshold
+        {
+            get
+            {
+                return Convert.ToDouble(ConfigurationManager.AppSettings.Get("MatchDistanceThreshold"));
+            }
+        }
     }
 }

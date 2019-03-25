@@ -26,6 +26,7 @@ namespace VisualArtifactDetector.Helper
 
         // List of the elapsed times.
         private List<TimeSpan> MeasuredTimes;
+        private List<string>   Labels;
 
         /// <summary>
         /// Do not allow direct instantiations.
@@ -33,6 +34,7 @@ namespace VisualArtifactDetector.Helper
         private VADStopwatch()
         {
             MeasuredTimes = new List<TimeSpan>();
+            Labels        = new List<string>();
         }
 
         /// <summary>
@@ -51,10 +53,12 @@ namespace VisualArtifactDetector.Helper
         /// <summary>
         /// Overrides the parent's Stop just to add the elapsed time to the internal list.
         /// </summary>
-        public new void Stop()
+        public void Stop(string label)
         {
             // Stop the Stopwatch first.
-            base.Stop();
+            Stop();
+
+            Labels.Add(label);
 
             // Then add the elapsed time for later processing.
             MeasuredTimes.Add(Elapsed);
@@ -79,15 +83,23 @@ namespace VisualArtifactDetector.Helper
         /// Converts the measured times (in ns) to a CSV-string (comma-separated), ending with their sum.
         /// </summary>
         /// <returns>The resulting string.</returns>
-        public string TimesToCSVinNS()
+        public string TimesToCSVinNSprecision()
         {
             string output = "";
-            MeasuredTimes.ForEach(TimeSpan => output += (long) (TimeSpan.TotalMilliseconds * 1000000) + ",");
+            MeasuredTimes.ForEach(TimeSpan => output += TimeSpan.TotalMilliseconds + ";");
 
-            long TotalTime = 0;
-            MeasuredTimes.ForEach(TimeSpan => TotalTime += (long) (TimeSpan.TotalMilliseconds * 1000000));
+            double TotalTime = 0;
+            MeasuredTimes.ForEach(TimeSpan => TotalTime += TimeSpan.TotalMilliseconds);
 
             return output + TotalTime;
+        }
+
+        public string LabelsToCSV()
+        {
+            string output = "";
+            Labels.ForEach(Label => output += Label + ";");
+
+            return output + "total";
         }
     }
 }
