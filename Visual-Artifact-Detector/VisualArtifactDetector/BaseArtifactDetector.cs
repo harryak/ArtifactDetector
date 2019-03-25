@@ -221,11 +221,21 @@ namespace VisualArtifactDetector.VisualArtifactDetector
         private double GetSizeRatio(Mat image1, Mat image2)
         {
             double ratio = 1;
-            int area1 = image1.Width * image1.Height;
-            int area2 = image2.Width * image2.Height;
+            double area1 = image1.Width * image1.Height;
+            double area2 = image2.Width * image2.Height;
 
-            if (area1 < area2) ratio = Math.Sqrt(area2 / area1);
-            else ratio = Math.Sqrt(area1 / area2);
+            double sqRatio;
+
+            if (area1 < area2)
+            {
+                sqRatio = area2 / area1;
+                ratio = Math.Sqrt(sqRatio);
+            }
+            else
+            {
+                sqRatio = area1 / area2;
+                ratio   = Math.Sqrt(sqRatio);
+            }
 
             return ratio;
         }
