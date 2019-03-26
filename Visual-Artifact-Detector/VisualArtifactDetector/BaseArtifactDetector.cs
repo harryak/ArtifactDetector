@@ -144,6 +144,7 @@ namespace VisualArtifactDetector.VisualArtifactDetector
             {
                 // Add model descriptors to matcher.
                 DescriptorMatcher.Add(currentArtifactImage.Descriptors);
+
                 // Match this set with the observed image descriptors.
                 matches = new VectorOfVectorOfDMatch();
                 DescriptorMatcher.KnnMatch(observedImage.Descriptors, matches, 2, null);
@@ -151,6 +152,7 @@ namespace VisualArtifactDetector.VisualArtifactDetector
                 // Is the best matche's distance below the threshold?
                 // Also: Apply Lowe's ratio test for 0.7 to the matches.
                 MDMatch[][] matchesArray = matches.ToArrayOfArray();
+                goodMatches = new VectorOfVectorOfDMatch();
                 foreach (MDMatch[] match in matchesArray)
                 {
                     // FLANN does not always output two matching points.
@@ -169,10 +171,11 @@ namespace VisualArtifactDetector.VisualArtifactDetector
                 matches.Dispose();
 
                 MatchFilter matchFilter = new MatchFilter();
-
-                // Check the matches, only take unique ones.
+                
                 matchesMask = new Mat(goodMatches.Size, 1, DepthType.Cv8U, 1);
                 matchesMask.SetTo(new MCvScalar(255));
+
+                // Check the matches, only take unique ones.
                 Features2DToolbox.VoteForUniqueness(goodMatches, uniquenessThreshold, matchesMask);
 
                 // Do we have a minimum amount of unique matches?
@@ -188,7 +191,7 @@ namespace VisualArtifactDetector.VisualArtifactDetector
                     }
                     catch (System.Runtime.InteropServices.SEHException)
                     {
-                        Logger.LogWarning("Can not call the voting for size and orientation. Treat as no match.");
+                        Logger.LogWarning("Can not call the voting for size and orientation. Better not continueing.");
                         continue;
                     }
 
@@ -196,13 +199,16 @@ namespace VisualArtifactDetector.VisualArtifactDetector
                     if (nonZeroCount >= minMatches / sizeRatio)
                     {
                         // Can we find a homography? Then it's a match.
-                        homography = matchFilter.GetRanSaCTransformationMatrix(currentArtifactImage.KeyPoints, observedImage.KeyPoints, goodMatches, ref matchesMask, 1000, 0.85, 3);//Features2DToolbox.GetHomographyMatrixFromMatchedFeatures(currentArtifactImage.KeyPoints, observedImage.KeyPoints, goodMatches, stupidMask, 1);
+                        homography = matchFilter.GetRanSaCTransformationMatrix(currentArtifactImage.KeyPoints, observedImage.KeyPoints, goodMatches, ref matchesMask, 1000, 0.85, 5);//Features2DToolbox.GetHomographyMatrixFromMatchedFeatures(currentArtifactImage.KeyPoints, observedImage.KeyPoints, goodMatches, stupidMask, 1);
 
-                        // Assign the match.
-                        matchingArtifact = currentArtifactImage;
-                        matchCount = CvInvoke.CountNonZero(matchesMask);
-                        // Break, we do not need further searching.
-                        break;
+                        if (homography != null)
+                        {
+                            // Assign the match.
+                            matchingArtifact = currentArtifactImage;
+                            matchCount = CvInvoke.CountNonZero(matchesMask);
+                            // Break, we do not need further searching.
+                            break;
+                        }
                     }
                 }
 
