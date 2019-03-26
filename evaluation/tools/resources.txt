@@ -1,0 +1,39 @@
+1. Run: artifact_00_images
+    CPU 90-100%
+    RAM <50MB (~43MB)
+    HDD 100KB/s
+
+2. Run: artifact_01_images
+    CPU 90-100%
+    RAM <50MB (~44MB)
+    HDD <100KB/s
+
+3. Run: artifact_02_images
+    CPU 90-100%
+    RAM <50MB (~45MB)
+    HDD <100KB/s
+
+4. Run: artifact_03_images
+    CPU 90-100%
+    RAM <50MB (~40MB)
+    HDD <100KB/s
+
+5. Run: artifact_04_images
+    CPU 90-100%
+    RAM <50MB (~44MB)
+    HDD <100KB/s
+
+6. Run: artifact_05_images
+    CPU 90-100%
+    RAM <50MB (~43MB)
+    HDD <100KB/s
+
+7. Run: artifact_06_images
+    CPU 90-100%
+    RAM <50MB (~43MB)
+    HDD <100KB/s
+
+8. Run: artifact_07_images
+    CPU 90-100%
+    RAM <50MB (~44MB)
+    HDD <100KB/s

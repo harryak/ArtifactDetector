@@ -27,6 +27,7 @@ namespace VisualArtifactDetector.Helper
         // List of the elapsed times.
         private List<TimeSpan> MeasuredTimes;
         private List<string>   Labels;
+        private int            ExtraValue = -1;
 
         /// <summary>
         /// Do not allow direct instantiations.
@@ -53,12 +54,18 @@ namespace VisualArtifactDetector.Helper
         /// <summary>
         /// Overrides the parent's Stop just to add the elapsed time to the internal list.
         /// </summary>
-        public void Stop(string label)
+        public void Stop(string label, int extraValue = -1)
         {
             // Stop the Stopwatch first.
             Stop();
 
             Labels.Add(label);
+
+            if (extraValue > 0)
+            {
+                Labels.Add("extra_value");
+                ExtraValue = extraValue;
+            }
 
             // Then add the elapsed time for later processing.
             MeasuredTimes.Add(Elapsed);
@@ -91,7 +98,11 @@ namespace VisualArtifactDetector.Helper
             double TotalTime = 0;
             MeasuredTimes.ForEach(TimeSpan => TotalTime += TimeSpan.TotalMilliseconds);
 
-            return output + TotalTime;
+            output += TotalTime;
+
+            if (ExtraValue > 0) output += ";" + ExtraValue;
+
+            return output;
         }
 
         public string LabelsToCSV()

@@ -140,6 +140,7 @@ namespace VisualArtifactDetector.VisualArtifactDetector
                 stopwatch.Restart();
             }
 
+            int artifactNumber = 0;
             foreach (var currentArtifactImage in artifactType.Images)
             {
                 // Add model descriptors to matcher.
@@ -213,11 +214,12 @@ namespace VisualArtifactDetector.VisualArtifactDetector
                 }
 
                 DescriptorMatcher.Clear();
+                artifactNumber++;
             }
 
             if (stopwatch != null)
             {
-                stopwatch.Stop("matching_finished");
+                stopwatch.Stop("matching_finished", artifactNumber);
                 Logger.LogDebug("Matching finished in {0} ms.", stopwatch.ElapsedMilliseconds);
             }
 

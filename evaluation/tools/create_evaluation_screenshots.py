@@ -57,6 +57,10 @@ for artifactTypeFolder in os.listdir(args.fgs):
                     fgImage = Image.open(fgFile, 'r')
                     fgImageWidth, fgImageHeight = fgImage.size
 
+                    # Resize by random amount
+                    fgImageWidth = random.randint(int(float(fgImageWidth) * 0.6), int(float(fgImageWidth) * 1.6))
+                    fgImageHeight = random.randint(int(float(fgImageHeight) * 0.6), int(float(fgImageHeight) * 1.6))
+
                     # Calculate at which dimensions the image is still recognizable.
                     fgImageWidthRecognizable = int(float(fgImageWidth) * 0.9)
                     fgImageHeightRecognizable = int(float(fgImageHeight) * 0.9)
@@ -81,5 +85,5 @@ for artifactTypeFolder in os.listdir(args.fgs):
                     # Compose image
                     canvas = Image.new('RGB', (bgImageWidth, bgImageHeight), (255, 255, 255))
                     canvas.paste(bgImage, (0, 0))
-                    canvas.paste(fgImage, offset)
+                    canvas.paste(fgImage.resize((fgImageWidth, fgImageHeight), Image.ANTIALIAS), offset)
                     canvas.save(args.outputFolder + '/' + artifactTypeName + '-' + str(bgNumber) + '-' + str(fgNumber) + '.png')
