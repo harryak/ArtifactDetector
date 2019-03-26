@@ -180,7 +180,7 @@ namespace VisualArtifactDetector.VisualArtifactDetector
 
                 // Do we have a minimum amount of unique matches?
                 int nonZeroCount = CvInvoke.CountNonZero(matchesMask);
-                double sizeRatio = GetSizeRatio(observedImage.Image, currentArtifactImage.Image);
+                double sizeRatio = GetSizeRatio(observedImage.Dimensions, currentArtifactImage.Dimensions);
 
                 if (nonZeroCount >= minMatches / sizeRatio)
                 {
@@ -224,7 +224,7 @@ namespace VisualArtifactDetector.VisualArtifactDetector
             return matchingArtifact;
         }
 
-        private double GetSizeRatio(Mat image1, Mat image2)
+        private double GetSizeRatio(SizeF image1, SizeF image2)
         {
             double ratio = 1;
             double area1 = image1.Width * image1.Height;
@@ -246,6 +246,7 @@ namespace VisualArtifactDetector.VisualArtifactDetector
             return ratio;
         }
 
+#if DEBUG
         /// <summary>
         /// Helper function for debug purposes.
         /// </summary>
@@ -295,6 +296,7 @@ namespace VisualArtifactDetector.VisualArtifactDetector
 
             return result;
         }
+#endif
 
         private PointF[] Transform(PointF[] input, Matrix<float> matrix)
         {

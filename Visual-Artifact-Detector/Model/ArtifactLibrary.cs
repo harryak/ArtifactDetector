@@ -31,6 +31,8 @@ namespace VisualArtifactDetector.Model
         [NonSerialized]
         private string _filePath;
 
+        private bool _dataChanged;
+
         /// <summary>
         /// This map is a storage for already processed features.
         /// </summary>
@@ -40,6 +42,7 @@ namespace VisualArtifactDetector.Model
         public string FilePath { get => _filePath; set => _filePath = value; }
         public IArtifactDetector ArtifactDetector { get => _artifactDetector; set => _artifactDetector = value; }
         public ILogger Logger { get => _logger; set => _logger = value; }
+        public bool DataChanged { get => _dataChanged; set => _dataChanged = value; }
 
         /// <summary>
         /// Needs a file path to operate in and an artifact detector.
@@ -60,6 +63,8 @@ namespace VisualArtifactDetector.Model
             Library = new Dictionary<string, ArtifactType>();
 
             Logger = _loggerFactory.CreateLogger("ArtifactLibrary");
+
+            DataChanged = false;
 
             // Parse available artifact types from folder.
             ImportAvailableArtifactTypes();
@@ -92,8 +97,12 @@ namespace VisualArtifactDetector.Model
 
                 foreach (string imageFile in GetImageFilesForArtifactType(name))
                 {
-                    ProcessedImage image =ArtifactDetector.ExtractFeatures(imageFile);
-                    if (image != null) Library[name].Images.Add(image);
+                    ProcessedImage image = ArtifactDetector.ExtractFeatures(imageFile);
+                    if (image != null)
+                    {
+                        DataChanged = true;
+                        Library[name].Images.Add(image);
+                    }
                 }
             }
 
@@ -158,6 +167,7 @@ namespace VisualArtifactDetector.Model
                 artifactLibrary.FilePath = FileHelper.AddDirectorySeparator(Path.GetDirectoryName(fileName));
                 artifactLibrary.ArtifactDetector = artifactDetector;
                 artifactLibrary.Logger = logger;
+                artifactLibrary.DataChanged = false;
             }
 
             if (stopwatch != null)
@@ -176,6 +186,9 @@ namespace VisualArtifactDetector.Model
         /// <param name="filePath"></param>
         public void ExportToFile(string fileName, string filePath = null)
         {
+            // We do not need to export anything, if nothing's changed.
+            if (!DataChanged) return;
+
             if (fileName == null)
                 throw new ArgumentNullException(nameof(fileName));
 
@@ -184,6 +197,9 @@ namespace VisualArtifactDetector.Model
                 filePath = FilePath;
             else
                 filePath = FileHelper.AddDirectorySeparator(filePath);
+
+            // Set flag to false just in case.
+            DataChanged = false;
 
             var binaryFormatter = new BinaryFormatter();
             FileHelper.WriteToFile(filePath + fileName, stream => binaryFormatter.Serialize(stream, this), FileMode.Create);

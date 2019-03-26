@@ -267,6 +267,7 @@ namespace VisualArtifactDetector
             ProcessedImage observedImage = detector.ExtractFeatures(screenshotPath, stopwatch);
             if (observedImage == null)
             {
+                logger.LogError("Could not get the screenshot.");
                 return -1;
             }
 
