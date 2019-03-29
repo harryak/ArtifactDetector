@@ -4,6 +4,9 @@
 \input{cfg.tex}
 \input{tpl/pkg.tex}
 
+% Do not mess up the pkg.tex
+\usepackage[toc,page]{appendix}
+
 \begin{document}
 % ------------------------------------------------------------------------- Init
 \setcounter{page}{0}
@@ -78,6 +81,9 @@
 
 % ---------------------------------------------------------- Add .bib files here
 \printbibliography*
+
+\clearpage
+\input{appendices.tex}
 
 %------------------------------------------------------------ Table of Figures and Tables if Position is 'end'
 \clearpage

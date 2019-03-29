@@ -505,7 +505,7 @@ TSWLatexianTemp*
 *.sta
 
 # exclude PDF output
-report/master.pdf
+#report/master.pdf
 
 # exclude intermediate evaluation results
 evaluation/tools/output.csv
