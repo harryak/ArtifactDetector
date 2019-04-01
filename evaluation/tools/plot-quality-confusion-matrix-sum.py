@@ -68,7 +68,7 @@ annotations.append([])
 # Go through entries sorted by their appearance
 j = 0
 for result in sorted(list(artifact_results.values()), key=lambda kv: kv["index"]):
-    if j < 13:
+    if j > 12:
         j += 1
         continue
     outputMatrix[0].append(result["tp"] / result["True"])
@@ -81,8 +81,8 @@ for result in sorted(list(artifact_results.values()), key=lambda kv: kv["index"]
     annotations[3].append("$\\frac{" + str(result["fn"]) + "}{" + str(result["True"]) + "}$")
     j +=1
 
-columns = ["A {0}".format(i) for i in range(14, 26)]#len(artifact_results))]
-columns.append("Total")
+columns = ["A {0}".format(i) for i in range(1, 14)]#len(artifact_results))]
+#columns.append("Total")
 
 df_cm = pds.DataFrame(outputMatrix, index = ["TP", "TN", "FP", "FN"],
                     columns = columns)
@@ -94,4 +94,5 @@ ax.tick_params(labelbottom=False,labeltop=True)
 ax.tick_params(axis="y", labelrotation=0)
 ax.set_xlabel("Artifact")
 ax.set_ylabel("$\\frac{\\text{sum measured}}{\\text{sum goal}}$")
-plt.show()
+#plt.show()
+plt.savefig("quality-confusion-matrix-p1.svg")

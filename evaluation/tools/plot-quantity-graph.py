@@ -40,7 +40,7 @@ conv = {
 df = pds.read_csv("output_quantitative-01.csv", sep=";", converters=conv, usecols=[1,2,3,4,5,6], names=["Provided screenshot", "Searched artifact", "Load references [ms]", "Feature extraction [ms]", "Matching time [ms]", "Total time [ms]"], skiprows=[0], header=None)
 
 sns.set(style="whitegrid", font_scale=1.5)
-ax = sns.catplot(x="Searched artifact", y="Total time [ms]", hue="Provided screenshot", kind="violin", split=True, inner=None, bw=.5, data=df, saturation=1, sharex=False, sharey=False)
+ax = sns.catplot(x="Searched artifact", y="Matching time [ms]", hue="Provided screenshot", kind="violin", split=True, inner=None, bw=.5, data=df, saturation=1, sharex=False, sharey=False)
 axes = ax.axes
 axes[0,0].set_ylim(0, 2500)
-plt.show()
+plt.savefig("quantity-violin-matching.svg")

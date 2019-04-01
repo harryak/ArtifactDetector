@@ -292,7 +292,7 @@ namespace VisualArtifactDetector.VisualArtifactDetector
                 Point[] points = Array.ConvertAll(pts, Point.Round);
                 using (VectorOfPoint vp = new VectorOfPoint(points))
                 {
-                    CvInvoke.Polylines(result, vp, true, new MCvScalar(255, 255, 0, 255), 1);
+                    CvInvoke.Polylines(result, vp, true, new MCvScalar(0, 0, 255, 255), 8);
                 }
             }
 
