@@ -58,7 +58,7 @@ Given the deployment area for \ape~in the present and near future, the \ref{itm:
 
 \subsection{Implementation decisions}
 
-It was initially decided to use an existing library for image recognition rather than implementing the necessary algorithms anew. The choice for an image recognition library fell to OpenCV, as it is licensed as \emph{Open Source} under the BSD license and arguably the most maintained and popular of such libraries with almost 20 million downloads \cite{opencv_downloads}. Other libraries for similar tasks exist, but they either focus more on machine learning like \emph{Google's Tensorflow} \cite{tensorflow}, are web-based APIs (mostly non-free) like \emph{Google's Vision API} \cite{vision_api} or \emph{Amazon Rekognition} \cite{rekognition}, or are not well maintained, such as \emph{VLFeat} \cite{vlfeat}.
+It was initially decided to use an existing library for image recognition rather than implementing the necessary algorithms anew. The choice for an image recognition library fell to OpenCV \cite{opencv}, as it is licensed as \emph{Open Source} under the BSD license and arguably the most maintained and popular of such libraries with almost 20 million downloads \cite{opencv_downloads}. Other libraries for similar tasks exist, but they either focus more on machine learning like \emph{Google's Tensorflow} \cite{tensorflow}, are web-based APIs (mostly non-free) like \emph{Google's Vision API} \cite{vision_api} or \emph{Amazon Rekognition} \cite{rekognition}, or are not well maintained, such as \emph{VLFeat} \cite{vlfeat}.
 
 Because the runtime performance is so important for this tool it was not suitable to implement the program using an interpreted programming language. The usage of OpenCV limits the available compiled languages to C, C++ or Java, and using the wrapper Emgu CV also allows to use C\#.
 
@@ -167,7 +167,7 @@ Given the described first setup the detection rate was found to be at about $88\
 	\subfigure[Results for artifacts A13 to A24 and their totals.]{
 		\includegraphics[width=0.8\textwidth]{fig/quality-confusion-matrix-p2}\label{fig:result-quality-p2}
 		}\hfill\\
-	\caption{Detection rate for all runs by artifacts A 1 to A 24 and their totals.}\label{fig:result-quality-sum}
+	\caption{Detection rate for all runs by artifacts A 1 to A 25 and their totals.}\label{fig:result-quality-sum}
 \end{figure}
 
 \subsection{Detection rate}\label{sec:eval-results:subsec:dect}
