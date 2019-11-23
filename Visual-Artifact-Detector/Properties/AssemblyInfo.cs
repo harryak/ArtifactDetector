@@ -11,7 +11,7 @@ using System.Runtime.InteropServices;
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("ITS.APE")]
 [assembly: AssemblyProduct("Artifact-Detector")]
-[assembly: AssemblyCopyright("Copyright ©  2019")]
+[assembly: AssemblyCopyright("Copyright © 2019")]
 [assembly: AssemblyTrademark("Felix Rossmann")]
 [assembly: AssemblyCulture("")]
 

@@ -25,57 +25,78 @@ namespace VisualArtifactDetector.VisualArtifactDetector
         }
     }
 
+    /// <summary>
+    /// Filter for matching VectorOfKeyPoints.
+    /// </summary>
     public class MatchFilter
     {
+        /// <summary>
+        /// Tries to get a transformation matrix via RanSaC from modelKeyPoints to queryKeyPoints matching the inlierRatio while allowing errors of patchSize.
+        /// </summary>
+        /// <param name="modelKeyPoints">Starting set of key points.</param>
+        /// <param name="queryKeyPoints">Goal set of key points.</param>
+        /// <param name="matches">Previously found matches between modelKeyPoints and queryKeyPoints masked by mask.</param>
+        /// <param name="mask">Mask for previously found matches.</param>
+        /// <param name="iterations">RanSaC maximum iterations.</param>
+        /// <param name="inlierRatio">How many previously found matches should support the hypothesis.</param>
+        /// <param name="patchSize">Error threshold for applying the hypothesis on the starting set to get to the goal set.</param>
+        /// <returns>A transformation matrix from model to query or null.</returns>
         public Matrix<float> GetRanSaCTransformationMatrix(VectorOfKeyPoint modelKeyPoints, VectorOfKeyPoint queryKeyPoints, VectorOfVectorOfDMatch matches, ref Mat mask, int iterations, double inlierRatio, int patchSize)
         {
+            // Get arrays of key points for easier access.
             MKeyPoint[] modelKeyPointsArray = modelKeyPoints.ToArray();
             MKeyPoint[] queryKeyPointsArray  = queryKeyPoints.ToArray();
 
-            List<IndexedMDMatch> filteredMatches = FilterMDMatchArrayOfArray(matches.ToArrayOfArray(), new Matrix<byte>(mask.GetData()));
+            // Get list of masked matches for easier access.
+            List<IndexedMDMatch> maskedMatchesList = FilterMDMatchArrayOfArray(matches.ToArrayOfArray(), new Matrix<byte>(mask.GetData()));
 
+            // Setup test variables for return value.
             int bestMatchCount = 0;
             float bestMatchLambda = 1, bestMatchSigma = 1;
             SizeF bestTranslation = new SizeF(0, 0);
 
+            // Get random for Ran(SaC).
             Random random = new Random();
 
-            // Define variables needed for RANSAC runs.
+            // Define variables needed for RanSaC runs.
             int matchIndex1, matchIndex2, matchCount;
             PointF modelPoint1, modelPoint2, queryPoint1, queryPoint2;
             SizeF translation, modelPointsDistance, queryPointsDistance, scaleFactors;
 
+            // Prepare handling of the matches' mask.
             Matrix<byte> maskInitial = new Matrix<byte>(mask.GetData());
             Matrix<byte> maskCurrent = new Matrix<byte>(maskInitial.Size);
             Matrix<byte> bestMask    = new Matrix<byte>(maskInitial.Size);
 
+            // The core loop for RanSaC.
             for (int i = 0; i < iterations; i++)
             {
-                // Reset match count and mask.
+                // Reset match count and mask for current run.
                 matchCount = 0;
                 maskInitial.CopyTo(maskCurrent);
 
                 // Get two random matches that aren't masked.
-                matchIndex1 = random.Next(filteredMatches.Count);
+                matchIndex1 = random.Next(maskedMatchesList.Count);
                 matchIndex2 = -1;
 
-                // Make sure they're distinct.
+                // Make sure the matches are distinct.
                 do
                 {
-                    matchIndex2 = random.Next(filteredMatches.Count);
+                    matchIndex2 = random.Next(maskedMatchesList.Count);
                 } while (matchIndex1 == matchIndex2);
 
-                // Get the two points at the current indices.
-                modelPoint1 = modelKeyPointsArray[filteredMatches[matchIndex1].match[0].TrainIdx].Point;
-                queryPoint1 = queryKeyPointsArray[filteredMatches[matchIndex1].match[0].QueryIdx].Point;
+                // Get the two points (the model set's and the query set's) at the current indices.
+                modelPoint1 = modelKeyPointsArray[maskedMatchesList[matchIndex1].match[0].TrainIdx].Point;
+                queryPoint1 = queryKeyPointsArray[maskedMatchesList[matchIndex1].match[0].QueryIdx].Point;
 
-                modelPoint2 = modelKeyPointsArray[filteredMatches[matchIndex2].match[0].TrainIdx].Point;
-                queryPoint2 = queryKeyPointsArray[filteredMatches[matchIndex2].match[0].QueryIdx].Point;
+                modelPoint2 = modelKeyPointsArray[maskedMatchesList[matchIndex2].match[0].TrainIdx].Point;
+                queryPoint2 = queryKeyPointsArray[maskedMatchesList[matchIndex2].match[0].QueryIdx].Point;
 
                 // To find a 2D scale factor via the point distances, X and Y of both point sets have to be different from each other.
-                if (modelPoint1.X == modelPoint2.X || modelPoint1.Y == modelPoint2.Y)
+                //TODO Is this check correct?
+                if (modelPoint1.X == modelPoint2.X && modelPoint1.Y == modelPoint2.Y)
                     continue;
-                if (queryPoint1.X == queryPoint2.X || queryPoint1.Y == queryPoint2.Y)
+                if (queryPoint1.X == queryPoint2.X && queryPoint1.Y == queryPoint2.Y)
                     continue;
 
                 // Try to find applicable transformation matrix for these matches.
@@ -93,12 +114,13 @@ namespace VisualArtifactDetector.VisualArtifactDetector
                     continue;
 
                 // Count how many matches fit to this model. This also counts the current points.
-                foreach (IndexedMDMatch indexedMatch in filteredMatches)
+                foreach (IndexedMDMatch indexedMatch in maskedMatchesList)
                 {
                     if (PointFitsModel(modelKeyPointsArray[indexedMatch.match[0].TrainIdx].Point, queryKeyPointsArray[indexedMatch.match[0].QueryIdx].Point, scaleFactors.Width, scaleFactors.Height, translation, patchSize))
                     {
                         matchCount++;
-                    } else
+                    }
+                    else
                     {
                         // Set the mask at the matche's original index to zero.
                         maskCurrent[indexedMatch.index, 0] = 0;
@@ -113,12 +135,14 @@ namespace VisualArtifactDetector.VisualArtifactDetector
                     bestMatchLambda = scaleFactors.Width;
                     bestMatchSigma = scaleFactors.Height;
                     bestTranslation = translation;
+
+                    bestMask.SetZero();
                     maskCurrent.CopyTo(bestMask);
                 }
             }
 
             // If we got less inliers than we wanted, treat as no match.
-            if (bestMatchCount < inlierRatio * filteredMatches.Count)
+            if (bestMatchCount < inlierRatio * maskedMatchesList.Count)
             {
                 return null;
             }
@@ -136,17 +160,31 @@ namespace VisualArtifactDetector.VisualArtifactDetector
             return transformationMatrix;
         }
 
-        private bool IsInTargetPatch(PointF point, PointF patchCenter, int patchSize)
-        {
-            return point.X >= patchCenter.X - patchSize && point.X <= patchCenter.X + patchSize
-                && point.Y >= patchCenter.Y - patchSize && point.Y <= patchCenter.Y + patchSize;
-        }
+        /// <summary>
+        /// Test if point is equal to patchCenter with respect to error patch size patchSize.
+        /// </summary>
+        /// <param name="point">Test value.</param>
+        /// <param name="rangeCenter">Goal value center.</param>
+        /// <param name="errorRangeRadius">Error range radius.</param>
+        /// <returns>If point is within range.</returns>
+        private bool IsInRange(float point, float rangeCenter, float errorRangeRadius)
+            => point >= point - errorRangeRadius
+            && point <= point + errorRangeRadius;
 
-        private bool IsInTargetPatch(float pointX, float pointY, PointF patchCenter, int patchSize)
-        {
-            return pointX >= patchCenter.X - patchSize && pointX <= patchCenter.X + patchSize
-                && pointY >= patchCenter.Y - patchSize && pointY <= patchCenter.Y + patchSize;
-        }
+        /// <summary>
+        /// Test if the 2D point is within a square of patchSize around patchCenter.
+        /// </summary>
+        /// <param name="point">Test value.</param>
+        /// <param name="patchCenter">Goal value center.</param>
+        /// <param name="patchSize">Half length of error square.</param>
+        /// <returns>If point is within square patch.</returns>
+        private bool IsInTargetPatch(PointF point, PointF patchCenter, float patchSize)
+            => IsInRange(point.X, patchCenter.X, patchSize)
+            && IsInRange(point.Y, patchCenter.Y, patchSize);
+
+        private bool IsInTargetPatch(float pointX, float pointY, PointF patchCenter, float patchSize)
+            => IsInRange(pointX, patchCenter.X, patchSize)
+            && IsInRange(pointY, patchCenter.Y, patchSize);
 
         private bool PointFitsModel(PointF srcPoint, PointF desPoint, float modelLambda, float modelSigma, SizeF translation, int patchSize)
         {
@@ -167,12 +205,12 @@ namespace VisualArtifactDetector.VisualArtifactDetector
 
         private SizeF GetScaleFactors(SizeF modelDistance, SizeF queryDistance)
         {
-            float lambda = 0, sigma = 0;
-
-            // There is a test so that the second with should never be 0, but just to be sure...
-            if (modelDistance.Width != 0)
+            // Default is a scale factor of "1" if any of the distances are zero.
+            float lambda = 1, sigma = 1;
+            
+            if (modelDistance.Width != 0 && queryDistance.Width != 0)
                 lambda = queryDistance.Width / modelDistance.Width;
-            if (modelDistance.Height != 0)
+            if (modelDistance.Height != 0 && queryDistance.Height != 0)
                 sigma = queryDistance.Height / modelDistance.Height;
 
             return new SizeF(lambda, sigma);
@@ -180,7 +218,7 @@ namespace VisualArtifactDetector.VisualArtifactDetector
 
         private SizeF GetTranslationVector(PointF modelPoint1, PointF queryPoint1, SizeF scaleFactors)
         {
-            return new SizeF(queryPoint1.X - scaleFactors.Width  * modelPoint1.X,
+            return new SizeF(queryPoint1.X - scaleFactors.Width * modelPoint1.X,
                              queryPoint1.Y - scaleFactors.Height * modelPoint1.Y);
         }
 

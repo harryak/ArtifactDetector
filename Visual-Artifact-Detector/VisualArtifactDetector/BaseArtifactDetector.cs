@@ -1,11 +1,4 @@
-﻿/**
-* Written by Felix Rossmann, "rossmann@cs.uni-bonn.de".
-* 
-* For license, please see "License-LGPL.txt".
-*/
-
-using VisualArtifactDetector.Model;
-using Emgu.CV;
+﻿using Emgu.CV;
 using Emgu.CV.CvEnum;
 using Emgu.CV.Features2D;
 using Emgu.CV.Structure;
@@ -15,6 +8,13 @@ using System;
 using System.Drawing;
 using System.IO;
 using VisualArtifactDetector.Helper;
+/**
+* Written by Felix Rossmann, "rossmann@cs.uni-bonn.de".
+* 
+* For license, please see "License-LGPL.txt".
+*/
+
+using VisualArtifactDetector.Model;
 
 namespace VisualArtifactDetector.VisualArtifactDetector
 {
@@ -129,11 +129,11 @@ namespace VisualArtifactDetector.VisualArtifactDetector
 
             VectorOfVectorOfDMatch matches;
             matchesMask = new Mat();
-            matchCount  = 0;
+            matchCount = 0;
 
             // Only needed for debugging output, otherwise will always be null.
             homography = null;
-            
+
             // Get the stopwatch for matching.
             if (stopwatch != null)
             {
@@ -171,8 +171,9 @@ namespace VisualArtifactDetector.VisualArtifactDetector
                 // Get rid of the original matches object, no need now.
                 matches.Dispose();
 
+                // Get filter for RanSaC.
                 MatchFilter matchFilter = new MatchFilter();
-                
+
                 matchesMask = new Mat(goodMatches.Size, 1, DepthType.Cv8U, 1);
                 matchesMask.SetTo(new MCvScalar(255));
 
@@ -181,6 +182,7 @@ namespace VisualArtifactDetector.VisualArtifactDetector
 
                 // Do we have a minimum amount of unique matches?
                 int nonZeroCount = CvInvoke.CountNonZero(matchesMask);
+                //TODO is this a good idea and why?
                 double sizeRatio = GetSizeRatio(observedImage.Dimensions, currentArtifactImage.Dimensions);
 
                 if (nonZeroCount >= minMatches / sizeRatio)
@@ -200,7 +202,7 @@ namespace VisualArtifactDetector.VisualArtifactDetector
                     if (nonZeroCount >= minMatches / sizeRatio)
                     {
                         // Can we find a homography? Then it's a match.
-                        homography = matchFilter.GetRanSaCTransformationMatrix(currentArtifactImage.KeyPoints, observedImage.KeyPoints, goodMatches, ref matchesMask, 1000, 0.85, 5);//Features2DToolbox.GetHomographyMatrixFromMatchedFeatures(currentArtifactImage.KeyPoints, observedImage.KeyPoints, goodMatches, stupidMask, 1);
+                        homography = matchFilter.GetRanSaCTransformationMatrix(currentArtifactImage.KeyPoints, observedImage.KeyPoints, goodMatches, ref matchesMask, 1000, 0.85, 5);
 
                         if (homography != null)
                         {
@@ -228,21 +230,21 @@ namespace VisualArtifactDetector.VisualArtifactDetector
 
         private double GetSizeRatio(SizeF image1, SizeF image2)
         {
-            double ratio = 1;
+            double ratio;
             double area1 = image1.Width * image1.Height;
             double area2 = image2.Width * image2.Height;
 
-            double sqRatio;
+            double squaredAreaRatio;
 
             if (area1 < area2)
             {
-                sqRatio = area2 / area1;
-                ratio = Math.Sqrt(sqRatio);
+                squaredAreaRatio = area2 / area1;
+                ratio = Math.Sqrt(squaredAreaRatio);
             }
             else
             {
-                sqRatio = area1 / area2;
-                ratio   = Math.Sqrt(sqRatio);
+                squaredAreaRatio = area1 / area2;
+                ratio = Math.Sqrt(squaredAreaRatio);
             }
 
             return ratio;
@@ -261,8 +263,7 @@ namespace VisualArtifactDetector.VisualArtifactDetector
         public Mat Draw(ProcessedImage observedImage, ProcessedImage artifactImage, VectorOfVectorOfDMatch matches, Mat matchesMask, Matrix<float> homography)
         {
             //Draw the matched keypoints
-            Mat result = new Mat();
-            Matrix<byte> test = new Matrix<byte>(matchesMask.GetData());
+            Mat resultingImage = new Mat();
 
             Features2DToolbox.DrawMatches(
                 artifactImage.Image,
@@ -270,7 +271,7 @@ namespace VisualArtifactDetector.VisualArtifactDetector
                 observedImage.Image,
                 observedImage.KeyPoints,
                 matches,
-                result,
+                resultingImage,
                 new MCvScalar(0, 128, 0),
                 new MCvScalar(0, 128, 255),
                 matchesMask
@@ -278,28 +279,35 @@ namespace VisualArtifactDetector.VisualArtifactDetector
 
             if (homography != null)
             {
-                //draw a rectangle along the projected model
+                // Draw a rectangle along the projected model.
                 Rectangle rect = new Rectangle(Point.Empty, artifactImage.Image.Size);
-                PointF[] pts = new PointF[]
+                // Set corner points of rectangle and transform them according to homography.
+                PointF[] pointFs = new PointF[]
                 {
                     new PointF(rect.Left, rect.Bottom),
                     new PointF(rect.Right, rect.Bottom),
                     new PointF(rect.Right, rect.Top),
                     new PointF(rect.Left, rect.Top)
                 };
-                pts = Transform(pts, homography);
+                pointFs = Transform(pointFs, homography);
 
-                Point[] points = Array.ConvertAll(pts, Point.Round);
-                using (VectorOfPoint vp = new VectorOfPoint(points))
+                // Draw the outlines using rounded coordinates of previously calculated points.
+                using (VectorOfPoint pointVector = new VectorOfPoint(Array.ConvertAll(pointFs, Point.Round)))
                 {
-                    CvInvoke.Polylines(result, vp, true, new MCvScalar(0, 0, 255, 255), 8);
+                    CvInvoke.Polylines(resultingImage, pointVector, true, new MCvScalar(0, 0, 255, 255), 8);
                 }
             }
 
-            return result;
+            return resultingImage;
         }
 #endif
 
+        /// <summary>
+        /// Transform all points in input list with the given matrix.
+        /// </summary>
+        /// <param name="input">List of points to transform.</param>
+        /// <param name="matrix">Matrix used to transform.</param>
+        /// <returns>List of all transformed points.</returns>
         private PointF[] Transform(PointF[] input, Matrix<float> matrix)
         {
             for (int i = 0; i < input.Length; i++)
@@ -321,9 +329,11 @@ namespace VisualArtifactDetector.VisualArtifactDetector
         {
             Mat image;
 
-            if (File.Exists(imagePath)) {
+            if (File.Exists(imagePath))
+            {
                 image = CvInvoke.Imread(imagePath, ImreadModes.Grayscale);
-            } else
+            }
+            else
             {
                 throw new FileNotFoundException("The image couldn't be found");
             }
