@@ -4,7 +4,7 @@
  * For license, please see "License-LGPL.txt".
  */
 
-using VisualArtifactDetector.VisualArtifactDetector;
+using VisualArtifactDetector.VisualArtifactDetector.Detectors;
 using VisualArtifactDetector.Helper;
 using VisualArtifactDetector.Model;
 using VisualArtifactDetector.Viewer;

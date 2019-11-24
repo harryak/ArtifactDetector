@@ -8,7 +8,7 @@ using VisualArtifactDetector.Model;
 using Emgu.CV;
 using VisualArtifactDetector.Helper;
 
-namespace VisualArtifactDetector.VisualArtifactDetector
+namespace VisualArtifactDetector.VisualArtifactDetector.Detectors
 {
     interface IArtifactDetector
     {

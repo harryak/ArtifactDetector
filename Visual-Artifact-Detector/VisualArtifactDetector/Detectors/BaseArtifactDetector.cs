@@ -1,4 +1,10 @@
-﻿using Emgu.CV;
+﻿/**
+* Written by Felix Rossmann, "rossmann@cs.uni-bonn.de".
+* 
+* For license, please see "License-LGPL.txt".
+*/
+
+using Emgu.CV;
 using Emgu.CV.CvEnum;
 using Emgu.CV.Features2D;
 using Emgu.CV.Structure;
@@ -8,15 +14,10 @@ using System;
 using System.Drawing;
 using System.IO;
 using VisualArtifactDetector.Helper;
-/**
-* Written by Felix Rossmann, "rossmann@cs.uni-bonn.de".
-* 
-* For license, please see "License-LGPL.txt".
-*/
-
+using VisualArtifactDetector.VisualArtifactDetector.MatchFilters;
 using VisualArtifactDetector.Model;
 
-namespace VisualArtifactDetector.VisualArtifactDetector
+namespace VisualArtifactDetector.VisualArtifactDetector.Detectors
 {
     /// <summary>
     /// Base class for all artifact detectors.
@@ -172,7 +173,7 @@ namespace VisualArtifactDetector.VisualArtifactDetector
                 matches.Dispose();
 
                 // Get filter for RanSaC.
-                MatchFilter matchFilter = new MatchFilter();
+                IMatchFilter matchFilter = new SimpleMatchFilter();
 
                 matchesMask = new Mat(goodMatches.Size, 1, DepthType.Cv8U, 1);
                 matchesMask.SetTo(new MCvScalar(255));

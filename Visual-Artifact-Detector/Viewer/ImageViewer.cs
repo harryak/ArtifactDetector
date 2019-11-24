@@ -1,5 +1,4 @@
 ﻿using Emgu.CV;
-using Emgu.CV.UI;
 using System.Drawing;
 using System.Windows.Forms;
 
@@ -7,7 +6,7 @@ namespace VisualArtifactDetector.Viewer
 {
     public partial class ImageViewer : Form
     {
-        public ImageViewer(IImage image)
+        public ImageViewer(Mat image)
         {
             InitializeComponent();
 

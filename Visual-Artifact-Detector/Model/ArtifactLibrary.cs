@@ -4,12 +4,11 @@
  * For license, please see "License-LGPL.txt".
  */
 
-using VisualArtifactDetector.VisualArtifactDetector;
+using VisualArtifactDetector.VisualArtifactDetector.Detectors;
 using VisualArtifactDetector.Helper;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.IO;
 using System.Runtime.Serialization.Formatters.Binary;
 
