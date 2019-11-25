@@ -1,6 +1,6 @@
 # Artifact Detector
 
-This is a standalone program written in C# for Microsoft Windows with .Net Framework ^4.7.2.
+This is a standalone program written in C# for Microsoft Windows with .Net Framework ^4.8.
 
 ## Goal
 
@@ -34,6 +34,7 @@ Options:
   -f, --filepath=VALUE       Path to the working directory (default is current directory). The recipes must be in this folder!
   -c, --cache                Cache the artifact types.
   -d, --detector=VALUE       Detector to use (default: orb). [akaze, brisk, kaze, orb]
+  -m, --filter=VALUE         Match filter to use (default: simple). [simple, affine]
   -e, --evaluate             Include stopwatch.
 ```
 
@@ -45,6 +46,7 @@ Parameter | Explaination
 -a | Using the itsape/recipes repository, this is the full name of an artifact type, e.g. 07_Paypal-Einfach
 -f | This is an absolute or relative path for a directory, the recipes must be stored in this directory.
 -d | Expert option regarding feature detection algorithm. Hint: Orb is fastest.
+-m | Expert option for choosing the filter matching algorithm used in RanSaC. Hint: Simple is fastest.
 -c | Read from and compile data to a file (in the working directory). If artifact type is not found in this cache, it will be read anew.
 
 ### Return value
