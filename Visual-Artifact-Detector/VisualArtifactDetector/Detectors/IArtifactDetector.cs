@@ -7,6 +7,7 @@
 using VisualArtifactDetector.Model;
 using Emgu.CV;
 using VisualArtifactDetector.Helper;
+using VisualArtifactDetector.VisualArtifactDetector.MatchFilters;
 
 namespace VisualArtifactDetector.VisualArtifactDetector.Detectors
 {
@@ -25,10 +26,11 @@ namespace VisualArtifactDetector.VisualArtifactDetector.Detectors
         /// </summary>
         /// <param name="observedImage">The observed image.</param>
         /// <param name="artifactType">The artifact type containing visual information.</param>
+        /// <param name="matchFilter">The filter used for matching.</param>
         /// <param name="drawingResult">The resulting image to draw in a window.</param>
         /// <param name="matchCount">Count of matches, if one was found.</param>
         /// <param name="stopwatch">An optional stopwatch used for evaluation.</param>
         /// <returns>Whether a match was found.</returns>
-        bool ImageContainsArtifactType(ProcessedImage observedImage, ArtifactType artifactType, out Mat drawingResult, out int matchCount, VADStopwatch stopwatch = null);
+        bool ImageContainsArtifactType(ProcessedImage observedImage, ArtifactType artifactType, IMatchFilter matchFilter, out Mat drawingResult, out int matchCount, VADStopwatch stopwatch = null);
     }
 }

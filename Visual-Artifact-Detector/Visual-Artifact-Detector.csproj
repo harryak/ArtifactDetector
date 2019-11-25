@@ -172,7 +172,7 @@
     <Compile Include="Model\ArtifactLibrary.cs" />
     <Compile Include="Model\ProcessedImage.cs" />
     <Compile Include="Model\ArtifactType.cs" />
-    <Compile Include="VisualArtifactDetector\Detectors\IDetector.cs" />
+    <Compile Include="VisualArtifactDetector\Detectors\IArtifactDetector.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Viewer\ImageViewer.cs">

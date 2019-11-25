@@ -7,7 +7,7 @@ using System.Runtime.InteropServices;
 // set of attributes. Change these attribute values to modify the information
 // associated with an assembly.
 [assembly: AssemblyTitle("Artifact-Detector")]
-[assembly: AssemblyDescription("Visual artifact detector for the ITS.APE.")]
+[assembly: AssemblyDescription("Visual artifact artifactDetector for the ITS.APE.")]
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("ITS.APE")]
 [assembly: AssemblyProduct("Artifact-Detector")]

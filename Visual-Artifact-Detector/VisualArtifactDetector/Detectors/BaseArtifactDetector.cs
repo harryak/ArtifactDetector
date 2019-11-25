@@ -75,11 +75,12 @@ namespace VisualArtifactDetector.VisualArtifactDetector.Detectors
         /// </summary>
         /// <param name="observedImage">The observed image.</param>
         /// <param name="artifactType">The artifact type containing visual information.</param>
+        /// <param name="matchFilter">The filter used for matching.</param>
         /// <param name="drawingResult">The result of the drawing (for Debug).</param>
         /// <param name="matchCount">Count of matches, if found.</param>
         /// <param name="stopwatch">An optional stopwatch used for evaluation.</param>
         /// <returns>A homography or null if none was found.</returns>
-        public bool ImageContainsArtifactType(ProcessedImage observedImage, ArtifactType artifactType, out Mat drawingResult, out int matchCount, VADStopwatch stopwatch = null)
+        public bool ImageContainsArtifactType(ProcessedImage observedImage, ArtifactType artifactType, IMatchFilter matchFilter, out Mat drawingResult, out int matchCount, VADStopwatch stopwatch = null)
         {
             // Only needed for debugging purposes, otherwise will always be null.
             drawingResult = null;
@@ -93,6 +94,7 @@ namespace VisualArtifactDetector.VisualArtifactDetector.Detectors
             ProcessedImage matchedArtifact = FindMatch(
                 observedImage,
                 artifactType,
+                matchFilter,
                 out matches,
                 out matchesMask,
                 out homography,
@@ -112,12 +114,13 @@ namespace VisualArtifactDetector.VisualArtifactDetector.Detectors
         /// </summary>
         /// <param name="observedImage">The observed image.</param>
         /// <param name="artifactType">The artifact type containing visual information.</param>
+        /// <param name="matchFilter">The filter used for matching.</param>
         /// <param name="matches">Reference to a match vector.</param>
         /// <param name="matchesMask">Reference to the used result mask.</param>
         /// <param name="homography">Reference to a possible homography.</param>
         /// <param name="stopwatch">An optional stopwatch used for evaluation.</param>
         /// <returns>A matched artifact image, if available.</returns>
-        public ProcessedImage FindMatch(ProcessedImage observedImage, ArtifactType artifactType, out VectorOfVectorOfDMatch goodMatches, out Mat matchesMask, out Matrix<float> homography, out int matchCount, VADStopwatch stopwatch = null)
+        public ProcessedImage FindMatch(ProcessedImage observedImage, ArtifactType artifactType, IMatchFilter matchFilter, out VectorOfVectorOfDMatch goodMatches, out Mat matchesMask, out Matrix<float> homography, out int matchCount, VADStopwatch stopwatch = null)
         {
             int minMatches = VADConfig.MinimumMatchesRequired;
             double uniquenessThreshold = VADConfig.MatchUniquenessThreshold;
@@ -171,9 +174,6 @@ namespace VisualArtifactDetector.VisualArtifactDetector.Detectors
                 }
                 // Get rid of the original matches object, no need now.
                 matches.Dispose();
-
-                // Get filter for RanSaC.
-                IMatchFilter matchFilter = new SimpleMatchFilter();
 
                 matchesMask = new Mat(goodMatches.Size, 1, DepthType.Cv8U, 1);
                 matchesMask.SetTo(new MCvScalar(255));

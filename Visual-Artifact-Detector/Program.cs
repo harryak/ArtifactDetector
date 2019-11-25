@@ -17,6 +17,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Runtime.Serialization;
 using System.Windows.Forms;
+using VisualArtifactDetector.VisualArtifactDetector.MatchFilters;
 
 namespace VisualArtifactDetector
 {
@@ -25,11 +26,12 @@ namespace VisualArtifactDetector
         // TODO: Move to config and add parameter.
         private readonly static string libraryFileName = "artifacts.bin";
         private static ILoggerFactory loggerFactory;
-        private static IArtifactDetector detector = null;
+        private static IArtifactDetector artifactDetector = null;
+        private static IMatchFilter matchFilter = null;
         private static ArtifactLibrary artifactLibrary = null;
 
         /// <summary>
-        /// Map for selecting an artifact detector by its name.
+        /// Map for selecting an artifact artifactDetector by its name.
         /// </summary>
         private readonly static Dictionary<string, Func<ILoggerFactory, IArtifactDetector>> detectorSelectionMap =
             new Dictionary<string, Func<ILoggerFactory, IArtifactDetector>>(){
@@ -37,6 +39,13 @@ namespace VisualArtifactDetector
                 { "brisk", (ILoggerFactory loggerFactory) => { return new BriskArtifactDetector(loggerFactory); } },
                 { "kaze", (ILoggerFactory loggerFactory) => { return new KazeArtifactDetector(loggerFactory); } },
                 { "orb", (ILoggerFactory loggerFactory) => { return new OrbArtifactDetector(loggerFactory); } }
+            };
+
+        private readonly static Dictionary<string, Func<IMatchFilter>> filterSelectionMap =
+            new Dictionary<string, Func<IMatchFilter>>()
+            {
+                { "simple", () => { return new SimpleMatchFilter(); } },
+                { "affine", () => { return new AffineMatchFilter(); } },
             };
 
         /// <summary>
@@ -55,7 +64,8 @@ namespace VisualArtifactDetector
         private static string screenshotPath = "";
         private static string artifactGoal = "";
         private static string workingDirectory = "";
-        private static string detectorSelection = "orb";  // Initialize with standard detector
+        private static string detectorSelection = "orb";  // Initialize with standard artifactDetector
+        private static string filterSelection = "simple";
         private static bool shouldShowHelp = false;
         private static bool shouldEvaluate = false;
         private static bool shouldCache = false;
@@ -77,6 +87,7 @@ namespace VisualArtifactDetector
                 { "f|filepath=", "Path to the working directory (default is current directory). The recipes must be in this folder!", f => workingDirectory = FileHelper.AddDirectorySeparator(Path.GetFullPath(f)) },
                 { "c|cache", "Cache the artifact types.", c => shouldCache = c != null },
                 { "d|detector=", "Detector to use (default: orb). [akaze, brisk, kaze, orb]", d => detectorSelection = d},
+                { "m|filter=", "Match filter to use (default: simple). [simple, affine]", m => filterSelection = m},
                 { "e|evaluate", "Include stopwatch output.", e => shouldEvaluate = e != null },
             };
         }
@@ -129,7 +140,7 @@ namespace VisualArtifactDetector
         }
 
         /// <summary>
-        /// Try to resolve the artifact detector by a given selection.
+        /// Try to resolve the artifact artifactDetector by a given selection.
         /// </summary>
         /// <param name="logger"></param>
         /// <returns></returns>
@@ -137,8 +148,20 @@ namespace VisualArtifactDetector
         {
             if (detectorSelectionMap.ContainsKey(detectorSelection))
             {
-                logger.LogInformation("Using detector {detectorSelection}.", detectorSelection);
-                detector = detectorSelectionMap[detectorSelection](loggerFactory);
+                logger.LogInformation("Using artifactDetector {detectorSelection}.", detectorSelection);
+                artifactDetector = detectorSelectionMap[detectorSelection](loggerFactory);
+                return true;
+            }
+
+            return false;
+        }
+
+        private static bool SetupMatchFilter(ILogger logger)
+        {
+            if (filterSelectionMap.ContainsKey(filterSelection))
+            {
+                logger.LogInformation("Using match filter {filterSelection}.", filterSelection);
+                matchFilter = filterSelectionMap[filterSelection]();
                 return true;
             }
 
@@ -156,7 +179,7 @@ namespace VisualArtifactDetector
             {
                 try
                 {
-                    artifactLibrary = ArtifactLibrary.FromFile(workingDirectory + libraryFileName, detector, stopwatch, loggerFactory);
+                    artifactLibrary = ArtifactLibrary.FromFile(workingDirectory + libraryFileName, artifactDetector, stopwatch, loggerFactory);
                     logger.LogDebug("Loaded artifact library from file {0}.", workingDirectory + libraryFileName);
                 }
                 catch (SerializationException)
@@ -214,6 +237,13 @@ namespace VisualArtifactDetector
                 return -1;
             }
 
+            // Which match filter should we use?
+            if (!SetupMatchFilter(logger))
+            {
+                ShowHelp(options);
+                return -1;
+            }
+
             // Determine if we use a stopwatch in this run.
             VADStopwatch stopwatch = null;
             if (shouldEvaluate)
@@ -234,7 +264,7 @@ namespace VisualArtifactDetector
                 logger.LogDebug("Creating new artifact library instance.");
                 try
                 {
-                    artifactLibrary = new ArtifactLibrary(workingDirectory, detector, loggerFactory);
+                    artifactLibrary = new ArtifactLibrary(workingDirectory, artifactDetector, loggerFactory);
                 }
                 catch (Exception e)
                 {
@@ -263,14 +293,14 @@ namespace VisualArtifactDetector
             }
 
             // Extract the features of the given image for comparison.
-            ProcessedImage observedImage = detector.ExtractFeatures(screenshotPath, stopwatch);
+            ProcessedImage observedImage = artifactDetector.ExtractFeatures(screenshotPath, stopwatch);
             if (observedImage == null)
             {
                 logger.LogError("Could not get the screenshot.");
                 return -1;
             }
 
-            bool artifactFound = detector.ImageContainsArtifactType(observedImage, artifactType, out Mat drawingResult, out int matchCount, stopwatch);
+            bool artifactFound = artifactDetector.ImageContainsArtifactType(observedImage, artifactType, matchFilter, out Mat drawingResult, out int matchCount, stopwatch);
 
 #if DEBUG
             // Show the results in a window.
@@ -295,7 +325,7 @@ namespace VisualArtifactDetector
                     if (!File.Exists("output.csv")) printHeader = true;
                     using (StreamWriter file = new StreamWriter("output.csv", true))
                     {
-                        if (printHeader) file.WriteLine("detector;screenshot_path;artifact_goal;" + stopwatch.LabelsToCSV() + ";found;match_count");
+                        if (printHeader) file.WriteLine("artifactDetector;screenshot_path;artifact_goal;" + stopwatch.LabelsToCSV() + ";found;match_count");
 
                         file.WriteLine(detectorSelection + ";" + screenshotPath + ";" + artifactGoal + ";" + stopwatch.TimesToCSVinNSprecision() + ";" + artifactFound + ";" + matchCount);
                     }

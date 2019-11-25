@@ -44,10 +44,10 @@ namespace VisualArtifactDetector.Model
         public bool DataChanged { get => _dataChanged; set => _dataChanged = value; }
 
         /// <summary>
-        /// Needs a file path to operate in and an artifact detector.
+        /// Needs a file path to operate in and an artifact artifactDetector.
         /// </summary>
         /// <param name="filePath">The path of all library resources.</param>
-        /// <param name="artifactDetector">An artifact detector instance to extract features.</param>
+        /// <param name="artifactDetector">An artifact artifactDetector instance to extract features.</param>
         /// <param name="_loggerFactory">Logger factory to get a new logger.</param>
         public ArtifactLibrary(string filePath, IArtifactDetector artifactDetector, ILoggerFactory _loggerFactory)
         {
@@ -142,7 +142,7 @@ namespace VisualArtifactDetector.Model
         /// Extracts a saved library from the given file.
         /// </summary>
         /// <param name="fileName">Filename to load the library from.</param>
-        /// <param name="artifactDetector">A new artifact detector for the loaded instance.</param>
+        /// <param name="artifactDetector">A new artifact artifactDetector for the loaded instance.</param>
         /// <param name="stopwatch">An optional stopwatch for evaluation.</param>
         /// <param name="logger">A logging factory.</param>
         /// <returns>The read artifact library.</returns>
