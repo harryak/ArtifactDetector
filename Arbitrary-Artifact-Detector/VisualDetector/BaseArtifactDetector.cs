@@ -13,11 +13,11 @@ using Microsoft.Extensions.Logging;
 using System;
 using System.Drawing;
 using System.IO;
+using ArbitraryArtifactDetector.VisualMatchFilter;
 using ArbitraryArtifactDetector.Helper;
-using ArbitraryArtifactDetector.ArbitraryArtifactDetector.MatchFilters;
 using ArbitraryArtifactDetector.Model;
 
-namespace ArbitraryArtifactDetector.ArbitraryArtifactDetector.Detectors
+namespace ArbitraryArtifactDetector.VisualDetector
 {
     /// <summary>
     /// Base class for all artifact detectors.

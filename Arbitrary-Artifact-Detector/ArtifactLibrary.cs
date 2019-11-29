@@ -4,7 +4,7 @@
  * For license, please see "License-LGPL.txt".
  */
 
-using ArbitraryArtifactDetector.ArbitraryArtifactDetector.Detectors;
+using ArbitraryArtifactDetector.VisualDetector;
 using ArbitraryArtifactDetector.Helper;
 using Microsoft.Extensions.Logging;
 using System;

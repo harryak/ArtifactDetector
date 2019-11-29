@@ -10,7 +10,7 @@ using Emgu.CV.Util;
 using System.Collections.Generic;
 using System.Drawing;
 
-namespace ArbitraryArtifactDetector.ArbitraryArtifactDetector.MatchFilters
+namespace ArbitraryArtifactDetector.VisualMatchFilter
 {
     public abstract class BaseMatchFilter : IMatchFilter
     {

@@ -159,20 +159,20 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="MatchingSettings.cs" />
-    <Compile Include="ArbitraryArtifactDetector\Detectors\BaseArtifactDetector.cs" />
-    <Compile Include="ArbitraryArtifactDetector\Detectors\BriskArtifactDetector.cs" />
-    <Compile Include="ArbitraryArtifactDetector\Detectors\AkazeArtifactDetector.cs" />
-    <Compile Include="ArbitraryArtifactDetector\MatchFilters\SimpleMatchFilter.cs" />
-    <Compile Include="ArbitraryArtifactDetector\MatchFilters\AffineMatchFilter.cs" />
-    <Compile Include="ArbitraryArtifactDetector\Detectors\OrbArtifactDetector.cs" />
-    <Compile Include="ArbitraryArtifactDetector\Detectors\KazeArtifactDetector.cs" />
+    <Compile Include="AADConfig.cs" />
+    <Compile Include="VisualDetector\BaseArtifactDetector.cs" />
+    <Compile Include="VisualDetector\BriskArtifactDetector.cs" />
+    <Compile Include="VisualDetector\AkazeArtifactDetector.cs" />
+    <Compile Include="VisualMatchFilter\SimpleMatchFilter.cs" />
+    <Compile Include="VisualMatchFilter\AffineMatchFilter.cs" />
+    <Compile Include="VisualDetector\OrbArtifactDetector.cs" />
+    <Compile Include="VisualDetector\KazeArtifactDetector.cs" />
     <Compile Include="Helper\FileHelper.cs" />
     <Compile Include="Helper\VADStopwatch.cs" />
-    <Compile Include="Model\ArtifactLibrary.cs" />
-    <Compile Include="Model\ProcessedImage.cs" />
-    <Compile Include="Model\ArtifactType.cs" />
-    <Compile Include="ArbitraryArtifactDetector\Detectors\IArtifactDetector.cs" />
+    <Compile Include="ArtifactLibrary.cs" />
+    <Compile Include="Models\ProcessedImage.cs" />
+    <Compile Include="Models\ArtifactType.cs" />
+    <Compile Include="VisualDetector\IArtifactDetector.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Setup.cs" />
@@ -183,8 +183,8 @@
     <Compile Include="Viewer\ImageViewer.Designer.cs">
       <DependentUpon>ImageViewer.cs</DependentUpon>
     </Compile>
-    <Compile Include="ArbitraryArtifactDetector\MatchFilters\BaseMatchFilter.cs" />
-    <Compile Include="ArbitraryArtifactDetector\MatchFilters\IMatchFilter.cs" />
+    <Compile Include="VisualMatchFilter\BaseMatchFilter.cs" />
+    <Compile Include="VisualMatchFilter\IMatchFilter.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config">

@@ -7,7 +7,7 @@
 using Emgu.CV.Features2D;
 using Microsoft.Extensions.Logging;
 
-namespace ArbitraryArtifactDetector.ArbitraryArtifactDetector.Detectors
+namespace ArbitraryArtifactDetector.VisualDetector
 {
     class OrbArtifactDetector : BaseArtifactDetector, IArtifactDetector
     {

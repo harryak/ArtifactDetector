@@ -11,7 +11,7 @@ using System;
 using System.Collections.Generic;
 using System.Drawing;
 
-namespace ArbitraryArtifactDetector.ArbitraryArtifactDetector.MatchFilters
+namespace ArbitraryArtifactDetector.VisualMatchFilter
 {
     /// <summary>
     /// Filter for matching VectorOfKeyPoints.

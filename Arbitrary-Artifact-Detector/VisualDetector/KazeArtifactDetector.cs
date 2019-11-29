@@ -8,7 +8,7 @@ using Emgu.CV.Features2D;
 using Emgu.CV.Flann;
 using Microsoft.Extensions.Logging;
 
-namespace ArbitraryArtifactDetector.ArbitraryArtifactDetector.Detectors
+namespace ArbitraryArtifactDetector.VisualDetector
 {
     class KazeArtifactDetector : BaseArtifactDetector, IArtifactDetector
     {

@@ -7,9 +7,9 @@
 using ArbitraryArtifactDetector.Model;
 using Emgu.CV;
 using ArbitraryArtifactDetector.Helper;
-using ArbitraryArtifactDetector.ArbitraryArtifactDetector.MatchFilters;
+using ArbitraryArtifactDetector.VisualMatchFilter;
 
-namespace ArbitraryArtifactDetector.ArbitraryArtifactDetector.Detectors
+namespace ArbitraryArtifactDetector.VisualDetector
 {
     interface IArtifactDetector
     {

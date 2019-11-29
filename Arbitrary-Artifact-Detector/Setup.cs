@@ -4,10 +4,10 @@
 * For license, please see "License-LGPL.txt".
 */
 
-using ArbitraryArtifactDetector.ArbitraryArtifactDetector.Detectors;
-using ArbitraryArtifactDetector.ArbitraryArtifactDetector.MatchFilters;
 using ArbitraryArtifactDetector.Helper;
 using ArbitraryArtifactDetector.Model;
+using ArbitraryArtifactDetector.VisualDetector;
+using ArbitraryArtifactDetector.VisualMatchFilter;
 using Microsoft.Extensions.Logging;
 using Mono.Options;
 using NLog.Extensions.Logging;
@@ -18,7 +18,8 @@ using System.Runtime.Serialization;
 
 namespace ArbitraryArtifactDetector
 {
-    class Setup
+    [Serializable]
+    internal class Setup
     {
         /// <summary>
         /// Map for selecting an artifact artifactDetector by its name.
