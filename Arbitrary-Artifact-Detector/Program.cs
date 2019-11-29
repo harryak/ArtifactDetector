@@ -4,194 +4,21 @@
  * For license, please see "License-LGPL.txt".
  */
 
-using ArbitraryArtifactDetector.ArbitraryArtifactDetector.Detectors;
-using ArbitraryArtifactDetector.Helper;
 using ArbitraryArtifactDetector.Model;
 using ArbitraryArtifactDetector.Viewer;
 using Emgu.CV;
 using Microsoft.Extensions.Logging;
-using Mono.Options;
-using NLog.Extensions.Logging;
 using System;
-using System.Collections.Generic;
 using System.IO;
-using System.Runtime.Serialization;
 using System.Windows.Forms;
-using ArbitraryArtifactDetector.ArbitraryArtifactDetector.MatchFilters;
 
 namespace ArbitraryArtifactDetector
 {
     class Program
     {
-        // TODO: Move to config and add parameter.
-        private readonly static string libraryFileName = "artifacts.bin";
-        private static ILoggerFactory loggerFactory;
-        private static IArtifactDetector artifactDetector = null;
-        private static IMatchFilter matchFilter = null;
-        private static ArtifactLibrary artifactLibrary = null;
+        private static Setup setup;
 
-        /// <summary>
-        /// Map for selecting an artifact artifactDetector by its name.
-        /// </summary>
-        private readonly static Dictionary<string, Func<ILoggerFactory, IArtifactDetector>> detectorSelectionMap =
-            new Dictionary<string, Func<ILoggerFactory, IArtifactDetector>>(){
-                { "akaze", (ILoggerFactory loggerFactory) => { return new AkazeArtifactDetector(loggerFactory); } },
-                { "brisk", (ILoggerFactory loggerFactory) => { return new BriskArtifactDetector(loggerFactory); } },
-                { "kaze", (ILoggerFactory loggerFactory) => { return new KazeArtifactDetector(loggerFactory); } },
-                { "orb", (ILoggerFactory loggerFactory) => { return new OrbArtifactDetector(loggerFactory); } }
-            };
-
-        private readonly static Dictionary<string, Func<IMatchFilter>> filterSelectionMap =
-            new Dictionary<string, Func<IMatchFilter>>()
-            {
-                { "simple", () => { return new SimpleMatchFilter(); } },
-                { "affine", () => { return new AffineMatchFilter(); } },
-            };
-
-        /// <summary>
-        /// Setup the loggerFactory and return a new logger with the given categoryName.
-        /// </summary>
-        /// <param name="categoryName"></param>
-        /// <returns></returns>
-        private static ILogger SetupLogging(string categoryName)
-        {
-            loggerFactory = new LoggerFactory();
-            loggerFactory.AddProvider(new NLogLoggerProvider());
-            return loggerFactory.CreateLogger(categoryName);
-        }
-
-        // Setup command line arguments.
-        private static string screenshotPath = "";
-        private static string artifactGoal = "";
-        private static string workingDirectory = "";
-        private static string detectorSelection = "orb";  // Initialize with standard artifactDetector
-        private static string filterSelection = "simple";
-        private static bool shouldShowHelp = false;
-        private static bool shouldEvaluate = false;
-        private static bool shouldCache = false;
-
-        /// <summary>
-        /// Prepares an option set for the command line.
-        /// </summary>
-        /// <returns></returns>
-        private static OptionSet SetupCmdOptions()
-        {
-            // Set default value to current directory for working directory.
-            workingDirectory = FileHelper.AddDirectorySeparator(Path.GetFullPath("."));
-
-            return new OptionSet
-            {
-                { "h|help", "Show this message and exit.", h => shouldShowHelp = h != null },
-                { "s|screenshot=", "The path to the screenshot to search in (required).", p => screenshotPath = p },
-                { "a|artifact=", "Name of the artifact to look for (required).", a => artifactGoal = a },
-                { "f|filepath=", "Path to the working directory (default is current directory). The recipes must be in this folder!", f => workingDirectory = FileHelper.AddDirectorySeparator(Path.GetFullPath(f)) },
-                { "c|cache", "Cache the artifact types.", c => shouldCache = c != null },
-                { "d|detector=", "Detector to use (default: orb). [akaze, brisk, kaze, orb]", d => detectorSelection = d},
-                { "m|filter=", "Match filter to use (default: simple). [simple, affine]", m => filterSelection = m},
-                { "e|evaluate", "Include stopwatch output.", e => shouldEvaluate = e != null },
-            };
-        }
-
-        /// <summary>
-        /// Prints the command line options/help.
-        /// </summary>
-        /// <param name="options"></param>
-        private static void ShowHelp(OptionSet options)
-        {
-            // show some app description message
-            Console.WriteLine("Usage: ArbitraryArtifact-Detector.exe [OPTIONS]+");
-            Console.WriteLine("Takes the supplied screenshot and looks in it for the artifact specified.");
-            Console.WriteLine();
-
-            // output the options
-            Console.WriteLine("Options:");
-            options.WriteOptionDescriptions(Console.Out);
-        }
-
-        /// <summary>
-        /// Test if a directory is writable by attempting to write and delete a lock file.
-        /// </summary>
-        /// <param name="path"></param>
-        /// <param name="logger"></param>
-        /// <returns></returns>
-        private static bool TestLockFile(string path, ILogger logger)
-        {
-            try
-            {
-                using (var lockFile = File.OpenWrite(workingDirectory + "lock"))
-                {
-                    ;
-                }
-
-                File.Delete(workingDirectory + "lock");
-            }
-            catch (AccessViolationException e)
-            {
-                logger.LogError("Can not write to working directory {workingDirectory} with error: {0}.", workingDirectory, e.Message);
-                return false;
-            }
-            catch (IOException e)
-            {
-                logger.LogError("Can not write to working directory {workingDirectory} with error: {0}.", workingDirectory, e.Message);
-                return false;
-            }
-
-            return true;
-        }
-
-        /// <summary>
-        /// Try to resolve the artifact artifactDetector by a given selection.
-        /// </summary>
-        /// <param name="logger"></param>
-        /// <returns></returns>
-        private static bool SetupArtifactDetector(ILogger logger)
-        {
-            if (detectorSelectionMap.ContainsKey(detectorSelection))
-            {
-                logger.LogInformation("Using artifactDetector {detectorSelection}.", detectorSelection);
-                artifactDetector = detectorSelectionMap[detectorSelection](loggerFactory);
-                return true;
-            }
-
-            return false;
-        }
-
-        private static bool SetupMatchFilter(ILogger logger)
-        {
-            if (filterSelectionMap.ContainsKey(filterSelection))
-            {
-                logger.LogInformation("Using match filter {filterSelection}.", filterSelection);
-                matchFilter = filterSelectionMap[filterSelection]();
-                return true;
-            }
-
-            return false;
-        }
-
-        /// <summary>
-        /// Get the artifact library from a file.
-        /// </summary>
-        /// <param name="logger"></param>
-        private static void FetchArtifactLibrary(ILogger logger, VADStopwatch stopwatch = null)
-        {
-            // Get the artifact library from a file.
-            if (File.Exists(workingDirectory + libraryFileName))
-            {
-                try
-                {
-                    artifactLibrary = ArtifactLibrary.FromFile(workingDirectory + libraryFileName, artifactDetector, stopwatch, loggerFactory);
-                    logger.LogDebug("Loaded artifact library from file {0}.", workingDirectory + libraryFileName);
-                }
-                catch (SerializationException)
-                {
-                    logger.LogWarning("Deserialization of artifact library failed.");
-                }
-            }
-            else
-            {
-                logger.LogDebug("Artifact library file not found at {0}.", workingDirectory + libraryFileName);
-            }
-        }
+        internal static Setup Setup { get => setup; set => setup = value; }
 
         [STAThread]
         static int Main(string[] args)
@@ -201,84 +28,24 @@ namespace ArbitraryArtifactDetector
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
 #endif
-            var logger = SetupLogging("Main");
 
-            // Parse the command line.
-            logger.LogDebug("Parsing the command line.");
-            var options = SetupCmdOptions();
             try
             {
-                options.Parse(args);
-            } catch (OptionException e)
-            {
-                logger.LogError("Error ocurred while parsing the options: {0} with option {1}.", e.Message, e.OptionName);
-                shouldShowHelp = true;
+                Setup = new Setup(args);
             }
-
-            // Should we show the help?
-            if (shouldShowHelp || string.IsNullOrEmpty(screenshotPath) || string.IsNullOrEmpty(artifactGoal))
+            catch (SetupError)
             {
-                ShowHelp(options);
-                return -1;
-            }
-            // We got the info.
-            logger.LogInformation("We got the path {screenshotPath} and the artifact goal {artifactGoal}.", screenshotPath, artifactGoal);
-
-            // Is there an existing and accessable working directory?
-            if (Directory.Exists(workingDirectory))
-            {
-                TestLockFile(workingDirectory, logger);
-            }
-
-            // Which artifact detector should we use?
-            if (!SetupArtifactDetector(logger))
-            {
-                ShowHelp(options);
                 return -1;
             }
 
-            // Which match filter should we use?
-            if (!SetupMatchFilter(logger))
-            {
-                ShowHelp(options);
-                return -1;
-            }
-
-            // Determine if we use a stopwatch in this run.
-            VADStopwatch stopwatch = null;
-            if (shouldEvaluate)
-            {
-                // Get stopwatch for evaluation.
-                stopwatch = VADStopwatch.GetInstance();
-            }
-
-            // Should we use a cache for the artifact library?
-            if (shouldCache)
-            {
-                FetchArtifactLibrary(logger, stopwatch);
-            }
-
-            // Some error occurred, get an empty library.
-            if (artifactLibrary == null)
-            {
-                logger.LogDebug("Creating new artifact library instance.");
-                try
-                {
-                    artifactLibrary = new ArtifactLibrary(workingDirectory, artifactDetector, loggerFactory);
-                }
-                catch (Exception e)
-                {
-                    logger.LogError("Could not instantiate artifact library: {0}", e.Message);
-                    return -1;
-                }
-            }
+            var logger = Setup.Logger;
 
             // Launch the actual program.
             logger.LogDebug("Call the actual comparison.");
             ArtifactType artifactType = null;
             try
             {
-                artifactType = artifactLibrary.GetArtifactType(artifactGoal, stopwatch);
+                artifactType = Setup.ArtifactLibrary.GetArtifactType(Setup.ArtifactGoal, Setup.Stopwatch);
             }
             catch (Exception e)
             {
@@ -293,14 +60,14 @@ namespace ArbitraryArtifactDetector
             }
 
             // Extract the features of the given image for comparison.
-            ProcessedImage observedImage = artifactDetector.ExtractFeatures(screenshotPath, stopwatch);
+            ProcessedImage observedImage = Setup.ArtifactDetector.ExtractFeatures(Setup.ScreenshotPath, Setup.Stopwatch);
             if (observedImage == null)
             {
                 logger.LogError("Could not get the screenshot.");
                 return -1;
             }
 
-            bool artifactFound = artifactDetector.ImageContainsArtifactType(observedImage, artifactType, matchFilter, out Mat drawingResult, out int matchCount, stopwatch);
+            bool artifactFound = Setup.ArtifactDetector.ImageContainsArtifactType(observedImage, artifactType, Setup.MatchFilter, out Mat drawingResult, out int matchCount, Setup.Stopwatch);
 
 #if DEBUG
             // Show the results in a window.
@@ -309,15 +76,15 @@ namespace ArbitraryArtifactDetector
 #endif
 
             // Chache the artifact library.
-            if (shouldCache)
+            if (Setup.ShouldCache)
             {
-                artifactLibrary.ExportToFile(libraryFileName, workingDirectory);
-                logger.LogInformation("Exported artifact library to {libraryFileName}.", workingDirectory + libraryFileName);
+                Setup.ArtifactLibrary.ExportToFile(Setup.LibraryFileName, Setup.WorkingDirectory);
+                logger.LogInformation("Exported artifact library to {libraryFileName}.", Setup.WorkingDirectory + Setup.LibraryFileName);
             }
 
             logger.LogInformation("The comparison yielded {0}.", artifactFound);
 
-            if (shouldEvaluate)
+            if (Setup.ShouldEvaluate)
             {
                 try
                 {
@@ -325,9 +92,9 @@ namespace ArbitraryArtifactDetector
                     if (!File.Exists("output.csv")) printHeader = true;
                     using (StreamWriter file = new StreamWriter("output.csv", true))
                     {
-                        if (printHeader) file.WriteLine("artifactDetector;screenshot_path;artifact_goal;" + stopwatch.LabelsToCSV() + ";found;match_count");
+                        if (printHeader) file.WriteLine("artifactDetector;screenshot_path;artifact_goal;" + Setup.Stopwatch.LabelsToCSV() + ";found;match_count");
 
-                        file.WriteLine(detectorSelection + ";" + screenshotPath + ";" + artifactGoal + ";" + stopwatch.TimesToCSVinNSprecision() + ";" + artifactFound + ";" + matchCount);
+                        file.WriteLine(Setup.DetectorSelection + ";" + Setup.ScreenshotPath + ";" + Setup.ArtifactGoal + ";" + Setup.Stopwatch.TimesToCSVinNSprecision() + ";" + artifactFound + ";" + matchCount);
                     }
                 }
                 catch (Exception e)
