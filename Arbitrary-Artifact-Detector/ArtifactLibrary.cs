@@ -24,13 +24,11 @@ namespace ArbitraryArtifactDetector.Model
     class ArtifactLibrary
     {
         [NonSerialized]
-        private IArtifactDetector _artifactDetector;
+        private IVisualArtifactDetector _artifactDetector;
         [NonSerialized]
         private ILogger _logger;
         [NonSerialized]
         private string _filePath;
-
-        private bool _dataChanged;
 
         /// <summary>
         /// This map is a storage for already processed features.
@@ -39,9 +37,10 @@ namespace ArbitraryArtifactDetector.Model
         private List<string> Types { get; set; }
 
         public string FilePath { get => _filePath; set => _filePath = value; }
-        public IArtifactDetector ArtifactDetector { get => _artifactDetector; set => _artifactDetector = value; }
+        public IVisualArtifactDetector ArtifactDetector { get => _artifactDetector; set => _artifactDetector = value; }
         public ILogger Logger { get => _logger; set => _logger = value; }
-        public bool DataChanged { get => _dataChanged; set => _dataChanged = value; }
+
+        public bool DataChanged { get; set; }
 
         /// <summary>
         /// Needs a file path to operate in and an artifact artifactDetector.
@@ -49,7 +48,7 @@ namespace ArbitraryArtifactDetector.Model
         /// <param name="filePath">The path of all library resources.</param>
         /// <param name="artifactDetector">An artifact artifactDetector instance to extract features.</param>
         /// <param name="_loggerFactory">Logger factory to get a new logger.</param>
-        public ArtifactLibrary(string filePath, IArtifactDetector artifactDetector, ILoggerFactory _loggerFactory)
+        public ArtifactLibrary(string filePath, IVisualArtifactDetector artifactDetector, ILogger logger)
         {
             if (filePath == null)
                 throw new ArgumentNullException(nameof(filePath));
@@ -61,7 +60,7 @@ namespace ArbitraryArtifactDetector.Model
             // Instantiate library.
             Library = new Dictionary<string, ArtifactType>();
 
-            Logger = _loggerFactory.CreateLogger("ArtifactLibrary");
+            Logger = logger;
 
             DataChanged = false;
 
@@ -146,7 +145,7 @@ namespace ArbitraryArtifactDetector.Model
         /// <param name="stopwatch">An optional stopwatch for evaluation.</param>
         /// <param name="logger">A logging factory.</param>
         /// <returns>The read artifact library.</returns>
-        public static ArtifactLibrary FromFile(string fileName, IArtifactDetector artifactDetector, VADStopwatch stopwatch = null, ILoggerFactory loggerFactory = null)
+        public static ArtifactLibrary FromFile(string fileName, IVisualArtifactDetector artifactDetector, VADStopwatch stopwatch = null, ILoggerFactory loggerFactory = null)
         {
             ILogger logger = loggerFactory.CreateLogger("ArtifactLibrary");
 

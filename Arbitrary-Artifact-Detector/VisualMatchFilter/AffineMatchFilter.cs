@@ -4,9 +4,11 @@
 * For license, please see "License-LGPL.txt".
 */
 
+using ArbitraryArtifactDetector.Helper;
 using Emgu.CV;
 using Emgu.CV.Structure;
 using Emgu.CV.Util;
+using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
 using System.Drawing;
@@ -18,6 +20,8 @@ namespace ArbitraryArtifactDetector.VisualMatchFilter
     /// </summary>
     public class AffineMatchFilter : BaseMatchFilter, IMatchFilter
     {
+        public AffineMatchFilter(ILogger logger, VADStopwatch stopwatch) : base(logger, stopwatch) { }
+
         public override Matrix<float> GetRanSaCTransformationMatrix(VectorOfKeyPoint modelKeyPoints, VectorOfKeyPoint queryKeyPoints, VectorOfVectorOfDMatch matches, ref Mat mask, int iterations, double inlierRatio, int patchSize)
         {
             // Get arrays of key points for easier access.

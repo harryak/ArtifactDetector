@@ -4,16 +4,16 @@
 * For license, please see "License-LGPL.txt".
 */
 
+using ArbitraryArtifactDetector.Helper;
 using Emgu.CV.Features2D;
 using Microsoft.Extensions.Logging;
 
 namespace ArbitraryArtifactDetector.VisualDetector
 {
-    class AkazeArtifactDetector : BaseArtifactDetector, IArtifactDetector
+    class AkazeArtifactDetector : BaseVisualArtifactDetector, IVisualArtifactDetector
     {
-        public AkazeArtifactDetector(ILoggerFactory _loggerFactory)
+        public AkazeArtifactDetector(ILogger logger, VADStopwatch stopwatch) : base(logger, stopwatch)
         {
-            Logger = _loggerFactory.CreateLogger("AkazeArtifactDetector");
 
             FeatureDetector = new AKAZE();
 

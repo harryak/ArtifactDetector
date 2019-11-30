@@ -4,18 +4,17 @@
 * For license, please see "License-LGPL.txt".
 */
 
+using ArbitraryArtifactDetector.Helper;
 using Emgu.CV.Features2D;
 using Emgu.CV.Flann;
 using Microsoft.Extensions.Logging;
 
 namespace ArbitraryArtifactDetector.VisualDetector
 {
-    class BriskArtifactDetector : BaseArtifactDetector, IArtifactDetector
+    class BriskArtifactDetector : BaseVisualArtifactDetector, IVisualArtifactDetector
     {
-        public BriskArtifactDetector(ILoggerFactory _loggerFactory)
+        public BriskArtifactDetector(ILogger logger, VADStopwatch stopwatch) : base(logger, stopwatch)
         {
-            Logger = _loggerFactory.CreateLogger("BriskArtifactDetector");
-
             FeatureDetector = new Brisk();
 
             LshIndexParams indexParams = new LshIndexParams(6, 12, 1);

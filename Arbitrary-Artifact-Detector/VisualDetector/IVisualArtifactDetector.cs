@@ -11,15 +11,14 @@ using ArbitraryArtifactDetector.VisualMatchFilter;
 
 namespace ArbitraryArtifactDetector.VisualDetector
 {
-    interface IArtifactDetector
+    interface IVisualArtifactDetector
     {
         /// <summary>
         /// Extract features of the given image using an OpenCV feature extractor.
         /// </summary>
         /// <param name="imagePath"></param>
-        /// <param name="stopwatch">An optional stopwatch used for evaluation.</param>
         /// <returns>The observed image with keypoints and descriptors.</returns>
-        ProcessedImage ExtractFeatures(string imagePath, VADStopwatch stopwatch = null);
+        ProcessedImage ExtractFeatures(string imagePath);
 
         /// <summary>
         /// Analyze the given observed image, whether the artifact type can be found within.
@@ -29,8 +28,7 @@ namespace ArbitraryArtifactDetector.VisualDetector
         /// <param name="matchFilter">The filter used for matching.</param>
         /// <param name="drawingResult">The resulting image to draw in a window.</param>
         /// <param name="matchCount">Count of matches, if one was found.</param>
-        /// <param name="stopwatch">An optional stopwatch used for evaluation.</param>
         /// <returns>Whether a match was found.</returns>
-        bool ImageContainsArtifactType(ProcessedImage observedImage, ArtifactType artifactType, IMatchFilter matchFilter, out Mat drawingResult, out int matchCount, VADStopwatch stopwatch = null);
+        bool ImageContainsArtifactType(ProcessedImage observedImage, ArtifactType artifactType, IMatchFilter matchFilter, out Mat drawingResult, out int matchCount);
     }
 }

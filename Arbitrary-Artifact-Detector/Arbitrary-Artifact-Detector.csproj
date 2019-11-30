@@ -160,7 +160,14 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="AADConfig.cs" />
-    <Compile Include="VisualDetector\BaseArtifactDetector.cs" />
+    <Compile Include="EnvironmentalDetector\IEnvironmentalDetector.cs" />
+    <Compile Include="EnvironmentalDetector\OpenWindowEnvironmentalDetector.cs" />
+    <Compile Include="Models\Point2D.cs" />
+    <Compile Include="Models\Rectangle.cs" />
+    <Compile Include="Models\ShowWindowCommand.cs" />
+    <Compile Include="Models\WindowInformation.cs" />
+    <Compile Include="Models\WindowPlacement.cs" />
+    <Compile Include="VisualDetector\BaseVisualArtifactDetector.cs" />
     <Compile Include="VisualDetector\BriskArtifactDetector.cs" />
     <Compile Include="VisualDetector\AkazeArtifactDetector.cs" />
     <Compile Include="VisualMatchFilter\SimpleMatchFilter.cs" />
@@ -172,7 +179,7 @@
     <Compile Include="ArtifactLibrary.cs" />
     <Compile Include="Models\ProcessedImage.cs" />
     <Compile Include="Models\ArtifactType.cs" />
-    <Compile Include="VisualDetector\IArtifactDetector.cs" />
+    <Compile Include="VisualDetector\IVisualArtifactDetector.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Setup.cs" />

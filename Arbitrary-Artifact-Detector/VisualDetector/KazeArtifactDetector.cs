@@ -4,18 +4,17 @@
 * For license, please see "License-LGPL.txt".
 */
 
+using ArbitraryArtifactDetector.Helper;
 using Emgu.CV.Features2D;
 using Emgu.CV.Flann;
 using Microsoft.Extensions.Logging;
 
 namespace ArbitraryArtifactDetector.VisualDetector
 {
-    class KazeArtifactDetector : BaseArtifactDetector, IArtifactDetector
+    class KazeArtifactDetector : BaseVisualArtifactDetector, IVisualArtifactDetector
     {
-        public KazeArtifactDetector(ILoggerFactory _loggerFactory)
+        public KazeArtifactDetector(ILogger logger, VADStopwatch stopwatch) : base(logger, stopwatch)
         {
-            Logger = _loggerFactory.CreateLogger("KazeArtifactDetector");
-
             FeatureDetector = new KAZE();
 
             LinearIndexParams ip = new LinearIndexParams();

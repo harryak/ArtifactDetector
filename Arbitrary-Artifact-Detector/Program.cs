@@ -4,6 +4,7 @@
  * For license, please see "License-LGPL.txt".
  */
 
+using ArbitraryArtifactDetector.EnvironmentalDetector;
 using ArbitraryArtifactDetector.Model;
 using ArbitraryArtifactDetector.Viewer;
 using Emgu.CV;
@@ -16,9 +17,7 @@ namespace ArbitraryArtifactDetector
 {
     class Program
     {
-        private static Setup setup;
-
-        internal static Setup Setup { get => setup; set => setup = value; }
+        internal static Setup Setup { get; set; }
 
         [STAThread]
         static int Main(string[] args)
@@ -28,7 +27,7 @@ namespace ArbitraryArtifactDetector
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
 #endif
-
+            
             try
             {
                 Setup = new Setup(args);
@@ -38,7 +37,23 @@ namespace ArbitraryArtifactDetector
                 return -1;
             }
 
-            var logger = Setup.Logger;
+            var logger = Setup.GetLogger("Main");
+
+            var envDetector = new OpenWindowEnvironmentalDetector(Setup.GetLogger("OpenWindowDetector"), Setup.Stopwatch);
+            var activeWindow = envDetector.GetActiveWindow();
+            logger.LogDebug("Foreground window is {windowName}.", activeWindow.ToString());
+
+            var openWindows = envDetector.GetOpenedWindows();
+
+            if (openWindows.Count > 0)
+            {
+                foreach(var openWindow in openWindows)
+                {
+                    logger.LogDebug("Have open window {windowName}.", openWindow.ToString());
+                }
+                return 1;
+            }
+            // Unreachable for now.
 
             // Launch the actual program.
             logger.LogDebug("Call the actual comparison.");
@@ -60,14 +75,14 @@ namespace ArbitraryArtifactDetector
             }
 
             // Extract the features of the given image for comparison.
-            ProcessedImage observedImage = Setup.ArtifactDetector.ExtractFeatures(Setup.ScreenshotPath, Setup.Stopwatch);
+            ProcessedImage observedImage = Setup.ArtifactDetector.ExtractFeatures(Setup.ScreenshotPath);
             if (observedImage == null)
             {
                 logger.LogError("Could not get the screenshot.");
                 return -1;
             }
 
-            bool artifactFound = Setup.ArtifactDetector.ImageContainsArtifactType(observedImage, artifactType, Setup.MatchFilter, out Mat drawingResult, out int matchCount, Setup.Stopwatch);
+            bool artifactFound = Setup.ArtifactDetector.ImageContainsArtifactType(observedImage, artifactType, Setup.MatchFilter, out Mat drawingResult, out int matchCount);
 
 #if DEBUG
             // Show the results in a window.

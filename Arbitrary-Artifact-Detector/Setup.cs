@@ -22,50 +22,61 @@ namespace ArbitraryArtifactDetector
     internal class Setup
     {
         /// <summary>
-        /// Map for selecting an artifact artifactDetector by its name.
+        /// Map for selecting a visual artifact detector by its name.
         /// </summary>
-        private readonly Dictionary<string, Func<ILoggerFactory, IArtifactDetector>> detectorSelectionMap =
-            new Dictionary<string, Func<ILoggerFactory, IArtifactDetector>>(){
-                { "akaze", (ILoggerFactory loggerFactory) => { return new AkazeArtifactDetector(loggerFactory); } },
-                { "brisk", (ILoggerFactory loggerFactory) => { return new BriskArtifactDetector(loggerFactory); } },
-                { "kaze", (ILoggerFactory loggerFactory) => { return new KazeArtifactDetector(loggerFactory); } },
-                { "orb", (ILoggerFactory loggerFactory) => { return new OrbArtifactDetector(loggerFactory); } }
+        private readonly Dictionary<string, Func<ILogger, VADStopwatch, IVisualArtifactDetector>> detectorSelectionMap =
+            new Dictionary<string, Func<ILogger, VADStopwatch, IVisualArtifactDetector>>(){
+                { "akaze", (ILogger logger, VADStopwatch stopwatch) => { return new AkazeArtifactDetector(logger, stopwatch); } },
+                { "brisk", (ILogger logger, VADStopwatch stopwatch) => { return new BriskArtifactDetector(logger, stopwatch); } },
+                { "kaze", (ILogger logger, VADStopwatch stopwatch) => { return new KazeArtifactDetector(logger, stopwatch); } },
+                { "orb", (ILogger logger, VADStopwatch stopwatch) => { return new OrbArtifactDetector(logger, stopwatch); } }
             };
 
-        private readonly Dictionary<string, Func<IMatchFilter>> filterSelectionMap =
-            new Dictionary<string, Func<IMatchFilter>>()
+        /// <summary>
+        /// Map for selecting a feature match filter by its name.
+        /// </summary>
+        private readonly Dictionary<string, Func<ILogger, VADStopwatch, IMatchFilter>> filterSelectionMap =
+            new Dictionary<string, Func<ILogger, VADStopwatch, IMatchFilter>>()
             {
-                { "simple", () => { return new SimpleMatchFilter(); } },
-                { "affine", () => { return new AffineMatchFilter(); } },
+                { "simple", (ILogger logger, VADStopwatch stopwatch) => { return new SimpleMatchFilter(logger, stopwatch); } },
+                { "affine", (ILogger logger, VADStopwatch stopwatch) => { return new AffineMatchFilter(logger, stopwatch); } },
             };
 
         private bool shouldShowHelp = false;
 
-        public ILogger Logger { get; set; }
+        /// <summary>
+        /// 
+        /// </summary>
+        private ILogger Logger { get; set; }
         public VADStopwatch Stopwatch { get; set; } = null;
+
         public ArtifactLibrary ArtifactLibrary { get; set; } = null;
         public string ArtifactGoal { get; set; } = "";
         public string ScreenshotPath { get; set; } = "";
         public string WorkingDirectory { get; set; } = "";
-        public IArtifactDetector ArtifactDetector { get; set; } = null;
+        public IVisualArtifactDetector ArtifactDetector { get; set; } = null;
         public IMatchFilter MatchFilter { get; set; } = null;
         public bool ShouldEvaluate { get; set; } = false;
         public bool ShouldCache { get; set; } = false;
         public string LibraryFileName { get; } = "artifacts.bin";
 
-        public ILoggerFactory LoggerFactory { get; set; }
+        private ILoggerFactory LoggerFactory { get; set; }
         public string DetectorSelection { get; set; } = "orb";
         public string FilterSelection { get; set; } = "simple";
 
         /// <summary>
-        /// Setup the loggerFactory and return a new logger with the given categoryName.
+        /// Setup the loggerFactory.
         /// </summary>
-        /// <param name="categoryName"></param>
         /// <returns></returns>
-        private ILogger SetupLogging(string categoryName)
+        private void SetupLogging()
         {
             LoggerFactory = new LoggerFactory();
             LoggerFactory.AddProvider(new NLogLoggerProvider());
+        }
+
+        public ILogger GetLogger(string categoryName)
+        {
+            if (LoggerFactory == null) { SetupLogging(); }
             return LoggerFactory.CreateLogger(categoryName);
         }
 
@@ -113,7 +124,7 @@ namespace ArbitraryArtifactDetector
         /// <param name="path"></param>
         /// <param name="logger"></param>
         /// <returns></returns>
-        private bool TestLockFile(string path, ILogger logger)
+        private bool TestLockFile(string path)
         {
             try
             {
@@ -126,12 +137,12 @@ namespace ArbitraryArtifactDetector
             }
             catch (AccessViolationException e)
             {
-                logger.LogError("Can not write to working directory {path} with error: {0}.", path, e.Message);
+                Logger.LogError("Can not write to working directory {path} with error: {0}.", path, e.Message);
                 return false;
             }
             catch (IOException e)
             {
-                logger.LogError("Can not write to working directory {path} with error: {0}.", path, e.Message);
+                Logger.LogError("Can not write to working directory {path} with error: {0}.", path, e.Message);
                 return false;
             }
 
@@ -141,26 +152,25 @@ namespace ArbitraryArtifactDetector
         /// <summary>
         /// Try to resolve the artifact artifactDetector by a given selection.
         /// </summary>
-        /// <param name="logger"></param>
         /// <returns></returns>
-        private bool SetupArtifactDetector(ILogger logger)
+        private bool SetupArtifactDetector()
         {
             if (detectorSelectionMap.ContainsKey(DetectorSelection))
             {
-                logger.LogInformation("Using artifactDetector {detectorSelection}.", DetectorSelection);
-                ArtifactDetector = detectorSelectionMap[DetectorSelection](LoggerFactory);
+                Logger.LogInformation("Using artifactDetector {detectorSelection}.", DetectorSelection);
+                ArtifactDetector = detectorSelectionMap[DetectorSelection](GetLogger(DetectorSelection + "ArtifactDetector"), Stopwatch);
                 return true;
             }
 
             return false;
         }
 
-        private bool SetupMatchFilter(ILogger logger)
+        private bool SetupMatchFilter()
         {
             if (filterSelectionMap.ContainsKey(FilterSelection))
             {
-                logger.LogInformation("Using match filter {filterSelection}.", FilterSelection);
-                MatchFilter = filterSelectionMap[FilterSelection]();
+                Logger.LogInformation("Using match filter {filterSelection}.", FilterSelection);
+                MatchFilter = filterSelectionMap[FilterSelection](GetLogger(FilterSelection + "MatchFilter"), Stopwatch);
                 return true;
             }
 
@@ -171,30 +181,30 @@ namespace ArbitraryArtifactDetector
         /// Get the artifact library from a file.
         /// </summary>
         /// <param name="logger"></param>
-        private void FetchArtifactLibrary(ILogger logger, VADStopwatch stopwatch = null)
+        private void FetchArtifactLibrary()
         {
             // Get the artifact library from a file.
             if (File.Exists(WorkingDirectory + LibraryFileName))
             {
                 try
                 {
-                    ArtifactLibrary = ArtifactLibrary.FromFile(WorkingDirectory + LibraryFileName, ArtifactDetector, stopwatch, LoggerFactory);
-                    logger.LogDebug("Loaded artifact library from file {0}.", WorkingDirectory + LibraryFileName);
+                    ArtifactLibrary = ArtifactLibrary.FromFile(WorkingDirectory + LibraryFileName, ArtifactDetector, Stopwatch, LoggerFactory);
+                    Logger.LogDebug("Loaded artifact library from file {0}.", WorkingDirectory + LibraryFileName);
                 }
                 catch (SerializationException)
                 {
-                    logger.LogWarning("Deserialization of artifact library failed.");
+                    Logger.LogWarning("Deserialization of artifact library failed.");
                 }
             }
             else
             {
-                logger.LogDebug("Artifact library file not found at {0}.", WorkingDirectory + LibraryFileName);
+                Logger.LogDebug("Artifact library file not found at {0}.", WorkingDirectory + LibraryFileName);
             }
         }
 
         public Setup(string[] commandLineArguments)
         {
-            Logger = SetupLogging("Setup");
+            Logger = GetLogger("Setup");
 
             // Parse the command line.
             Logger.LogDebug("Parsing the command line.");
@@ -221,18 +231,18 @@ namespace ArbitraryArtifactDetector
             // Is there an existing and accessable working directory?
             if (Directory.Exists(WorkingDirectory))
             {
-                TestLockFile(WorkingDirectory, Logger);
+                TestLockFile(WorkingDirectory);
             }
 
             // Which artifact detector should we use?
-            if (!SetupArtifactDetector(Logger))
+            if (!SetupArtifactDetector())
             {
                 ShowHelp(options);
                 throw new SetupError("Could not set up artifact detector.");
             }
 
             // Which match filter should we use?
-            if (!SetupMatchFilter(Logger))
+            if (!SetupMatchFilter())
             {
                 ShowHelp(options);
                 throw new SetupError("Could not set up match filter.");
@@ -248,7 +258,7 @@ namespace ArbitraryArtifactDetector
             // Should we use a cache for the artifact library?
             if (ShouldCache)
             {
-                FetchArtifactLibrary(Logger, Stopwatch);
+                FetchArtifactLibrary();
             }
 
             // Some error occurred, get an empty library.
@@ -257,7 +267,7 @@ namespace ArbitraryArtifactDetector
                 Logger.LogDebug("Creating new artifact library instance.");
                 try
                 {
-                    ArtifactLibrary = new ArtifactLibrary(WorkingDirectory, ArtifactDetector, LoggerFactory);
+                    ArtifactLibrary = new ArtifactLibrary(WorkingDirectory, ArtifactDetector, GetLogger("ArtifactLibrary"));
                 }
                 catch (Exception e)
                 {

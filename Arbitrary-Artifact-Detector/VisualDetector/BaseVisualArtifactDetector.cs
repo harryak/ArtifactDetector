@@ -22,9 +22,16 @@ namespace ArbitraryArtifactDetector.VisualDetector
     /// <summary>
     /// Base class for all artifact detectors.
     /// </summary>
-    abstract class BaseArtifactDetector : IArtifactDetector
+    abstract class BaseVisualArtifactDetector : IVisualArtifactDetector
     {
         protected ILogger Logger { get; set; }
+        protected VADStopwatch Stopwatch { get; set; }
+
+        protected BaseVisualArtifactDetector(ILogger logger, VADStopwatch stopwatch)
+        {
+            Logger = logger;
+            Stopwatch = stopwatch;
+        }
 
         /// <summary>
         /// Extract features of the given image using an OpenCV feature extractor.
@@ -32,11 +39,11 @@ namespace ArbitraryArtifactDetector.VisualDetector
         /// <param name="imagePath"></param>
         /// <param name="stopwatch">An optional stopwatch used for evaluation.</param>
         /// <returns>The observed image with keypoints and descriptors.</returns>
-        public ProcessedImage ExtractFeatures(string imagePath, VADStopwatch stopwatch = null)
+        public ProcessedImage ExtractFeatures(string imagePath)
         {
-            if (stopwatch != null)
+            if (Stopwatch != null)
             {
-                stopwatch.Restart();
+                Stopwatch.Restart();
             }
 
             Mat image;
@@ -55,10 +62,10 @@ namespace ArbitraryArtifactDetector.VisualDetector
 
             FeatureDetector.DetectAndCompute(image.GetUMat(AccessType.Read), null, keyPoints, descriptors, false);
 
-            if (stopwatch != null)
+            if (Stopwatch != null)
             {
-                stopwatch.Stop("features_extracted");
-                Logger.LogDebug("Extracted features from image in {0} ms.", stopwatch.ElapsedMilliseconds);
+                Stopwatch.Stop("features_extracted");
+                Logger.LogDebug("Extracted features from image in {0} ms.", Stopwatch.ElapsedMilliseconds);
             }
 
             if (descriptors.Width < 1)
@@ -80,7 +87,7 @@ namespace ArbitraryArtifactDetector.VisualDetector
         /// <param name="matchCount">Count of matches, if found.</param>
         /// <param name="stopwatch">An optional stopwatch used for evaluation.</param>
         /// <returns>A homography or null if none was found.</returns>
-        public bool ImageContainsArtifactType(ProcessedImage observedImage, ArtifactType artifactType, IMatchFilter matchFilter, out Mat drawingResult, out int matchCount, VADStopwatch stopwatch = null)
+        public bool ImageContainsArtifactType(ProcessedImage observedImage, ArtifactType artifactType, IMatchFilter matchFilter, out Mat drawingResult, out int matchCount)
         {
             // Only needed for debugging purposes, otherwise will always be null.
             drawingResult = null;
@@ -98,8 +105,7 @@ namespace ArbitraryArtifactDetector.VisualDetector
                 out matches,
                 out matchesMask,
                 out homography,
-                out matchCount,
-                stopwatch
+                out matchCount
             );
 
 #if DEBUG
@@ -120,7 +126,7 @@ namespace ArbitraryArtifactDetector.VisualDetector
         /// <param name="homography">Reference to a possible homography.</param>
         /// <param name="stopwatch">An optional stopwatch used for evaluation.</param>
         /// <returns>A matched artifact image, if available.</returns>
-        public ProcessedImage FindMatch(ProcessedImage observedImage, ArtifactType artifactType, IMatchFilter matchFilter, out VectorOfVectorOfDMatch goodMatches, out Mat matchesMask, out Matrix<float> homography, out int matchCount, VADStopwatch stopwatch = null)
+        public ProcessedImage FindMatch(ProcessedImage observedImage, ArtifactType artifactType, IMatchFilter matchFilter, out VectorOfVectorOfDMatch goodMatches, out Mat matchesMask, out Matrix<float> homography, out int matchCount)
         {
             int minMatches = AADConfig.MinimumMatchesRequired;
             double uniquenessThreshold = AADConfig.MatchUniquenessThreshold;
@@ -139,9 +145,9 @@ namespace ArbitraryArtifactDetector.VisualDetector
             homography = null;
 
             // Get the stopwatch for matching.
-            if (stopwatch != null)
+            if (Stopwatch != null)
             {
-                stopwatch.Restart();
+                Stopwatch.Restart();
             }
 
             int artifactNumber = 0;
@@ -220,10 +226,10 @@ namespace ArbitraryArtifactDetector.VisualDetector
                 artifactNumber++;
             }
 
-            if (stopwatch != null)
+            if (Stopwatch != null)
             {
-                stopwatch.Stop("matching_finished", artifactNumber);
-                Logger.LogDebug("Matching finished in {0} ms.", stopwatch.ElapsedMilliseconds);
+                Stopwatch.Stop("matching_finished", artifactNumber);
+                Logger.LogDebug("Matching finished in {0} ms.", Stopwatch.ElapsedMilliseconds);
             }
 
             return matchingArtifact;

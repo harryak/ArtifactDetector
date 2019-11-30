@@ -4,17 +4,16 @@
 * For license, please see "License-LGPL.txt".
 */
 
+using ArbitraryArtifactDetector.Helper;
 using Emgu.CV.Features2D;
 using Microsoft.Extensions.Logging;
 
 namespace ArbitraryArtifactDetector.VisualDetector
 {
-    class OrbArtifactDetector : BaseArtifactDetector, IArtifactDetector
+    class OrbArtifactDetector : BaseVisualArtifactDetector, IVisualArtifactDetector
     {
-        public OrbArtifactDetector(ILoggerFactory _loggerFactory)
+        public OrbArtifactDetector(ILogger logger, VADStopwatch stopwatch) : base(logger, stopwatch)
         {
-            Logger = _loggerFactory.CreateLogger("OrbArtifactDetector");
-
             //IIndexParams indexParams = new LshIndexParams(6, 12, 1);
             //SearchParams searchParams = new SearchParams(50);
             //DescriptorMatcher = new FlannBasedMatcher(indexParams, searchParams);
