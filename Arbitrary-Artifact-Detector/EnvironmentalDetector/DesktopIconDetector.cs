@@ -15,12 +15,12 @@ using System.Text;
 
 namespace ArbitraryArtifactDetector.EnvironmentalDetector
 {
-    internal class DesktopIconEnvironmentalDetector : IEnvironmentalDetector
+    internal class DesktopIconDetector : IEnvironmentalDetector
     {
         private VADStopwatch Stopwatch { get; set; }
         private ILogger Logger { get; set; }
 
-        internal DesktopIconEnvironmentalDetector(ILogger logger, VADStopwatch stopwatch = null)
+        internal DesktopIconDetector(ILogger logger, VADStopwatch stopwatch = null)
         {
             Logger = logger;
             Stopwatch = stopwatch;
@@ -77,7 +77,7 @@ namespace ArbitraryArtifactDetector.EnvironmentalDetector
 
                     string iconName = Encoding.Unicode.GetString(vBuffer, 0,
                             (int)vNumberOfBytesRead);
-                    iconName = iconName.Replace("\0", "");
+                    iconName = iconName.Substring(0, iconName.IndexOf('\0'));
 
                     SendMessage(desktopHandle, LVM_GETITEMPOSITION, i, vPointer.ToInt32());
 

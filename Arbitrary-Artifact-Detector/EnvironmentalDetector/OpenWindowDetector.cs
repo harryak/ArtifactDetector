@@ -16,12 +16,12 @@ using System.Text;
 
 namespace ArbitraryArtifactDetector.EnvironmentalDetector
 {
-    class OpenWindowEnvironmentalDetector : IEnvironmentalDetector
+    class OpenWindowDetector : IEnvironmentalDetector
     {
         private VADStopwatch Stopwatch { get; set; }
         private ILogger Logger { get; set; }
 
-        public OpenWindowEnvironmentalDetector(ILogger logger, VADStopwatch stopwatch = null)
+        public OpenWindowDetector(ILogger logger, VADStopwatch stopwatch = null)
         {
             Logger = logger;
             Stopwatch = stopwatch;

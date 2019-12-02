@@ -160,9 +160,11 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="AADConfig.cs" />
-    <Compile Include="EnvironmentalDetector\DesktopIconEnvironmentalDetector.cs" />
+    <Compile Include="EnvironmentalDetector\DesktopIconDetector.cs" />
     <Compile Include="EnvironmentalDetector\IEnvironmentalDetector.cs" />
-    <Compile Include="EnvironmentalDetector\OpenWindowEnvironmentalDetector.cs" />
+    <Compile Include="EnvironmentalDetector\InstalledProgramsDetector.cs" />
+    <Compile Include="EnvironmentalDetector\Models\InstalledProgram.cs" />
+    <Compile Include="EnvironmentalDetector\OpenWindowDetector.cs" />
     <Compile Include="EnvironmentalDetector\Models\DesktopIcon.cs" />
     <Compile Include="EnvironmentalDetector\Models\Point2D.cs" />
     <Compile Include="EnvironmentalDetector\Models\Rectangle.cs" />
