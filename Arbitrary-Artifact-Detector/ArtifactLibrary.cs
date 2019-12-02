@@ -29,6 +29,8 @@ namespace ArbitraryArtifactDetector.Model
         private ILogger _logger;
         [NonSerialized]
         private string _filePath;
+        [NonSerialized]
+        private VADStopwatch _stopwatch;
 
         /// <summary>
         /// This map is a storage for already processed features.
@@ -38,7 +40,8 @@ namespace ArbitraryArtifactDetector.Model
 
         public string FilePath { get => _filePath; set => _filePath = value; }
         public IVisualDetector ArtifactDetector { get => _artifactDetector; set => _artifactDetector = value; }
-        public ILogger Logger { get => _logger; set => _logger = value; }
+        public ILogger Logger { get => _logger; private set => _logger = value; }
+        public VADStopwatch Stopwatch { get => _stopwatch; private set => _stopwatch = value; }
 
         public bool DataChanged { get; set; }
 
@@ -48,7 +51,7 @@ namespace ArbitraryArtifactDetector.Model
         /// <param name="filePath">The path of all library resources.</param>
         /// <param name="artifactDetector">An artifact artifactDetector instance to extract features.</param>
         /// <param name="_loggerFactory">Logger factory to get a new logger.</param>
-        public ArtifactLibrary(string filePath, IVisualDetector artifactDetector, ILogger logger)
+        public ArtifactLibrary(string filePath, IVisualDetector artifactDetector, ILogger logger, VADStopwatch stopwatch)
         {
             if (filePath == null)
                 throw new ArgumentNullException(nameof(filePath));
@@ -61,6 +64,7 @@ namespace ArbitraryArtifactDetector.Model
             Library = new Dictionary<string, ArtifactType>();
 
             Logger = logger;
+            Stopwatch = stopwatch;
 
             DataChanged = false;
 
@@ -76,7 +80,7 @@ namespace ArbitraryArtifactDetector.Model
         /// <param name="name">Name of the artifact</param>
         /// <param name="stopwatch">An optional stopwatch for evaluation.</param>
         /// <returns>The retrieved artifact type.</returns>
-        public ArtifactType GetArtifactType(string name, VADStopwatch stopwatch = null)
+        public ArtifactType GetArtifactType(string name)
         {
             if (name == null)
                 throw new ArgumentNullException(nameof(name));
@@ -84,14 +88,16 @@ namespace ArbitraryArtifactDetector.Model
             if (!Types.Contains(name))
                 throw new NotImplementedException("Artifact type was not found.");
 
-            if (stopwatch != null)
-                stopwatch.Restart();
+            if (Stopwatch != null)
+            {
+                Stopwatch.Restart();
+            }
 
             // Either read from library, or generate.
             if (!Library.ContainsKey(name))
             {
                 // Generate artifact object freshly.
-                Library[name] = new ArtifactType(_name: name);
+                Library[name] = new ArtifactType(name: name);
 
                 foreach (string imageFile in GetImageFilesForArtifactType(name))
                 {
@@ -104,10 +110,10 @@ namespace ArbitraryArtifactDetector.Model
                 }
             }
 
-            if (stopwatch != null)
+            if (Stopwatch != null)
             {
-                stopwatch.Stop("artifacttype_retrieved");
-                Logger.LogDebug("Retrieved artifact type in {0} ms.", stopwatch.ElapsedMilliseconds);
+                Stopwatch.Stop("artifacttype_retrieved");
+                Logger.LogDebug("Retrieved artifact type in {0} ms.", Stopwatch.ElapsedMilliseconds);
             }
 
             return Library[name];
@@ -165,6 +171,7 @@ namespace ArbitraryArtifactDetector.Model
                 artifactLibrary.FilePath = FileHelper.AddDirectorySeparator(Path.GetDirectoryName(fileName));
                 artifactLibrary.ArtifactDetector = artifactDetector;
                 artifactLibrary.Logger = logger;
+                artifactLibrary.Stopwatch = stopwatch;
                 artifactLibrary.DataChanged = false;
             }
 

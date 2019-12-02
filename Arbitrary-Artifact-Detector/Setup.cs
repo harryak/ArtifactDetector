@@ -19,7 +19,7 @@ using System.Runtime.Serialization;
 namespace ArbitraryArtifactDetector
 {
     [Serializable]
-    internal class Setup
+    class Setup
     {
         /// <summary>
         /// Map for selecting a visual artifact detector by its name.

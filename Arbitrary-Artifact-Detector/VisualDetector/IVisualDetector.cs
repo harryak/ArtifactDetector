@@ -4,13 +4,14 @@
 * For license, please see "License-LGPL.txt".
 */
 
+using ArbitraryArtifactDetector.Detector;
 using ArbitraryArtifactDetector.Model;
-using Emgu.CV;
 using ArbitraryArtifactDetector.VisualMatchFilter;
+using Emgu.CV;
 
 namespace ArbitraryArtifactDetector.VisualDetector
 {
-    interface IVisualDetector
+    interface IVisualDetector : IDetector
     {
         /// <summary>
         /// Extract features of the given image using an OpenCV feature extractor.

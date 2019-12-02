@@ -4,9 +4,10 @@
 * For license, please see "License-LGPL.txt".
 */
 
-namespace ArbitraryArtifactDetector
+namespace ArbitraryArtifactDetector.Detector
 {
-    interface ICompoundDetector
+    interface IDetector
     {
+        bool FindArtifact(Setup setup);
     }
 }

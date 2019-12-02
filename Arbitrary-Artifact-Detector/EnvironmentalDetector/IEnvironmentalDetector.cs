@@ -4,9 +4,11 @@
 * For license, please see "License-LGPL.txt".
 */
 
+using ArbitraryArtifactDetector.Detector;
+
 namespace ArbitraryArtifactDetector.EnvironmentalDetector
 {
-    interface IEnvironmentalDetector
+    interface IEnvironmentalDetector : IDetector
     {
 
     }

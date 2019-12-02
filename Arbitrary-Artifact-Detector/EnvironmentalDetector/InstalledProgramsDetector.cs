@@ -8,11 +8,12 @@ using ArbitraryArtifactDetector.EnvironmentalDetector.Models;
 using ArbitraryArtifactDetector.Helper;
 using Microsoft.Extensions.Logging;
 using Microsoft.Win32;
+using System;
 using System.Collections.Generic;
 
 namespace ArbitraryArtifactDetector.EnvironmentalDetector
 {
-    public class InstalledProgramsDetector : BaseEnvironmentalDetector, IEnvironmentalDetector
+    class InstalledProgramsDetector : BaseEnvironmentalDetector, IEnvironmentalDetector
     {
         const string registry_key = @"SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall";
 
@@ -65,6 +66,11 @@ namespace ArbitraryArtifactDetector.EnvironmentalDetector
                 && string.IsNullOrEmpty(releaseType)
                 && string.IsNullOrEmpty(parentName)
                 && (systemComponent == null || (int) systemComponent == 0);
+        }
+
+        public override bool FindArtifact(Setup setup)
+        {
+            throw new NotImplementedException();
         }
     }
 }

@@ -4,6 +4,11 @@
 * For license, please see "License-LGPL.txt".
 */
 
+using ArbitraryArtifactDetector.Detector;
+using ArbitraryArtifactDetector.Helper;
+using ArbitraryArtifactDetector.Model;
+using ArbitraryArtifactDetector.Viewer;
+using ArbitraryArtifactDetector.VisualMatchFilter;
 using Emgu.CV;
 using Emgu.CV.CvEnum;
 using Emgu.CV.Features2D;
@@ -13,9 +18,7 @@ using Microsoft.Extensions.Logging;
 using System;
 using System.Drawing;
 using System.IO;
-using ArbitraryArtifactDetector.VisualMatchFilter;
-using ArbitraryArtifactDetector.Helper;
-using ArbitraryArtifactDetector.Model;
+using System.Windows.Forms;
 
 namespace ArbitraryArtifactDetector.VisualDetector
 {
@@ -25,6 +28,72 @@ namespace ArbitraryArtifactDetector.VisualDetector
     abstract class BaseVisualDetector : BaseDetector, IVisualDetector
     {
         protected BaseVisualDetector(ILogger logger, VADStopwatch stopwatch = null) : base(logger, stopwatch) { }
+
+        protected Feature2D FeatureDetector { get; set; }
+        protected DescriptorMatcher DescriptorMatcher { get; set; }
+
+        public override bool FindArtifact(Setup setup)
+        {
+            ArtifactType artifactType = null;
+            try
+            {
+                artifactType = setup.ArtifactLibrary.GetArtifactType(setup.ArtifactGoal);
+            }
+            catch (Exception e)
+            {
+                Logger.LogError("Could not get artifact type: {0}", e.Message);
+                throw new ArgumentNullException("Could not get artifact type: { 0 }", e.Message);
+            }
+
+            if (artifactType.Images.Count < 1)
+            {
+                Logger.LogError("Could not get any images for the artifact type.");
+                throw new ArgumentNullException("No images for the artifact type found.");
+            }
+
+            ProcessedImage observedImage = ExtractFeatures(setup.ScreenshotPath);
+
+            bool artifactTypeFound = ImageContainsArtifactType(observedImage, artifactType, setup.MatchFilter, out Mat drawingResult, out int matchCount);
+
+#if DEBUG
+            // Prepare debug window output.
+            Application.EnableVisualStyles();
+            Application.SetCompatibleTextRenderingDefault(false);
+            // Show the results in a window.
+            if (drawingResult != null)
+                Application.Run(new ImageViewer(drawingResult));
+#endif
+
+            // Chache the artifact library.
+            if (setup.ShouldCache)
+            {
+                setup.ArtifactLibrary.ExportToFile(setup.LibraryFileName, setup.WorkingDirectory);
+                Logger.LogInformation("Exported artifact library to {libraryFileName}.", setup.WorkingDirectory + setup.LibraryFileName);
+            }
+
+            Logger.LogInformation("The comparison yielded {0}.", artifactTypeFound);
+
+            if (setup.ShouldEvaluate)
+            {
+                try
+                {
+                    bool printHeader = false;
+                    if (!File.Exists("output.csv")) printHeader = true;
+                    using (StreamWriter file = new StreamWriter("output.csv", true))
+                    {
+                        if (printHeader) file.WriteLine("artifactDetector;screenshot_path;artifact_goal;" + setup.Stopwatch.LabelsToCSV() + ";found;match_count");
+
+                        file.WriteLine(setup.DetectorSelection + ";" + setup.ScreenshotPath + ";" + setup.ArtifactGoal + ";" + setup.Stopwatch.TimesToCSVinNSprecision() + ";" + artifactTypeFound + ";" + matchCount);
+                    }
+                }
+                catch (Exception e)
+                {
+                    Logger.LogError("Could not write to output.csv: {0}", e.Message);
+                }
+            }
+
+            return artifactTypeFound;
+        }
 
         /// <summary>
         /// Extract features of the given image using an OpenCV feature extractor.
@@ -109,7 +178,7 @@ namespace ArbitraryArtifactDetector.VisualDetector
         /// <param name="matchesMask">Reference to the used result mask.</param>
         /// <param name="homography">Reference to a possible homography.</param>
         /// <returns>A matched artifact image, if available.</returns>
-        public ProcessedImage FindMatch(ProcessedImage observedImage, ArtifactType artifactType, IMatchFilter matchFilter, out VectorOfVectorOfDMatch goodMatches, out Mat matchesMask, out Matrix<float> homography, out int matchCount)
+        private ProcessedImage FindMatch(ProcessedImage observedImage, ArtifactType artifactType, IMatchFilter matchFilter, out VectorOfVectorOfDMatch goodMatches, out Mat matchesMask, out Matrix<float> homography, out int matchCount)
         {
             int minMatches = AADConfig.MinimumMatchesRequired;
             double uniquenessThreshold = AADConfig.MatchUniquenessThreshold;
@@ -243,7 +312,7 @@ namespace ArbitraryArtifactDetector.VisualDetector
         /// <param name="matchesMask">Reference to the used result mask.</param>
         /// <param name="homography">Reference to a possible homography.</param>
         /// <returns>The result of DrawMatches.</returns>
-        public Mat Draw(ProcessedImage observedImage, ProcessedImage artifactImage, VectorOfVectorOfDMatch matches, Mat matchesMask, Matrix<float> homography)
+        private Mat Draw(ProcessedImage observedImage, ProcessedImage artifactImage, VectorOfVectorOfDMatch matches, Mat matchesMask, Matrix<float> homography)
         {
             //Draw the matched keypoints
             Mat resultingImage = new Mat();
@@ -308,7 +377,7 @@ namespace ArbitraryArtifactDetector.VisualDetector
         /// <param name="imagePath">Path to the image.</param>
         /// <exception cref="FileNotFoundException">If the file doesn't exist.</exception>
         /// <returns>A EmguCV Mat.</returns>
-        public Mat LoadImage(string imagePath)
+        private Mat LoadImage(string imagePath)
         {
             Mat image;
 
@@ -329,8 +398,5 @@ namespace ArbitraryArtifactDetector.VisualDetector
 
             return image;
         }
-
-        protected Feature2D FeatureDetector { get; set; }
-        protected DescriptorMatcher DescriptorMatcher { get; set; }
     }
 }

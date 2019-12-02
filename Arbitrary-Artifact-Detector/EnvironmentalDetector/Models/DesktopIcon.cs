@@ -8,7 +8,7 @@ using System.Drawing;
 
 namespace ArbitraryArtifactDetector.EnvironmentalDetector.Models
 {
-    public class DesktopIcon
+    class DesktopIcon
     {
         public DesktopIcon(string name, Point location)
         {

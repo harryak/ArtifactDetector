@@ -8,12 +8,12 @@ using ArbitraryArtifactDetector.Helper;
 using Microsoft.Extensions.Logging;
 using System.Diagnostics;
 
-namespace ArbitraryArtifactDetector
+namespace ArbitraryArtifactDetector.Detector
 {
     /// <summary>
     /// A base class to provide common functions for all detectors.
     /// </summary>
-    public class BaseDetector
+    abstract class BaseDetector : IDetector
     {
         /// <summary>
         /// A logger instance.
@@ -58,5 +58,7 @@ namespace ArbitraryArtifactDetector
                 Logger.LogDebug(message, Stopwatch.ElapsedMilliseconds);
             }
         }
+
+        abstract public bool FindArtifact(Setup setup);
     }
 }

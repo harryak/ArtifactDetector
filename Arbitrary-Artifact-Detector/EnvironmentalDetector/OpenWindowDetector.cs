@@ -13,10 +13,11 @@ using System.Diagnostics;
 using System.IO;
 using System.Runtime.InteropServices;
 using System.Text;
+using ArbitraryArtifactDetector.Model;
 
 namespace ArbitraryArtifactDetector.EnvironmentalDetector
 {
-    public class OpenWindowDetector : BaseEnvironmentalDetector, IEnvironmentalDetector
+    class OpenWindowDetector : BaseEnvironmentalDetector, IEnvironmentalDetector
     {
         public OpenWindowDetector(ILogger logger, VADStopwatch stopwatch = null) : base(logger, stopwatch) { }
 
@@ -108,6 +109,11 @@ namespace ArbitraryArtifactDetector.EnvironmentalDetector
                 }
             }
             return "";
+        }
+
+        public override bool FindArtifact(Setup setup)
+        {
+            throw new NotImplementedException();
         }
 
         #region DLL imports

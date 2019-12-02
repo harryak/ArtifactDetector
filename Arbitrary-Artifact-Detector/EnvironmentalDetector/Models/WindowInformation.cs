@@ -10,7 +10,7 @@ using System.Windows.Forms;
 
 namespace ArbitraryArtifactDetector.EnvironmentalDetector.Models
 {
-    public class WindowInformation
+    class WindowInformation
     {
         public IntPtr Handle = IntPtr.Zero;
         public FileInfo ExecutablePath = new FileInfo(Application.ExecutablePath);

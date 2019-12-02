@@ -8,7 +8,7 @@ using Microsoft.Win32;
 
 namespace ArbitraryArtifactDetector.EnvironmentalDetector.Models
 {
-    public class InstalledProgram
+    class InstalledProgram
     {
         public string Name { get; }
         public string ReleaseType { get; }

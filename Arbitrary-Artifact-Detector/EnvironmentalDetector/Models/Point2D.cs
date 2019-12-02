@@ -13,7 +13,7 @@ namespace ArbitraryArtifactDetector.EnvironmentalDetector.Models
     /// A two-dimensional point for window positions.
     /// </summary>
     [StructLayout(LayoutKind.Sequential)]
-    public struct WindowPosition
+    struct WindowPosition
     {
         public int X;
         public int Y;

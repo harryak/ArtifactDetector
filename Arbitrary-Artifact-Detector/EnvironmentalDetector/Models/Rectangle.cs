@@ -3,7 +3,7 @@
 namespace ArbitraryArtifactDetector.EnvironmentalDetector.Models
 {
     [StructLayout(LayoutKind.Sequential)]
-    public struct Rectangle
+    struct Rectangle
     {
         public int Left, Top, Right, Bottom;
 

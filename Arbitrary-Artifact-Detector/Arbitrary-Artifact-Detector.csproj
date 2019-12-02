@@ -160,10 +160,11 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="AADConfig.cs" />
-    <Compile Include="BaseDetector.cs" />
+    <Compile Include="Detector\BaseDetector.cs" />
+    <Compile Include="Detector\CompoundDetector.cs" />
     <Compile Include="EnvironmentalDetector\BaseEnvironmentalDetector.cs" />
     <Compile Include="EnvironmentalDetector\DesktopIconDetector.cs" />
-    <Compile Include="ICompoundDetector.cs" />
+    <Compile Include="Detector\ICompoundDetector.cs" />
     <Compile Include="EnvironmentalDetector\IEnvironmentalDetector.cs" />
     <Compile Include="EnvironmentalDetector\InstalledProgramsDetector.cs" />
     <Compile Include="EnvironmentalDetector\Models\InstalledProgram.cs" />
@@ -174,6 +175,7 @@
     <Compile Include="EnvironmentalDetector\Models\ShowWindowCommand.cs" />
     <Compile Include="EnvironmentalDetector\Models\WindowInformation.cs" />
     <Compile Include="EnvironmentalDetector\Models\WindowPlacement.cs" />
+    <Compile Include="Detector\IDetector.cs" />
     <Compile Include="VisualDetector\BaseVisualDetector.cs" />
     <Compile Include="VisualDetector\BriskDetector.cs" />
     <Compile Include="VisualDetector\AkazeDetector.cs" />

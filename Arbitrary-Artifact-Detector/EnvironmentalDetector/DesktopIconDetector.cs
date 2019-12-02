@@ -6,6 +6,7 @@
 
 using ArbitraryArtifactDetector.EnvironmentalDetector.Models;
 using ArbitraryArtifactDetector.Helper;
+using ArbitraryArtifactDetector.Model;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
@@ -15,7 +16,7 @@ using System.Text;
 
 namespace ArbitraryArtifactDetector.EnvironmentalDetector
 {
-    public class DesktopIconDetector : BaseEnvironmentalDetector, IEnvironmentalDetector
+    class DesktopIconDetector : BaseEnvironmentalDetector, IEnvironmentalDetector
     {
         public DesktopIconDetector(ILogger logger, VADStopwatch stopwatch = null) : base(logger, stopwatch) { }
 
@@ -90,6 +91,11 @@ namespace ArbitraryArtifactDetector.EnvironmentalDetector
             return icons;
         }
 
+        public override bool FindArtifact(Setup setup)
+        {
+            throw new NotImplementedException();
+        }
+
         private delegate bool EnumWindowsProc(IntPtr hWnd, int lParam);
 
         #region DLL imports
@@ -123,7 +129,6 @@ namespace ArbitraryArtifactDetector.EnvironmentalDetector
 
         [DllImport("kernel32.dll")]
         private static extern bool CloseHandle(IntPtr handle);
-
         #endregion
 
         #region Windows Messages
