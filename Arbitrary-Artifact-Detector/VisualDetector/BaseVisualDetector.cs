@@ -22,29 +22,18 @@ namespace ArbitraryArtifactDetector.VisualDetector
     /// <summary>
     /// Base class for all artifact detectors.
     /// </summary>
-    abstract class BaseVisualDetector : IVisualDetector
+    abstract class BaseVisualDetector : BaseDetector, IVisualDetector
     {
-        protected ILogger Logger { get; set; }
-        protected VADStopwatch Stopwatch { get; set; }
-
-        protected BaseVisualDetector(ILogger logger, VADStopwatch stopwatch)
-        {
-            Logger = logger;
-            Stopwatch = stopwatch;
-        }
+        protected BaseVisualDetector(ILogger logger, VADStopwatch stopwatch = null) : base(logger, stopwatch) { }
 
         /// <summary>
         /// Extract features of the given image using an OpenCV feature extractor.
         /// </summary>
         /// <param name="imagePath"></param>
-        /// <param name="stopwatch">An optional stopwatch used for evaluation.</param>
         /// <returns>The observed image with keypoints and descriptors.</returns>
         public ProcessedImage ExtractFeatures(string imagePath)
         {
-            if (Stopwatch != null)
-            {
-                Stopwatch.Restart();
-            }
+            StartStopwatch();
 
             Mat image;
             try
@@ -62,11 +51,7 @@ namespace ArbitraryArtifactDetector.VisualDetector
 
             FeatureDetector.DetectAndCompute(image.GetUMat(AccessType.Read), null, keyPoints, descriptors, false);
 
-            if (Stopwatch != null)
-            {
-                Stopwatch.Stop("features_extracted");
-                Logger.LogDebug("Extracted features from image in {0} ms.", Stopwatch.ElapsedMilliseconds);
-            }
+            StopStopwatch("Extracted features from image in {0} ms.");
 
             if (descriptors.Width < 1)
             {
@@ -85,7 +70,6 @@ namespace ArbitraryArtifactDetector.VisualDetector
         /// <param name="matchFilter">The filter used for matching.</param>
         /// <param name="drawingResult">The result of the drawing (for Debug).</param>
         /// <param name="matchCount">Count of matches, if found.</param>
-        /// <param name="stopwatch">An optional stopwatch used for evaluation.</param>
         /// <returns>A homography or null if none was found.</returns>
         public bool ImageContainsArtifactType(ProcessedImage observedImage, ArtifactType artifactType, IMatchFilter matchFilter, out Mat drawingResult, out int matchCount)
         {
@@ -124,7 +108,6 @@ namespace ArbitraryArtifactDetector.VisualDetector
         /// <param name="matches">Reference to a match vector.</param>
         /// <param name="matchesMask">Reference to the used result mask.</param>
         /// <param name="homography">Reference to a possible homography.</param>
-        /// <param name="stopwatch">An optional stopwatch used for evaluation.</param>
         /// <returns>A matched artifact image, if available.</returns>
         public ProcessedImage FindMatch(ProcessedImage observedImage, ArtifactType artifactType, IMatchFilter matchFilter, out VectorOfVectorOfDMatch goodMatches, out Mat matchesMask, out Matrix<float> homography, out int matchCount)
         {
@@ -145,10 +128,7 @@ namespace ArbitraryArtifactDetector.VisualDetector
             homography = null;
 
             // Get the stopwatch for matching.
-            if (Stopwatch != null)
-            {
-                Stopwatch.Restart();
-            }
+            StartStopwatch();
 
             int artifactNumber = 0;
             foreach (var currentArtifactImage in artifactType.Images)
@@ -226,11 +206,7 @@ namespace ArbitraryArtifactDetector.VisualDetector
                 artifactNumber++;
             }
 
-            if (Stopwatch != null)
-            {
-                Stopwatch.Stop("matching_finished", artifactNumber);
-                Logger.LogDebug("Matching finished in {0} ms.", Stopwatch.ElapsedMilliseconds);
-            }
+            StopStopwatch("Matching finished in {0} ms.");
 
             return matchingArtifact;
         }
