@@ -22,12 +22,12 @@ namespace ArbitraryArtifactDetector.VisualDetector
     /// <summary>
     /// Base class for all artifact detectors.
     /// </summary>
-    abstract class BaseVisualArtifactDetector : IVisualArtifactDetector
+    abstract class BaseVisualDetector : IVisualDetector
     {
         protected ILogger Logger { get; set; }
         protected VADStopwatch Stopwatch { get; set; }
 
-        protected BaseVisualArtifactDetector(ILogger logger, VADStopwatch stopwatch)
+        protected BaseVisualDetector(ILogger logger, VADStopwatch stopwatch)
         {
             Logger = logger;
             Stopwatch = stopwatch;

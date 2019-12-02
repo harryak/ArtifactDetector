@@ -4,9 +4,9 @@
 * For license, please see "License-LGPL.txt".
 */
 
-namespace ArbitraryArtifactDetector.EnvironmentalDetector
+namespace ArbitraryArtifactDetector
 {
-    interface ICompoundEnvironmentalDetector
+    interface ICompoundDetector
     {
     }
 }

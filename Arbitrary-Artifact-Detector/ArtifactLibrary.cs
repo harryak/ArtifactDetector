@@ -24,7 +24,7 @@ namespace ArbitraryArtifactDetector.Model
     class ArtifactLibrary
     {
         [NonSerialized]
-        private IVisualArtifactDetector _artifactDetector;
+        private IVisualDetector _artifactDetector;
         [NonSerialized]
         private ILogger _logger;
         [NonSerialized]
@@ -37,7 +37,7 @@ namespace ArbitraryArtifactDetector.Model
         private List<string> Types { get; set; }
 
         public string FilePath { get => _filePath; set => _filePath = value; }
-        public IVisualArtifactDetector ArtifactDetector { get => _artifactDetector; set => _artifactDetector = value; }
+        public IVisualDetector ArtifactDetector { get => _artifactDetector; set => _artifactDetector = value; }
         public ILogger Logger { get => _logger; set => _logger = value; }
 
         public bool DataChanged { get; set; }
@@ -48,7 +48,7 @@ namespace ArbitraryArtifactDetector.Model
         /// <param name="filePath">The path of all library resources.</param>
         /// <param name="artifactDetector">An artifact artifactDetector instance to extract features.</param>
         /// <param name="_loggerFactory">Logger factory to get a new logger.</param>
-        public ArtifactLibrary(string filePath, IVisualArtifactDetector artifactDetector, ILogger logger)
+        public ArtifactLibrary(string filePath, IVisualDetector artifactDetector, ILogger logger)
         {
             if (filePath == null)
                 throw new ArgumentNullException(nameof(filePath));
@@ -145,7 +145,7 @@ namespace ArbitraryArtifactDetector.Model
         /// <param name="stopwatch">An optional stopwatch for evaluation.</param>
         /// <param name="logger">A logging factory.</param>
         /// <returns>The read artifact library.</returns>
-        public static ArtifactLibrary FromFile(string fileName, IVisualArtifactDetector artifactDetector, VADStopwatch stopwatch = null, ILoggerFactory loggerFactory = null)
+        public static ArtifactLibrary FromFile(string fileName, IVisualDetector artifactDetector, VADStopwatch stopwatch = null, ILoggerFactory loggerFactory = null)
         {
             ILogger logger = loggerFactory.CreateLogger("ArtifactLibrary");
 

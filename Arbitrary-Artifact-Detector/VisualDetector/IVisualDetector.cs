@@ -6,12 +6,11 @@
 
 using ArbitraryArtifactDetector.Model;
 using Emgu.CV;
-using ArbitraryArtifactDetector.Helper;
 using ArbitraryArtifactDetector.VisualMatchFilter;
 
 namespace ArbitraryArtifactDetector.VisualDetector
 {
-    interface IVisualArtifactDetector
+    interface IVisualDetector
     {
         /// <summary>
         /// Extract features of the given image using an OpenCV feature extractor.

@@ -11,9 +11,9 @@ using Microsoft.Extensions.Logging;
 
 namespace ArbitraryArtifactDetector.VisualDetector
 {
-    class BriskArtifactDetector : BaseVisualArtifactDetector, IVisualArtifactDetector
+    class BriskDetector : BaseVisualDetector, IVisualDetector
     {
-        public BriskArtifactDetector(ILogger logger, VADStopwatch stopwatch) : base(logger, stopwatch)
+        public BriskDetector(ILogger logger, VADStopwatch stopwatch) : base(logger, stopwatch)
         {
             FeatureDetector = new Brisk();
 

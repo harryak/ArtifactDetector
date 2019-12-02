@@ -10,9 +10,9 @@ using Microsoft.Extensions.Logging;
 
 namespace ArbitraryArtifactDetector.VisualDetector
 {
-    class OrbArtifactDetector : BaseVisualArtifactDetector, IVisualArtifactDetector
+    class OrbDetector : BaseVisualDetector, IVisualDetector
     {
-        public OrbArtifactDetector(ILogger logger, VADStopwatch stopwatch) : base(logger, stopwatch)
+        public OrbDetector(ILogger logger, VADStopwatch stopwatch) : base(logger, stopwatch)
         {
             //IIndexParams indexParams = new LshIndexParams(6, 12, 1);
             //SearchParams searchParams = new SearchParams(50);

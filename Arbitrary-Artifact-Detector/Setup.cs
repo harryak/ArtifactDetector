@@ -24,12 +24,12 @@ namespace ArbitraryArtifactDetector
         /// <summary>
         /// Map for selecting a visual artifact detector by its name.
         /// </summary>
-        private readonly Dictionary<string, Func<ILogger, VADStopwatch, IVisualArtifactDetector>> detectorSelectionMap =
-            new Dictionary<string, Func<ILogger, VADStopwatch, IVisualArtifactDetector>>(){
-                { "akaze", (ILogger logger, VADStopwatch stopwatch) => { return new AkazeArtifactDetector(logger, stopwatch); } },
-                { "brisk", (ILogger logger, VADStopwatch stopwatch) => { return new BriskArtifactDetector(logger, stopwatch); } },
-                { "kaze", (ILogger logger, VADStopwatch stopwatch) => { return new KazeArtifactDetector(logger, stopwatch); } },
-                { "orb", (ILogger logger, VADStopwatch stopwatch) => { return new OrbArtifactDetector(logger, stopwatch); } }
+        private readonly Dictionary<string, Func<ILogger, VADStopwatch, IVisualDetector>> detectorSelectionMap =
+            new Dictionary<string, Func<ILogger, VADStopwatch, IVisualDetector>>(){
+                { "akaze", (ILogger logger, VADStopwatch stopwatch) => { return new AkazeDetector(logger, stopwatch); } },
+                { "brisk", (ILogger logger, VADStopwatch stopwatch) => { return new BriskDetector(logger, stopwatch); } },
+                { "kaze", (ILogger logger, VADStopwatch stopwatch) => { return new KazeDetector(logger, stopwatch); } },
+                { "orb", (ILogger logger, VADStopwatch stopwatch) => { return new OrbDetector(logger, stopwatch); } }
             };
 
         /// <summary>
@@ -54,7 +54,7 @@ namespace ArbitraryArtifactDetector
         public string ArtifactGoal { get; set; } = "";
         public string ScreenshotPath { get; set; } = "";
         public string WorkingDirectory { get; set; } = "";
-        public IVisualArtifactDetector ArtifactDetector { get; set; } = null;
+        public IVisualDetector ArtifactDetector { get; set; } = null;
         public IMatchFilter MatchFilter { get; set; } = null;
         public bool ShouldEvaluate { get; set; } = false;
         public bool ShouldCache { get; set; } = false;

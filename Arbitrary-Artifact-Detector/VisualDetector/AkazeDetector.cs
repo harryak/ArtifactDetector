@@ -10,9 +10,9 @@ using Microsoft.Extensions.Logging;
 
 namespace ArbitraryArtifactDetector.VisualDetector
 {
-    class AkazeArtifactDetector : BaseVisualArtifactDetector, IVisualArtifactDetector
+    class AkazeDetector : BaseVisualDetector, IVisualDetector
     {
-        public AkazeArtifactDetector(ILogger logger, VADStopwatch stopwatch) : base(logger, stopwatch)
+        public AkazeDetector(ILogger logger, VADStopwatch stopwatch) : base(logger, stopwatch)
         {
 
             FeatureDetector = new AKAZE();

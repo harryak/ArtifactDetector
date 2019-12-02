@@ -11,9 +11,9 @@ using Microsoft.Extensions.Logging;
 
 namespace ArbitraryArtifactDetector.VisualDetector
 {
-    class KazeArtifactDetector : BaseVisualArtifactDetector, IVisualArtifactDetector
+    class KazeDetector : BaseVisualDetector, IVisualDetector
     {
-        public KazeArtifactDetector(ILogger logger, VADStopwatch stopwatch) : base(logger, stopwatch)
+        public KazeDetector(ILogger logger, VADStopwatch stopwatch) : base(logger, stopwatch)
         {
             FeatureDetector = new KAZE();
 
