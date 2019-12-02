@@ -1,24 +1,24 @@
-﻿
-
-using System.Drawing;
-/**
+﻿/**
 * Written by Felix Rossmann, "rossmann@cs.uni-bonn.de".
 * 
 * For license, please see "License-LGPL.txt".
 */
+
+using System.Drawing;
+
 namespace ArbitraryArtifactDetector.EnvironmentalDetector.Models
 {
     public class DesktopIcon
     {
-        internal DesktopIcon(string name, Point location)
+        public DesktopIcon(string name, Point location)
         {
             Location = location;
             Name = name;
         }
 
-        internal Point Location { get; set; }
+        public Point Location { get; }
 
-        public string Name { get; set;  }
+        public string Name { get;  }
 
         public override string ToString()
         {

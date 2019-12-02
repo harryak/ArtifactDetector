@@ -1,14 +1,19 @@
-﻿
+﻿/**
+* Written by Felix Rossmann, "rossmann@cs.uni-bonn.de".
+* 
+* For license, please see "License-LGPL.txt".
+*/
+
 using Microsoft.Win32;
 
 namespace ArbitraryArtifactDetector.EnvironmentalDetector.Models
 {
-    class InstalledProgram
+    public class InstalledProgram
     {
-        private string Name { get; }
-        private string ReleaseType { get; }
-        private int SystemComponent { get; }
-        private string ParentName { get; }
+        public string Name { get; }
+        public string ReleaseType { get; }
+        public int SystemComponent { get; }
+        public string ParentName { get; }
 
         public InstalledProgram(string name, string releaseType, int systemComponent, string parentName)
         {

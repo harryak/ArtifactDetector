@@ -160,7 +160,10 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="AADConfig.cs" />
+    <Compile Include="BaseDetector.cs" />
+    <Compile Include="EnvironmentalDetector\BaseEnvironmentalDetector.cs" />
     <Compile Include="EnvironmentalDetector\DesktopIconDetector.cs" />
+    <Compile Include="EnvironmentalDetector\ICompoundEnvironmentalDetector.cs" />
     <Compile Include="EnvironmentalDetector\IEnvironmentalDetector.cs" />
     <Compile Include="EnvironmentalDetector\InstalledProgramsDetector.cs" />
     <Compile Include="EnvironmentalDetector\Models\InstalledProgram.cs" />

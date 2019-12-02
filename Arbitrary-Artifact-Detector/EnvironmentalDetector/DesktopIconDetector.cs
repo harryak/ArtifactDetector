@@ -15,23 +15,13 @@ using System.Text;
 
 namespace ArbitraryArtifactDetector.EnvironmentalDetector
 {
-    internal class DesktopIconDetector : IEnvironmentalDetector
+    public class DesktopIconDetector : BaseEnvironmentalDetector, IEnvironmentalDetector
     {
-        private VADStopwatch Stopwatch { get; set; }
-        private ILogger Logger { get; set; }
+        public DesktopIconDetector(ILogger logger, VADStopwatch stopwatch = null) : base(logger, stopwatch) { }
 
-        internal DesktopIconDetector(ILogger logger, VADStopwatch stopwatch = null)
+        public IDictionary<int, DesktopIcon> GetDesktopIcons()
         {
-            Logger = logger;
-            Stopwatch = stopwatch;
-        }
-
-        internal IDictionary<int, DesktopIcon> GetDesktopIcons()
-        {
-            if (Stopwatch != null)
-            {
-                Stopwatch.Restart();
-            }
+            StartStopwatch();
 
             Dictionary<int , DesktopIcon> icons = new Dictionary<int , DesktopIcon>();
 
@@ -95,11 +85,7 @@ namespace ArbitraryArtifactDetector.EnvironmentalDetector
                 CloseHandle(vProcess);
             }
 
-            if (Stopwatch != null)
-            {
-                Stopwatch.Stop("get_opened_windows");
-                Logger.LogDebug("Got all opened windows in {0} ms.", Stopwatch.ElapsedMilliseconds);
-            }
+            StopStopwatch("Got all opened windows in {0} ms.");
 
             return icons;
         }

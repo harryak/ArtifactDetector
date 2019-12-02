@@ -1,4 +1,9 @@
-﻿
+﻿/**
+* Written by Felix Rossmann, "rossmann@cs.uni-bonn.de".
+* 
+* For license, please see "License-LGPL.txt".
+*/
+
 using ArbitraryArtifactDetector.EnvironmentalDetector.Models;
 using ArbitraryArtifactDetector.Helper;
 using Microsoft.Extensions.Logging;
@@ -7,35 +12,22 @@ using System.Collections.Generic;
 
 namespace ArbitraryArtifactDetector.EnvironmentalDetector
 {
-    class InstalledProgramsDetector : IEnvironmentalDetector
+    public class InstalledProgramsDetector : BaseEnvironmentalDetector, IEnvironmentalDetector
     {
         const string registry_key = @"SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall";
 
-        private VADStopwatch Stopwatch { get; set; }
-        private ILogger Logger { get; set; }
-
-        public InstalledProgramsDetector(ILogger logger, VADStopwatch stopwatch = null)
-        {
-            Logger = logger;
-            Stopwatch = stopwatch;
-        }
+        public InstalledProgramsDetector(ILogger logger, VADStopwatch stopwatch = null) : base(logger, stopwatch) { }
 
         public IDictionary<int, InstalledProgram> GetInstalledPrograms()
         {
-            if (Stopwatch != null)
-            {
-                Stopwatch.Restart();
-            }
+            StartStopwatch();
 
             IDictionary<int, InstalledProgram> programs = new Dictionary<int, InstalledProgram>();
+
             GetInstalledProgramsFromRegistry(RegistryView.Registry32, ref programs);
             GetInstalledProgramsFromRegistry(RegistryView.Registry64, ref programs);
 
-            if (Stopwatch != null)
-            {
-                Stopwatch.Stop("get_installed_programs");
-                Logger.LogDebug("Got installed programs in {0} ms.", Stopwatch.ElapsedMilliseconds);
-            }
+            StopStopwatch("Got installed programs in {0} ms.");
 
             return programs;
         }

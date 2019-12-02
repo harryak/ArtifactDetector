@@ -16,16 +16,9 @@ using System.Text;
 
 namespace ArbitraryArtifactDetector.EnvironmentalDetector
 {
-    class OpenWindowDetector : IEnvironmentalDetector
+    public class OpenWindowDetector : BaseEnvironmentalDetector, IEnvironmentalDetector
     {
-        private VADStopwatch Stopwatch { get; set; }
-        private ILogger Logger { get; set; }
-
-        public OpenWindowDetector(ILogger logger, VADStopwatch stopwatch = null)
-        {
-            Logger = logger;
-            Stopwatch = stopwatch;
-        }
+        public OpenWindowDetector(ILogger logger, VADStopwatch stopwatch = null) : base(logger, stopwatch) { }
 
         /// <summary>
         /// Gets the currently active window.
@@ -33,10 +26,7 @@ namespace ArbitraryArtifactDetector.EnvironmentalDetector
         /// <returns>The information of the active window.</returns>
         public WindowInformation GetActiveWindow()
         {
-            if (Stopwatch != null)
-            {
-                Stopwatch.Restart();
-            }
+            StartStopwatch();
 
             IntPtr hWnd = GetForegroundWindow();
 
@@ -55,11 +45,7 @@ namespace ArbitraryArtifactDetector.EnvironmentalDetector
                 Placement = Placement
             };
 
-            if (Stopwatch != null)
-            {
-                Stopwatch.Stop("get_active_window");
-                Logger.LogDebug("Got active window in {0} ms.", Stopwatch.ElapsedMilliseconds);
-            }
+            StopStopwatch("Got active window in {0} ms.");
 
             return windowInformation;
         }
@@ -68,10 +54,7 @@ namespace ArbitraryArtifactDetector.EnvironmentalDetector
         /// <returns>A dictionary that contains the handle and title of all the open windows.</returns>
         public IDictionary<IntPtr, WindowInformation> GetOpenedWindows()
         {
-            if (Stopwatch != null)
-            {
-                Stopwatch.Restart();
-            }
+            StartStopwatch();
 
             IntPtr shellWindow = GetShellWindow();
             Dictionary<IntPtr , WindowInformation> windows = new Dictionary<IntPtr , WindowInformation>();
@@ -103,18 +86,14 @@ namespace ArbitraryArtifactDetector.EnvironmentalDetector
                 0
             );
 
-            if (Stopwatch != null)
-            {
-                Stopwatch.Stop("get_opened_windows");
-                Logger.LogDebug("Got all opened windows in {0} ms.", Stopwatch.ElapsedMilliseconds);
-            }
+            StopStopwatch("Got all opened windows in {0} ms.");
 
             return windows;
         }
 
         private delegate bool EnumWindowsProc(IntPtr hWnd, int lParam);
 
-        public static string GetProcessPath(IntPtr hwnd)
+        public string GetProcessPath(IntPtr hwnd)
         {
             GetWindowThreadProcessId(hwnd, out uint pid);
             if (hwnd != IntPtr.Zero)
@@ -131,6 +110,7 @@ namespace ArbitraryArtifactDetector.EnvironmentalDetector
             return "";
         }
 
+        #region DLL imports
         [DllImport("user32.dll")]
         private static extern bool EnumWindows(EnumWindowsProc enumFunc, int lParam);
 
@@ -156,5 +136,6 @@ namespace ArbitraryArtifactDetector.EnvironmentalDetector
         [DllImport("user32.dll", SetLastError = true)]
         [return: MarshalAs(UnmanagedType.Bool)]
         internal static extern bool GetWindowPlacement(IntPtr hWnd, ref WindowPlacement lpwndpl);
+        #endregion
     }
 }
