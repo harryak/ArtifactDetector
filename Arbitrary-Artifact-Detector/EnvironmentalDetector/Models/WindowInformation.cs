@@ -8,7 +8,7 @@ using System;
 using System.IO;
 using System.Windows.Forms;
 
-namespace ArbitraryArtifactDetector.Models
+namespace ArbitraryArtifactDetector.EnvironmentalDetector.Models
 {
     public class WindowInformation
     {

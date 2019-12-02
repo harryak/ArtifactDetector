@@ -160,13 +160,15 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="AADConfig.cs" />
+    <Compile Include="EnvironmentalDetector\DesktopIconEnvironmentalDetector.cs" />
     <Compile Include="EnvironmentalDetector\IEnvironmentalDetector.cs" />
     <Compile Include="EnvironmentalDetector\OpenWindowEnvironmentalDetector.cs" />
-    <Compile Include="Models\Point2D.cs" />
-    <Compile Include="Models\Rectangle.cs" />
-    <Compile Include="Models\ShowWindowCommand.cs" />
-    <Compile Include="Models\WindowInformation.cs" />
-    <Compile Include="Models\WindowPlacement.cs" />
+    <Compile Include="EnvironmentalDetector\Models\DesktopIcon.cs" />
+    <Compile Include="EnvironmentalDetector\Models\Point2D.cs" />
+    <Compile Include="EnvironmentalDetector\Models\Rectangle.cs" />
+    <Compile Include="EnvironmentalDetector\Models\ShowWindowCommand.cs" />
+    <Compile Include="EnvironmentalDetector\Models\WindowInformation.cs" />
+    <Compile Include="EnvironmentalDetector\Models\WindowPlacement.cs" />
     <Compile Include="VisualDetector\BaseVisualArtifactDetector.cs" />
     <Compile Include="VisualDetector\BriskArtifactDetector.cs" />
     <Compile Include="VisualDetector\AkazeArtifactDetector.cs" />

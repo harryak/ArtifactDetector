@@ -7,7 +7,7 @@
 using System;
 using System.Runtime.InteropServices;
 
-namespace ArbitraryArtifactDetector.Models
+namespace ArbitraryArtifactDetector.EnvironmentalDetector.Models
 {
     /// <summary>
     /// Contains information about the placement of a window on the screen.
@@ -37,12 +37,12 @@ namespace ArbitraryArtifactDetector.Models
         /// <summary>
         /// The coordinates of the window's upper-left corner when the window is minimized.
         /// </summary>
-        public Point2D MinPosition;
+        public WindowPosition MinPosition;
 
         /// <summary>
         /// The coordinates of the window's upper-left corner when the window is maximized.
         /// </summary>
-        public Point2D MaxPosition;
+        public WindowPosition MaxPosition;
 
         /// <summary>
         /// The window's coordinates when the window is in the restored position.

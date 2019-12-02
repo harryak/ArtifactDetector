@@ -1,6 +1,6 @@
 ﻿using System.Runtime.InteropServices;
 
-namespace ArbitraryArtifactDetector.Models
+namespace ArbitraryArtifactDetector.EnvironmentalDetector.Models
 {
     [StructLayout(LayoutKind.Sequential)]
     public struct Rectangle

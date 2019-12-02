@@ -5,7 +5,7 @@
 */
 
 using ArbitraryArtifactDetector.Helper;
-using ArbitraryArtifactDetector.Models;
+using ArbitraryArtifactDetector.EnvironmentalDetector.Models;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
@@ -26,8 +26,6 @@ namespace ArbitraryArtifactDetector.EnvironmentalDetector
             Logger = logger;
             Stopwatch = stopwatch;
         }
-
-        internal WindowInformation WindowActive = new WindowInformation();
 
         /// <summary>
         /// Gets the currently active window.

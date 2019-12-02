@@ -1,4 +1,4 @@
-﻿namespace ArbitraryArtifactDetector.Models
+﻿namespace ArbitraryArtifactDetector.EnvironmentalDetector.Models
 {
     enum ShowWindowCommands
     {

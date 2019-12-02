@@ -39,6 +39,20 @@ namespace ArbitraryArtifactDetector
 
             var logger = Setup.GetLogger("Main");
 
+            var iconDetector = new DesktopIconEnvironmentalDetector(Setup.GetLogger("DesktopIconDetector"), Setup.Stopwatch);
+            var desktopIcons = iconDetector.GetDesktopIcons();
+
+            if (desktopIcons.Count > 0)
+            {
+                foreach(var desktopIcon in desktopIcons)
+                {
+                    logger.LogDebug("Have desktop icon {desktopIcon}.", desktopIcon.ToString());
+                }
+
+                return 1;
+            }
+            // Unreachable for now.
+
             var envDetector = new OpenWindowEnvironmentalDetector(Setup.GetLogger("OpenWindowDetector"), Setup.Stopwatch);
             var activeWindow = envDetector.GetActiveWindow();
             logger.LogDebug("Foreground window is {windowName}.", activeWindow.ToString());
