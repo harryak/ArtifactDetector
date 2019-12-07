@@ -1,10 +1,4 @@
-﻿/**
- * Written by Felix Rossmann, "rossmann@cs.uni-bonn.de".
- * 
- * For license, please see "License-LGPL.txt".
- */
-
-using ArbitraryArtifactDetector.EnvironmentalDetector;
+﻿using ArbitraryArtifactDetector.EnvironmentalDetector;
 using Microsoft.Extensions.Logging;
 using System;
 
@@ -75,9 +69,9 @@ namespace ArbitraryArtifactDetector
             // Launch the actual program.
             logger.LogDebug("Call the actual comparison.");
 
-            bool artifactFound = Setup.ArtifactDetector.FindArtifact(Setup);
+            var artifactFound = Setup.ArtifactDetector.FindArtifact(Setup);
 
-            return artifactFound ? 0 : 1;
+            return artifactFound.ArtifactFound ? 0 : 1;
         }
     }
 }

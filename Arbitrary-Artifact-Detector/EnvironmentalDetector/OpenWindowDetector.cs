@@ -1,10 +1,4 @@
-﻿/**
-* Written by Felix Rossmann, "rossmann@cs.uni-bonn.de".
-* 
-* For license, please see "License-LGPL.txt".
-*/
-
-using ArbitraryArtifactDetector.Helper;
+﻿using ArbitraryArtifactDetector.Helper;
 using ArbitraryArtifactDetector.EnvironmentalDetector.Models;
 using Microsoft.Extensions.Logging;
 using System;
@@ -13,7 +7,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Runtime.InteropServices;
 using System.Text;
-using ArbitraryArtifactDetector.Model;
+using ArbitraryArtifactDetector.Models;
 
 namespace ArbitraryArtifactDetector.EnvironmentalDetector
 {
@@ -111,7 +105,7 @@ namespace ArbitraryArtifactDetector.EnvironmentalDetector
             return "";
         }
 
-        public override bool FindArtifact(Setup setup)
+        public override DetectorResponse FindArtifact(Setup setup)
         {
             throw new NotImplementedException();
         }

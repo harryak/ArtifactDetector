@@ -1,10 +1,4 @@
-﻿/**
-* Written by Felix Rossmann, "rossmann@cs.uni-bonn.de".
-* 
-* For license, please see "License-LGPL.txt".
-*/
-
-using ArbitraryArtifactDetector.Helper;
+﻿using ArbitraryArtifactDetector.Helper;
 using ArbitraryArtifactDetector.Model;
 using ArbitraryArtifactDetector.VisualDetector;
 using ArbitraryArtifactDetector.VisualMatchFilter;
@@ -267,7 +261,7 @@ namespace ArbitraryArtifactDetector
                 Logger.LogDebug("Creating new artifact library instance.");
                 try
                 {
-                    ArtifactLibrary = new ArtifactLibrary(WorkingDirectory, ArtifactDetector, GetLogger("ArtifactLibrary"));
+                    ArtifactLibrary = new ArtifactLibrary(WorkingDirectory, ArtifactDetector, GetLogger("ArtifactLibrary"), Stopwatch);
                 }
                 catch (Exception e)
                 {

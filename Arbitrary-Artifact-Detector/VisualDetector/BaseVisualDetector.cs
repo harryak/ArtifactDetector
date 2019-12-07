@@ -1,12 +1,7 @@
-﻿/**
-* Written by Felix Rossmann, "rossmann@cs.uni-bonn.de".
-* 
-* For license, please see "License-LGPL.txt".
-*/
-
-using ArbitraryArtifactDetector.Detector;
+﻿using ArbitraryArtifactDetector.Detector;
 using ArbitraryArtifactDetector.Helper;
 using ArbitraryArtifactDetector.Model;
+using ArbitraryArtifactDetector.Models;
 using ArbitraryArtifactDetector.Viewer;
 using ArbitraryArtifactDetector.VisualMatchFilter;
 using Emgu.CV;
@@ -32,7 +27,7 @@ namespace ArbitraryArtifactDetector.VisualDetector
         protected Feature2D FeatureDetector { get; set; }
         protected DescriptorMatcher DescriptorMatcher { get; set; }
 
-        public override bool FindArtifact(Setup setup)
+        public override DetectorResponse FindArtifact(Setup setup)
         {
             ArtifactType artifactType = null;
             try
@@ -92,7 +87,7 @@ namespace ArbitraryArtifactDetector.VisualDetector
                 }
             }
 
-            return artifactTypeFound;
+            return new DetectorResponse() { ArtifactFound = artifactTypeFound, ArtifactLikely = artifactTypeFound, Certainty = 100 };
         }
 
         /// <summary>

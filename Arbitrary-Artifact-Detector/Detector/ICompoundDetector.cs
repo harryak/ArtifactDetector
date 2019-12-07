@@ -1,10 +1,4 @@
-﻿/**
-* Written by Felix Rossmann, "rossmann@cs.uni-bonn.de".
-* 
-* For license, please see "License-LGPL.txt".
-*/
-
-namespace ArbitraryArtifactDetector.Detector
+﻿namespace ArbitraryArtifactDetector.Detector
 {
     /// <summary>
     /// A detector made up from several detectors.

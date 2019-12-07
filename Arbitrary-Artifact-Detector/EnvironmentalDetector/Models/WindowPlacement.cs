@@ -1,10 +1,4 @@
-﻿/**
-* Written by Felix Rossmann, "rossmann@cs.uni-bonn.de".
-* 
-* For license, please see "License-LGPL.txt".
-*/
-
-using System;
+﻿using System;
 using System.Runtime.InteropServices;
 
 namespace ArbitraryArtifactDetector.EnvironmentalDetector.Models

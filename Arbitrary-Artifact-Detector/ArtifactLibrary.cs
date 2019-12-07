@@ -1,10 +1,4 @@
-﻿/**
- * Written by Felix Rossmann, "rossmann@cs.uni-bonn.de".
- * 
- * For license, please see "License-LGPL.txt".
- */
-
-using ArbitraryArtifactDetector.VisualDetector;
+﻿using ArbitraryArtifactDetector.VisualDetector;
 using ArbitraryArtifactDetector.Helper;
 using Microsoft.Extensions.Logging;
 using System;

@@ -1,10 +1,4 @@
-﻿/**
-* Written by Felix Rossmann, "rossmann@cs.uni-bonn.de".
-* 
-* For license, please see "License-LGPL.txt".
-*/
-
-using ArbitraryArtifactDetector.Helper;
+﻿using ArbitraryArtifactDetector.Helper;
 using Emgu.CV;
 using Emgu.CV.Structure;
 using Emgu.CV.Util;

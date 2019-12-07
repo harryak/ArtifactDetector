@@ -1,10 +1,5 @@
-﻿/**
-* Written by Felix Rossmann, "rossmann@cs.uni-bonn.de".
-* 
-* For license, please see "License-LGPL.txt".
-*/
-
-using ArbitraryArtifactDetector.Helper;
+﻿using ArbitraryArtifactDetector.Helper;
+using ArbitraryArtifactDetector.Models;
 using Microsoft.Extensions.Logging;
 using System.Diagnostics;
 
@@ -59,6 +54,6 @@ namespace ArbitraryArtifactDetector.Detector
             }
         }
 
-        abstract public bool FindArtifact(Setup setup);
+        abstract public DetectorResponse FindArtifact(Setup setup);
     }
 }

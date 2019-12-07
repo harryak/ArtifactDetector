@@ -1,9 +1,4 @@
-﻿/**
-* Written by Felix Rossmann, "rossmann@cs.uni-bonn.de".
-* 
-* For license, please see "License-LGPL.txt".
-*/
-
+﻿using ArbitraryArtifactDetector.Models;
 using System.Collections.Generic;
 
 namespace ArbitraryArtifactDetector.Detector
@@ -30,7 +25,7 @@ namespace ArbitraryArtifactDetector.Detector
             
             foreach (KeyValuePair<int, IDetector> entry in DetectorList)
             {
-                output += entry.Key + ": " + entry.Value + ";";
+                output += "{entry.Key} : {entry.Value };";
             }
 
             return output;
@@ -41,19 +36,19 @@ namespace ArbitraryArtifactDetector.Detector
             return DetectorList.Count;
         }
 
-        public bool FindArtifact(Setup setup)
+        public DetectorResponse FindArtifact(Setup setup)
         {
-            bool output = false;
+            DetectorResponse response = null;
 
             foreach (KeyValuePair<int, IDetector> entry in DetectorList)
             {
-                output |= entry.Value.FindArtifact(setup);
+                response = entry.Value.FindArtifact(setup);
 
-                if (output)
+                if (response.ArtifactFound || (!response.ArtifactLikely && response.Certainty > 99))
                     break;
             }
 
-            return output;
+            return response;
         }
 
         public bool PrioritizeDetector(IDetector detector, int oldPriority, int newPriority)

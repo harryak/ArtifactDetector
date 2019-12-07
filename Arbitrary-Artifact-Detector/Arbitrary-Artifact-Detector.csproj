@@ -176,6 +176,7 @@
     <Compile Include="EnvironmentalDetector\Models\WindowInformation.cs" />
     <Compile Include="EnvironmentalDetector\Models\WindowPlacement.cs" />
     <Compile Include="Detector\IDetector.cs" />
+    <Compile Include="Models\DetectorResponse.cs" />
     <Compile Include="VisualDetector\BaseVisualDetector.cs" />
     <Compile Include="VisualDetector\BriskDetector.cs" />
     <Compile Include="VisualDetector\AkazeDetector.cs" />
