@@ -168,12 +168,13 @@
     <Compile Include="EnvironmentalDetector\IEnvironmentalDetector.cs" />
     <Compile Include="EnvironmentalDetector\InstalledProgramsDetector.cs" />
     <Compile Include="EnvironmentalDetector\Models\InstalledProgram.cs" />
+    <Compile Include="EnvironmentalDetector\Models\WindowVisualInformation.cs" />
     <Compile Include="EnvironmentalDetector\OpenWindowDetector.cs" />
     <Compile Include="EnvironmentalDetector\Models\DesktopIcon.cs" />
-    <Compile Include="EnvironmentalDetector\Models\Point2D.cs" />
+    <Compile Include="EnvironmentalDetector\Models\WindowPosition.cs" />
     <Compile Include="EnvironmentalDetector\Models\Rectangle.cs" />
     <Compile Include="EnvironmentalDetector\Models\ShowWindowCommand.cs" />
-    <Compile Include="EnvironmentalDetector\Models\WindowInformation.cs" />
+    <Compile Include="EnvironmentalDetector\Models\WindowToplevelInformation.cs" />
     <Compile Include="EnvironmentalDetector\Models\WindowPlacement.cs" />
     <Compile Include="Detector\IDetector.cs" />
     <Compile Include="Models\DetectorResponse.cs" />

@@ -53,6 +53,11 @@ namespace ArbitraryArtifactDetector.EnvironmentalDetector.Models
             set { Width = value.Width; Height = value.Height; }
         }
 
+        public int Area
+        {
+            get { return Size.Width * Size.Height; }
+        }
+
         public static implicit operator System.Drawing.Rectangle(Rectangle r)
         {
             return new System.Drawing.Rectangle(r.Left, r.Top, r.Width, r.Height);
