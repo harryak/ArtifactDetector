@@ -1,7 +1,7 @@
 ﻿using Emgu.CV;
 using Emgu.CV.Util;
 
-namespace ArbitraryArtifactDetector.VisualMatchFilter
+namespace ArbitraryArtifactDetector.Detector.VisualDetector.VisualMatchFilter
 {
     /// <summary>
     /// Interface of all match filters using RanSaC for abstraction from different implementations.

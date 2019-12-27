@@ -162,35 +162,34 @@
     <Compile Include="AADConfig.cs" />
     <Compile Include="Detector\BaseDetector.cs" />
     <Compile Include="Detector\CompoundDetector.cs" />
-    <Compile Include="EnvironmentalDetector\BaseEnvironmentalDetector.cs" />
-    <Compile Include="EnvironmentalDetector\DesktopIconDetector.cs" />
+    <Compile Include="Detector\DetectorConfig.cs" />
+    <Compile Include="Detector\DesktopIconDetector.cs" />
     <Compile Include="Detector\ICompoundDetector.cs" />
-    <Compile Include="EnvironmentalDetector\IEnvironmentalDetector.cs" />
-    <Compile Include="EnvironmentalDetector\InstalledProgramsDetector.cs" />
-    <Compile Include="EnvironmentalDetector\Models\InstalledProgram.cs" />
-    <Compile Include="EnvironmentalDetector\Models\WindowVisualInformation.cs" />
-    <Compile Include="EnvironmentalDetector\OpenWindowDetector.cs" />
-    <Compile Include="EnvironmentalDetector\Models\DesktopIcon.cs" />
-    <Compile Include="EnvironmentalDetector\Models\WindowPosition.cs" />
-    <Compile Include="EnvironmentalDetector\Models\Rectangle.cs" />
-    <Compile Include="EnvironmentalDetector\Models\ShowWindowCommand.cs" />
-    <Compile Include="EnvironmentalDetector\Models\WindowToplevelInformation.cs" />
-    <Compile Include="EnvironmentalDetector\Models\WindowPlacement.cs" />
+    <Compile Include="Detector\InstalledProgramsDetector.cs" />
+    <Compile Include="Detector\Models\InstalledProgram.cs" />
+    <Compile Include="Detector\Models\WindowVisualInformation.cs" />
+    <Compile Include="Detector\OpenWindowDetector.cs" />
+    <Compile Include="Detector\Models\DesktopIcon.cs" />
+    <Compile Include="Detector\Models\WindowPosition.cs" />
+    <Compile Include="Detector\Models\Rectangle.cs" />
+    <Compile Include="Detector\Models\ShowWindowCommand.cs" />
+    <Compile Include="Detector\Models\WindowToplevelInformation.cs" />
+    <Compile Include="Detector\Models\WindowPlacement.cs" />
     <Compile Include="Detector\IDetector.cs" />
     <Compile Include="Models\DetectorResponse.cs" />
-    <Compile Include="VisualDetector\BaseVisualDetector.cs" />
-    <Compile Include="VisualDetector\BriskDetector.cs" />
-    <Compile Include="VisualDetector\AkazeDetector.cs" />
-    <Compile Include="VisualMatchFilter\SimpleMatchFilter.cs" />
-    <Compile Include="VisualMatchFilter\AffineMatchFilter.cs" />
-    <Compile Include="VisualDetector\OrbDetector.cs" />
-    <Compile Include="VisualDetector\KazeDetector.cs" />
+    <Compile Include="Detector\VisualDetector.cs" />
+    <Compile Include="Detector\VisualDetector\BriskDetector.cs" />
+    <Compile Include="Detector\VisualDetector\AkazeDetector.cs" />
+    <Compile Include="Detector\VisualDetector\VisualMatchFilter\SimpleMatchFilter.cs" />
+    <Compile Include="Detector\VisualDetector\VisualMatchFilter\AffineMatchFilter.cs" />
+    <Compile Include="Detector\VisualDetector\OrbDetector.cs" />
+    <Compile Include="Detector\VisualDetector\KazeDetector.cs" />
     <Compile Include="Helper\FileHelper.cs" />
     <Compile Include="Helper\VADStopwatch.cs" />
     <Compile Include="ArtifactLibrary.cs" />
     <Compile Include="Models\ProcessedImage.cs" />
     <Compile Include="Models\ArtifactType.cs" />
-    <Compile Include="VisualDetector\IVisualDetector.cs" />
+    <Compile Include="Detector\VisualDetector\IVisualDetector.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Setup.cs" />
@@ -201,8 +200,8 @@
     <Compile Include="Viewer\ImageViewer.Designer.cs">
       <DependentUpon>ImageViewer.cs</DependentUpon>
     </Compile>
-    <Compile Include="VisualMatchFilter\BaseMatchFilter.cs" />
-    <Compile Include="VisualMatchFilter\IMatchFilter.cs" />
+    <Compile Include="Detector\VisualDetector\VisualMatchFilter\BaseMatchFilter.cs" />
+    <Compile Include="Detector\VisualDetector\VisualMatchFilter\IMatchFilter.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config">

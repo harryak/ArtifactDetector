@@ -1,9 +1,9 @@
-﻿using ArbitraryArtifactDetector.Detector;
+﻿using ArbitraryArtifactDetector.Detector.VisualDetector;
 using ArbitraryArtifactDetector.Helper;
 using ArbitraryArtifactDetector.Model;
 using ArbitraryArtifactDetector.Models;
 using ArbitraryArtifactDetector.Viewer;
-using ArbitraryArtifactDetector.VisualMatchFilter;
+using ArbitraryArtifactDetector.Detector.VisualDetector.VisualMatchFilter;
 using Emgu.CV;
 using Emgu.CV.CvEnum;
 using Emgu.CV.Features2D;
@@ -14,18 +14,42 @@ using System;
 using System.Drawing;
 using System.IO;
 using System.Windows.Forms;
+using System.Collections.Generic;
 
-namespace ArbitraryArtifactDetector.VisualDetector
+namespace ArbitraryArtifactDetector.Detector
 {
     /// <summary>
     /// Base class for all artifact detectors.
     /// </summary>
     abstract class BaseVisualDetector : BaseDetector, IVisualDetector
     {
+        /// <summary>
+        /// Map for selecting a feature match filter by its name.
+        /// </summary>
+        private readonly Dictionary<string, Func<ILogger, VADStopwatch, IMatchFilter>> visualFilterSelectionMap =
+            new Dictionary<string, Func<ILogger, VADStopwatch, IMatchFilter>>()
+            {
+                { "simple", (ILogger logger, VADStopwatch stopwatch) => { return new SimpleMatchFilter(logger, stopwatch); } },
+                { "affine", (ILogger logger, VADStopwatch stopwatch) => { return new AffineMatchFilter(logger, stopwatch); } },
+            };
+
         protected BaseVisualDetector(ILogger logger, VADStopwatch stopwatch = null) : base(logger, stopwatch) { }
 
+        protected IMatchFilter MatchFilter { get; set; }
         protected Feature2D FeatureDetector { get; set; }
         protected DescriptorMatcher DescriptorMatcher { get; set; }
+
+        private bool SetupMatchFilter(Setup setup)
+        {
+            if (visualFilterSelectionMap.ContainsKey(setup.FilterSelection))
+            {
+                Logger.LogInformation("Using match filter {filterSelection}.", setup.FilterSelection);
+                MatchFilter = visualFilterSelectionMap[setup.FilterSelection](setup.GetLogger(setup.FilterSelection + "MatchFilter"), Stopwatch);
+                return true;
+            }
+
+            return false;
+        }
 
         public override DetectorResponse FindArtifact(Setup setup)
         {
@@ -40,6 +64,12 @@ namespace ArbitraryArtifactDetector.VisualDetector
                 throw new ArgumentNullException("Could not get artifact type: { 0 }", e.Message);
             }
 
+            if (!SetupMatchFilter(setup))
+            {
+                Logger.LogError("Could not get match filter type: {0}", setup.FilterSelection);
+                throw new ArgumentNullException("Could not get match filter type: { 0 }", setup.FilterSelection);
+            }
+
             if (artifactType.Images.Count < 1)
             {
                 Logger.LogError("Could not get any images for the artifact type.");
@@ -48,7 +78,7 @@ namespace ArbitraryArtifactDetector.VisualDetector
 
             ProcessedImage observedImage = ExtractFeatures(setup.ScreenshotPath);
 
-            bool artifactTypeFound = ImageContainsArtifactType(observedImage, artifactType, setup.MatchFilter, out Mat drawingResult, out int matchCount);
+            bool artifactTypeFound = ImageContainsArtifactType(observedImage, artifactType, MatchFilter, out Mat drawingResult, out int matchCount);
 
 #if DEBUG
             // Prepare debug window output.
@@ -87,7 +117,7 @@ namespace ArbitraryArtifactDetector.VisualDetector
                 }
             }
 
-            return new DetectorResponse() { ArtifactFound = artifactTypeFound, ArtifactLikely = artifactTypeFound, Certainty = 100 };
+            return new DetectorResponse() { ArtifactPresent = artifactTypeFound, Certainty = 100 };
         }
 
         /// <summary>

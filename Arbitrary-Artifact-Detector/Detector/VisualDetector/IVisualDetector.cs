@@ -1,9 +1,8 @@
-﻿using ArbitraryArtifactDetector.Detector;
-using ArbitraryArtifactDetector.Model;
-using ArbitraryArtifactDetector.VisualMatchFilter;
+﻿using ArbitraryArtifactDetector.Model;
+using ArbitraryArtifactDetector.Detector.VisualDetector.VisualMatchFilter;
 using Emgu.CV;
 
-namespace ArbitraryArtifactDetector.VisualDetector
+namespace ArbitraryArtifactDetector.Detector.VisualDetector
 {
     interface IVisualDetector : IDetector
     {

@@ -6,9 +6,9 @@ using Microsoft.Win32;
 using System;
 using System.Collections.Generic;
 
-namespace ArbitraryArtifactDetector.EnvironmentalDetector
+namespace ArbitraryArtifactDetector.Detector
 {
-    class InstalledProgramsDetector : BaseEnvironmentalDetector, IEnvironmentalDetector
+    class InstalledProgramsDetector : BaseDetector, IDetector
     {
         const string registry_key = @"SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall";
 

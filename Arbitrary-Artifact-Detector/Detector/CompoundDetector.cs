@@ -3,18 +3,36 @@ using System.Collections.Generic;
 
 namespace ArbitraryArtifactDetector.Detector
 {
+    /// <summary>
+    /// A detector made up from several detectors.
+    /// </summary>
     class CompoundDetector : ICompoundDetector
     {
-        private IDictionary<int, IDetector> DetectorList { get; set; } = new SortedDictionary<int, IDetector>();
+        /// <summary>
+        /// List of detector configurations.
+        /// </summary>
+        private IDictionary<int, DetectorConfig> DetectorList { get; set; } = new SortedDictionary<int, DetectorConfig>();
 
-        public int AddDetector(IDetector detector, int priority = -1)
+        public int AddDetector(IDetector detector, int priority = -1, int requiredCertainty = 0)
         {
             if (priority < 0)
             {
                 priority = DetectorList.Count * 10;
             }
 
-            DetectorList.Add(priority, detector);
+            DetectorList.Add(priority, new DetectorConfig(detector, requiredCertainty));
+
+            return priority;
+        }
+
+        public int AddDetector(DetectorConfig detectorConfig, int priority = -1)
+        {
+            if (priority < 0)
+            {
+                priority = DetectorList.Count * 10;
+            }
+
+            DetectorList.Add(priority, detectorConfig);
 
             return priority;
         }
@@ -23,7 +41,7 @@ namespace ArbitraryArtifactDetector.Detector
         {
             string output = "";
             
-            foreach (KeyValuePair<int, IDetector> entry in DetectorList)
+            foreach (KeyValuePair<int, DetectorConfig> entry in DetectorList)
             {
                 output += "{entry.Key} : {entry.Value };";
             }
@@ -40,11 +58,18 @@ namespace ArbitraryArtifactDetector.Detector
         {
             DetectorResponse response = null;
 
-            foreach (KeyValuePair<int, IDetector> entry in DetectorList)
+            foreach (KeyValuePair<int, DetectorConfig> entry in DetectorList)
             {
-                response = entry.Value.FindArtifact(setup);
+                var nextDetector = entry.Value;
+                // Check if previous certainty meets required level.
+                if (response != null && nextDetector.HasRequirements() && entry.Value.IsToCall(response))
+                    break;
 
-                if (response.ArtifactFound || (!response.ArtifactLikely && response.Certainty > 99))
+                // Get the new chain element's response.
+                response = entry.Value.Detector.FindArtifact(setup);
+
+                // If there is an artifact or there is none with 100 certainty, break.
+                if (response.ArtifactPresent || response.Certainty > 99)
                     break;
             }
 

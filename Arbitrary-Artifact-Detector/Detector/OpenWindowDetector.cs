@@ -5,14 +5,13 @@ using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Drawing;
 using System.IO;
 using System.Runtime.InteropServices;
 using System.Text;
 
-namespace ArbitraryArtifactDetector.EnvironmentalDetector
+namespace ArbitraryArtifactDetector.Detector
 {
-    class OpenWindowDetector : BaseEnvironmentalDetector, IEnvironmentalDetector
+    class OpenWindowDetector : BaseDetector, IDetector
     {
         public OpenWindowDetector(ILogger logger, VADStopwatch stopwatch = null) : base(logger, stopwatch) { }
 

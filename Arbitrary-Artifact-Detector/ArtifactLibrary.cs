@@ -1,4 +1,4 @@
-﻿using ArbitraryArtifactDetector.VisualDetector;
+﻿using ArbitraryArtifactDetector.Detector.VisualDetector;
 using ArbitraryArtifactDetector.Helper;
 using Microsoft.Extensions.Logging;
 using System;

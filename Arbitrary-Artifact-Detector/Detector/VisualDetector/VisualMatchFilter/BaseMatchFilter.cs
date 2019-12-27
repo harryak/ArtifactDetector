@@ -6,7 +6,7 @@ using Microsoft.Extensions.Logging;
 using System.Collections.Generic;
 using System.Drawing;
 
-namespace ArbitraryArtifactDetector.VisualMatchFilter
+namespace ArbitraryArtifactDetector.Detector.VisualDetector.VisualMatchFilter
 {
     public abstract class BaseMatchFilter : IMatchFilter
     {

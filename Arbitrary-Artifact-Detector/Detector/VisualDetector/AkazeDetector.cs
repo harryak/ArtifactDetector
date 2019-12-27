@@ -2,7 +2,7 @@
 using Emgu.CV.Features2D;
 using Microsoft.Extensions.Logging;
 
-namespace ArbitraryArtifactDetector.VisualDetector
+namespace ArbitraryArtifactDetector.Detector.VisualDetector
 {
     class AkazeDetector : BaseVisualDetector, IVisualDetector
     {

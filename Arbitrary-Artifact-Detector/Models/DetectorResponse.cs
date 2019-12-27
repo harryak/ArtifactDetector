@@ -2,8 +2,7 @@
 {
     class DetectorResponse
     {
-        public bool ArtifactFound { get; set; }
-        public bool ArtifactLikely { get; set; }
+        public bool ArtifactPresent { get; set; }
         public int Certainty { get; set; }
     }
 }

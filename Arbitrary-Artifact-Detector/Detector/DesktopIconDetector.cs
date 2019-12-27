@@ -8,9 +8,9 @@ using System.Drawing;
 using System.Runtime.InteropServices;
 using System.Text;
 
-namespace ArbitraryArtifactDetector.EnvironmentalDetector
+namespace ArbitraryArtifactDetector.Detector
 {
-    class DesktopIconDetector : BaseEnvironmentalDetector, IEnvironmentalDetector
+    class DesktopIconDetector : BaseDetector, IDetector
     {
         public DesktopIconDetector(ILogger logger, VADStopwatch stopwatch = null) : base(logger, stopwatch) { }
 
