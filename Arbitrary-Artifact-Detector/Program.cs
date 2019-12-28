@@ -32,6 +32,7 @@ namespace ArbitraryArtifactDetector
         /// Logger instance for this class.
         /// </summary>
         private static ILogger Logger { get; set; }
+        public static IDetector ArtifactDetector { get; private set; }
 
         /// <summary>
         /// Try to resolve the artifact artifactDetector by a given selection.
@@ -45,36 +46,11 @@ namespace ArbitraryArtifactDetector
             if (visualDetectorSelectionMap.ContainsKey(Setup.DetectorSelection))
             {
                 Logger.LogInformation("Using artifactDetector {detectorSelection}.", Setup.DetectorSelection);
-                //ArtifactDetector = visualDetectorSelectionMap[DetectorSelection](GetLogger(DetectorSelection + "ArtifactDetector"), Stopwatch);
+                ArtifactDetector = visualDetectorSelectionMap[Setup.DetectorSelection](Setup.GetLogger(Setup.DetectorSelection + "ArtifactDetector"), Setup.Stopwatch);
                 return true;
             }
 
             return false;
-        }
-
-        /// <summary>
-        /// Get the artifact library from a file.
-        /// </summary>
-        /// <param name="logger"></param>
-        private static void FetchArtifactLibrary()
-        {
-            // Get the artifact library from a file.
-            if (File.Exists(Setup.WorkingDirectory + Setup.LibraryFileName))
-            {
-                try
-                {
-                    //Setup.ArtifactLibrary = ArtifactLibrary.FromFile(Setup.WorkingDirectory + Setup.LibraryFileName, ArtifactDetector, Setup.Stopwatch, Setup.LoggerFactory);
-                    Logger.LogDebug("Loaded artifact library from file {0}.", Setup.WorkingDirectory + Setup.LibraryFileName);
-                }
-                catch (SerializationException)
-                {
-                    Logger.LogWarning("Deserialization of artifact library failed.");
-                }
-            }
-            else
-            {
-                Logger.LogDebug("Artifact library file not found at {0}.", Setup.WorkingDirectory + Setup.LibraryFileName);
-            }
         }
 
         [STAThread]
@@ -100,31 +76,9 @@ namespace ArbitraryArtifactDetector
                 throw new SetupError("Could not set up artifact detector.");
             }
 
-            // Should we use a cache for the artifact library?
-            if (Setup.ShouldCache)
-            {
-                FetchArtifactLibrary();
-            }
+            var artifactFound = ArtifactDetector.FindArtifact(Setup);
 
-            // Some error occurred, get an empty library.
-            if (Setup.ArtifactLibrary == null)
-            {
-                Logger.LogDebug("Creating new artifact library instance.");
-                try
-                {
-                    //Setup.ArtifactLibrary = new ArtifactLibrary(Setup.WorkingDirectory, ArtifactDetector, GetLogger("ArtifactLibrary"), Stopwatch);
-                }
-                catch (Exception e)
-                {
-                    Logger.LogError("Could not instantiate artifact library: {0}", e.Message);
-                    throw new SetupError("Could not instantiate artifact library.");
-                }
-            }
-
-            //var artifactFound = ArtifactDetector.FindArtifact(Setup);
-
-            //return artifactFound.ArtifactPresent ? 0 : 1;
-            return 1;
+            return artifactFound.ArtifactPresent ? 0 : 1;
         }
     }
 }

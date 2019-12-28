@@ -15,6 +15,7 @@ using System.Drawing;
 using System.IO;
 using System.Windows.Forms;
 using System.Collections.Generic;
+using System.Runtime.Serialization;
 
 namespace ArbitraryArtifactDetector.Detector
 {
@@ -34,10 +35,36 @@ namespace ArbitraryArtifactDetector.Detector
             };
 
         protected BaseVisualDetector(ILogger logger, VADStopwatch stopwatch = null) : base(logger, stopwatch) { }
-
+        
+        public ArtifactLibrary ArtifactLibrary { get; set; } = null;
         protected IMatchFilter MatchFilter { get; set; }
         protected Feature2D FeatureDetector { get; set; }
         protected DescriptorMatcher DescriptorMatcher { get; set; }
+
+        /// <summary>
+        /// Get the artifact library from a file.
+        /// </summary>
+        /// <param name="logger"></param>
+        private void FetchArtifactLibrary(Setup setup)
+        {
+            // Get the artifact library from a file.
+            if (File.Exists(setup.WorkingDirectory + setup.LibraryFileName))
+            {
+                try
+                {
+                    ArtifactLibrary = ArtifactLibrary.FromFile(setup.WorkingDirectory + setup.LibraryFileName, this, setup.Stopwatch, setup.LoggerFactory);
+                    Logger.LogDebug("Loaded artifact library from file {0}.", setup.WorkingDirectory + setup.LibraryFileName);
+                }
+                catch (SerializationException)
+                {
+                    Logger.LogWarning("Deserialization of artifact library failed.");
+                }
+            }
+            else
+            {
+                Logger.LogDebug("Artifact library file not found at {0}.", setup.WorkingDirectory + setup.LibraryFileName);
+            }
+        }
 
         private bool SetupMatchFilter(Setup setup)
         {
@@ -53,10 +80,31 @@ namespace ArbitraryArtifactDetector.Detector
 
         public override DetectorResponse FindArtifact(Setup setup)
         {
+            // Should we use a cache for the artifact library?
+            if (setup.ShouldCache)
+            {
+                FetchArtifactLibrary(setup);
+            }
+
+            // Some error occurred, get an empty library.
+            if (ArtifactLibrary == null)
+            {
+                Logger.LogDebug("Creating new artifact library instance.");
+                try
+                {
+                    ArtifactLibrary = new ArtifactLibrary(setup.WorkingDirectory, this, setup.GetLogger("ArtifactLibrary"), Stopwatch);
+                }
+                catch (Exception e)
+                {
+                    Logger.LogError("Could not instantiate artifact library: {0}", e.Message);
+                    throw new SetupError("Could not instantiate artifact library.");
+                }
+            }
+
             ArtifactType artifactType = null;
             try
             {
-                artifactType = setup.ArtifactLibrary.GetArtifactType(setup.ArtifactGoal);
+                artifactType = ArtifactLibrary.GetArtifactType(setup.ArtifactGoal);
             }
             catch (Exception e)
             {
@@ -89,10 +137,10 @@ namespace ArbitraryArtifactDetector.Detector
                 Application.Run(new ImageViewer(drawingResult));
 #endif
 
-            // Chache the artifact library.
+            // Cache the artifact library.
             if (setup.ShouldCache)
             {
-                setup.ArtifactLibrary.ExportToFile(setup.LibraryFileName, setup.WorkingDirectory);
+                ArtifactLibrary.ExportToFile(setup.LibraryFileName, setup.WorkingDirectory);
                 Logger.LogInformation("Exported artifact library to {libraryFileName}.", setup.WorkingDirectory + setup.LibraryFileName);
             }
 

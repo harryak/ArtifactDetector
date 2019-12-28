@@ -1,5 +1,4 @@
 ﻿using ArbitraryArtifactDetector.Helper;
-using ArbitraryArtifactDetector.Model;
 using Microsoft.Extensions.Logging;
 using Mono.Options;
 using NLog.Extensions.Logging;
@@ -19,7 +18,6 @@ namespace ArbitraryArtifactDetector
         private ILogger Logger { get; set; }
         public VADStopwatch Stopwatch { get; set; } = null;
 
-        public ArtifactLibrary ArtifactLibrary { get; set; } = null;
         public string ArtifactGoal { get; set; } = "";
         public string ScreenshotPath { get; set; } = "";
         public string WorkingDirectory { get; set; } = "";
@@ -27,7 +25,7 @@ namespace ArbitraryArtifactDetector
         public bool ShouldCache { get; set; } = false;
         public string LibraryFileName { get; } = "artifacts.bin";
 
-        private ILoggerFactory LoggerFactory { get; set; }
+        public ILoggerFactory LoggerFactory { get; private set; }
         public string DetectorSelection { get; set; } = "orb";
         public string FilterSelection { get; set; } = "simple";
 
