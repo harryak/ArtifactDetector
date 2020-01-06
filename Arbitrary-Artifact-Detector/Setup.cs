@@ -1,4 +1,5 @@
-﻿using ArbitraryArtifactDetector.Helper;
+﻿using ArbitraryArtifactDetector.DebugUtilities;
+using ArbitraryArtifactDetector.Helper;
 using Microsoft.Extensions.Logging;
 using Mono.Options;
 using NLog.Extensions.Logging;
@@ -16,18 +17,15 @@ namespace ArbitraryArtifactDetector
         /// 
         /// </summary>
         private ILogger Logger { get; set; }
-        public VADStopwatch Stopwatch { get; set; } = null;
+        public AADStopwatch Stopwatch { get; set; } = null;
 
         public string ArtifactGoal { get; set; } = "";
-        public string ScreenshotPath { get; set; } = "";
         public string WorkingDirectory { get; set; } = "";
         public bool ShouldEvaluate { get; set; } = false;
         public bool ShouldCache { get; set; } = false;
         public string LibraryFileName { get; } = "artifacts.bin";
 
         public ILoggerFactory LoggerFactory { get; private set; }
-        public string DetectorSelection { get; set; } = "orb";
-        public string FilterSelection { get; set; } = "simple";
 
         /// <summary>
         /// This class handles the parsing of the configuration files and command line arguments for this program, plus the setup of the working environment.
@@ -51,25 +49,28 @@ namespace ArbitraryArtifactDetector
             }
 
             // Should we show the help?
-            if (shouldShowHelp || string.IsNullOrEmpty(ScreenshotPath) || string.IsNullOrEmpty(ArtifactGoal))
+            if (shouldShowHelp || string.IsNullOrEmpty(ArtifactGoal))
             {
                 ShowHelp(options);
                 throw new SetupError("Screenshot path or artifact goal not set.");
             }
             // We got the info.
-            Logger.LogInformation("We got the path {screenshotPath} and the artifact goal {artifactGoal}.", ScreenshotPath, ArtifactGoal);
+            Logger.LogInformation("We got the artifact goal {artifactGoal}.", ArtifactGoal);
 
             // Is there an existing and accessable working directory?
             if (Directory.Exists(WorkingDirectory))
             {
-                TestLockFile(WorkingDirectory);
+                if (!FileHelper.DirectoryIsWritable(WorkingDirectory, out Exception exception))
+                {
+                    Logger.LogError("Can not write to working directory {path} with error: {0}.", WorkingDirectory, exception.Message);
+                }
             }
 
             // Determine if we use a stopwatch in this run.
             if (ShouldEvaluate)
             {
                 // Get stopwatch for evaluation.
-                Stopwatch = VADStopwatch.GetInstance();
+                Stopwatch = AADStopwatch.GetInstance();
             }
         }
 
@@ -106,12 +107,9 @@ namespace ArbitraryArtifactDetector
             return new OptionSet
             {
                 { "h|help", "Show this message and exit.", h => shouldShowHelp = h != null },
-                { "s|screenshot=", "The path to the screenshot to search in (required).", p => ScreenshotPath = p },
                 { "a|artifact=", "Name of the artifact to look for (required).", a => ArtifactGoal = a },
                 { "f|filepath=", "Path to the working directory (default is current directory). The recipes must be in this folder!", f => WorkingDirectory = FileHelper.AddDirectorySeparator(Path.GetFullPath(f)) },
                 { "c|cache", "Cache the artifact types.", c => ShouldCache = c != null },
-                { "d|detector=", "Detector to use (default: orb). [akaze, brisk, kaze, orb]", d => DetectorSelection = d},
-                { "m|filter=", "Match filter to use (default: simple). [simple, affine]", m => FilterSelection = m},
                 { "e|evaluate", "Include stopwatch output.", e => ShouldEvaluate = e != null },
             };
         }
@@ -130,37 +128,6 @@ namespace ArbitraryArtifactDetector
             // output the options
             Console.WriteLine("Options:");
             options.WriteOptionDescriptions(Console.Out);
-        }
-
-        /// <summary>
-        /// Test if a directory is writable by attempting to write and delete a lock file.
-        /// </summary>
-        /// <param name="path"></param>
-        /// <param name="logger"></param>
-        /// <returns></returns>
-        private bool TestLockFile(string path)
-        {
-            try
-            {
-                using (var lockFile = File.OpenWrite(path + "lock"))
-                {
-                    ;
-                }
-
-                File.Delete(path + "lock");
-            }
-            catch (AccessViolationException e)
-            {
-                Logger.LogError("Can not write to working directory {path} with error: {0}.", path, e.Message);
-                return false;
-            }
-            catch (IOException e)
-            {
-                Logger.LogError("Can not write to working directory {path} with error: {0}.", path, e.Message);
-                return false;
-            }
-
-            return true;
         }
     }
 }

@@ -26,5 +26,19 @@ namespace ArbitraryArtifactDetector
                 return Convert.ToDouble(ConfigurationManager.AppSettings.Get("MatchDistanceThreshold"));
             }
         }
+        public static string FeatureExtractorSelection
+        {
+            get
+            {
+                return ConfigurationManager.AppSettings.Get("FeatureExtractor");
+            }
+        }
+        public static string MatchFilterSelection
+        {
+            get
+            {
+                return ConfigurationManager.AppSettings.Get("MatchFilter");
+            }
+        }
     }
 }

@@ -43,6 +43,39 @@ namespace ArbitraryArtifactDetector.Helper
         }
 
         /// <summary>
+        /// Test if a directory is writable by attempting to write and delete a lock file.
+        /// </summary>
+        /// <param name="path"></param>
+        /// <param name="logger"></param>
+        /// <returns></returns>
+        public static bool DirectoryIsWritable(string path, out Exception exception)
+        {
+            exception = null;
+
+            try
+            {
+                using (var lockFile = File.OpenWrite(path + "lock"))
+                {
+                    ;
+                }
+
+                File.Delete(path + "lock");
+            }
+            catch (AccessViolationException e)
+            {
+                exception = e;
+                return false;
+            }
+            catch (IOException e)
+            {
+                exception = e;
+                return false;
+            }
+
+            return true;
+        }
+
+        /// <summary>
         /// Writes to a file using the write action.
         /// </summary>
         /// <param name="filename">The filename to write to.</param>
