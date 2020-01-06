@@ -1,19 +1,51 @@
-﻿using ArbitraryArtifactDetector.Model;
+﻿using ArbitraryArtifactDetector.DebugUtilities;
+using ArbitraryArtifactDetector.Helper;
+using ArbitraryArtifactDetector.Model;
 using ArbitraryArtifactDetector.RecipeParser.Model;
-using System.Collections.Generic;
+using System.IO;
+using YamlDotNet.Serialization;
+using YamlDotNet.Serialization.NamingConventions;
 
 namespace ArbitraryArtifactDetector.RecipeParser
 {
-    class ArtifactConfigurationParser
+    class ArtifactConfigurationParser : Debuggable
     {
-        /// <summary>
-        /// Sorted list of detector configurations directly from YAML.
-        /// </summary>
-        private List<RawDetectorEntry> RawDetectorEntries { get; set; }
+        private Setup Setup { get; set; }
 
-        public ArtifactConfiguration ParseRecipe(string recipePath)
+        internal ArtifactConfigurationParser(Setup setup) : base(setup)
         {
-            throw new System.NotImplementedException();
+            Setup = setup;
+        }
+
+        public ArtifactConfiguration ParseRecipe()
+        {
+            StartStopwatch();
+
+            string recipePath = FileHelper.AddDirectorySeparator(Setup.WorkingDirectory) + Setup.ArtifactGoal + ".yml";
+            
+            var deserializer = new DeserializerBuilder()
+                .IgnoreUnmatchedProperties()
+                .WithNamingConvention(CamelCaseNamingConvention.Instance)
+                .WithTagMapping("!ruby/object:Recipe", typeof(RawRecipe))
+                .Build();
+
+            RawRecipe rawRecipe;
+            using (StreamReader streamReader = new StreamReader(recipePath))
+            {
+                rawRecipe = deserializer.Deserialize<RawRecipe>(streamReader);
+            }
+
+            StopStopwatch("Finished parsing of recipe in {0}ms.");
+            StartStopwatch();
+
+            ArtifactConfiguration artifactConfiguration = new ArtifactConfiguration(
+                Setup.ArtifactGoal,
+                DetectorParser.FromRawRecipe(rawRecipe, Setup),
+                FileHelper.AddDirectorySeparator(Setup.WorkingDirectory) + "screenshot");
+
+            StopStopwatch("Finished generating artifact configuration in {0}ms.");
+
+            return artifactConfiguration;
         }
     }
 }

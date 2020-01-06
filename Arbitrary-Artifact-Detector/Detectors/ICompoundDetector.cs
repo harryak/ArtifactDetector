@@ -10,9 +10,8 @@
         /// </summary>
         /// <param name="detector">Instance of the new detector to add.</param>
         /// <param name="priority">Optional. Prioritize this detector.</param>
-        /// <param name="requiredCertainty">Optional. Required certainty level to proceed with this detector.</param>
         /// <returns>The set priority.</returns>
-        int AddDetector(IDetector detector, int priority = 0, int requiredCertainty = 0);
+        int AddDetector(IDetector detector, int priority = -1);
 
         /// <summary>
         /// Simple debug output to list all detectors in the current chain.

@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
+using ArbitraryArtifactDetector.Helper;
 
 namespace ArbitraryArtifactDetector.RecipeParser
 {
@@ -17,7 +18,7 @@ namespace ArbitraryArtifactDetector.RecipeParser
             {"=", (string leftPart, string rightPart) => new EqualityDetectorCondition<ObjectType>(leftPart, rightPart) }
         };
 
-        public static IDetectorCondition<ObjectType> ParseConditionString<ObjectType>(string conditionString)
+        public static IDetectorCondition<ObjectType> ParseConditionString(string conditionString)
         {
             // Special word "none"
             if (conditionString == "none")
@@ -42,7 +43,7 @@ namespace ArbitraryArtifactDetector.RecipeParser
                 }
                 else if (substrings.Length == 3)
                 {
-                    return (IDetectorCondition<ObjectType>) TranslateSimpleExpressionMap[substrings[1]](substrings[0], substrings[2]);
+                    return TranslateSimpleExpressionMap[substrings[1]](substrings[0].CapitalizeFirstLetter(), substrings[2]);
                 }
 
                 throw new ArgumentOutOfRangeException("Can not parse the condition string.");
@@ -85,7 +86,7 @@ namespace ArbitraryArtifactDetector.RecipeParser
 
                     for (int i = 0; i < substrings.Length; i += 2)
                     {
-                        conditions.AddCondition(ParseConditionString<ObjectType>(substrings[i]));
+                        conditions.AddCondition(ParseConditionString(substrings[i]));
                     }
 
                     return conditions;
@@ -109,7 +110,7 @@ namespace ArbitraryArtifactDetector.RecipeParser
                     }
 
                     // Add the parsed contents up until the logical connector before the bracket.
-                    conditions.AddCondition(ParseConditionString<ObjectType>(conditionString.Substring(0, firstOpeningBracketPosition - 2)));
+                    conditions.AddCondition(ParseConditionString(conditionString.Substring(0, firstOpeningBracketPosition - 2)));
                 }
 
                 // Get index of last closing bracket.
@@ -145,11 +146,11 @@ namespace ArbitraryArtifactDetector.RecipeParser
                     }
 
                     // Add the parsed contents after the logical connector behind the bracket.
-                    conditions.AddCondition(ParseConditionString<ObjectType>(conditionString.Substring(lastClosingBracketPosition + 2)));
+                    conditions.AddCondition(ParseConditionString(conditionString.Substring(lastClosingBracketPosition + 2)));
                 }
 
                 // Finally: Parse and add everything between the first opening and the last closing bracket by recursive call.
-                conditions.AddCondition(ParseConditionString<ObjectType>(conditionString.Substring(firstOpeningBracketPosition + 1, lastClosingBracketPosition - 1)));
+                conditions.AddCondition(ParseConditionString(conditionString.Substring(firstOpeningBracketPosition + 1, lastClosingBracketPosition - 1)));
 
                 return conditions;
             }

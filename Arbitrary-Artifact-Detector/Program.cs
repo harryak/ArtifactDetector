@@ -1,5 +1,6 @@
 ﻿using ArbitraryArtifactDetector.DetectorCondition.Model;
 using ArbitraryArtifactDetector.Detectors;
+using ArbitraryArtifactDetector.Helper;
 using ArbitraryArtifactDetector.Model;
 using ArbitraryArtifactDetector.RecipeParser;
 using Microsoft.Extensions.Logging;
@@ -39,7 +40,8 @@ namespace ArbitraryArtifactDetector
             ArtifactConfiguration artifactConfiguration;
             try
             {
-                artifactConfiguration = new ArtifactConfigurationParser().ParseRecipe(Setup.WorkingDirectory + Setup.ArtifactGoal);
+                // Read the YML at the working directory with the artifact's name.
+                artifactConfiguration = new ArtifactConfigurationParser(Setup).ParseRecipe();
             }
             catch (IOException exception)
             {
@@ -58,10 +60,11 @@ namespace ArbitraryArtifactDetector
                 Logger.LogError(error.Message);
                 return -1;
             }
-            
-            DetectorResponse artifactFound = artifactDetector.FindArtifact(null, Setup);
 
-            return artifactFound.ArtifactPresent ? 0 : 1;
+            return 0;
+            //DetectorResponse artifactFound = artifactDetector.FindArtifact(new ArtifactRuntimeInformation(), Setup);
+
+            //return artifactFound.ArtifactPresent ? 0 : 1;
         }
     }
 }

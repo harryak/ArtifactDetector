@@ -18,7 +18,7 @@ namespace ArbitraryArtifactDetector.DetectorCondition.Model
         public BaseDetectorCondition(string aspectToCheck, Func<GeneralAspectType, Type, bool> checkingFunction)
         {
             // Check the aspect for validity and get the type.
-            PropertyInfo property = typeof(GeneralAspectType).GetProperty(aspectToCheck);
+            PropertyInfo property = typeof(ObjectType).GetProperty(aspectToCheck);
             if (property == null)
             {
                 throw new ArgumentException("Property not valid for given class.");

@@ -92,7 +92,7 @@ namespace ArbitraryArtifactDetector.Model
             if (!Library.ContainsKey(name))
             {
                 // Generate artifact object freshly.
-                Library[name] = new ArtifactConfiguration(artifactName: name);
+                Library[name] = null;// new ArtifactConfiguration(artifactName: name);
 
                 foreach (string imageFile in GetImageFilesForArtifactType(name))
                 {

@@ -14,7 +14,7 @@ namespace ArbitraryArtifactDetector.DebugUtilities
         /// <param name="setup">The current execution's setup.</param>
         internal Debuggable(Setup setup)
         {
-            Logger = setup.GetLogger(new StackFrame(1).GetType().ToString());
+            Logger = setup.GetLogger(GetType().Name);
             Stopwatch = setup.Stopwatch;
         }
 
@@ -37,7 +37,7 @@ namespace ArbitraryArtifactDetector.DebugUtilities
         {
             if (Stopwatch != null)
             {
-                Stopwatch.Stop(new StackFrame(1).GetMethod().Name);
+                Stopwatch.Stop(GetType().Name);
                 Logger.LogDebug(message, Stopwatch.ElapsedMilliseconds);
             }
         }

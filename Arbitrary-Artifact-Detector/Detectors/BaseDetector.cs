@@ -9,8 +9,8 @@ namespace ArbitraryArtifactDetector.Detectors
     /// </summary>
     abstract class BaseDetector : Debuggable, IDetector
     {
-        protected DetectorConditionSet PreConditions { get; set; }
-        protected DetectorConditionSet TargetConditions { get; set; }
+        protected IDetectorCondition<ArtifactRuntimeInformation> PreConditions { get; set; }
+        protected IDetectorCondition<DetectorResponse> TargetConditions { get; set; }
 
         /// <summary>
         /// Provide the setup, please
@@ -24,7 +24,7 @@ namespace ArbitraryArtifactDetector.Detectors
         /// Explicit setter function for the interface.
         /// </summary>
         /// <param name="conditions">Value to set.</param>
-        public void SetPreConditions(DetectorConditionSet conditions)
+        public void SetPreConditions(IDetectorCondition<ArtifactRuntimeInformation> conditions)
         {
             PreConditions = conditions;
         }
@@ -33,7 +33,7 @@ namespace ArbitraryArtifactDetector.Detectors
         /// Explicit setter function for the interface.
         /// </summary>
         /// <param name="conditions">Value to set.</param>
-        public void SetTargetConditions(DetectorConditionSet conditions)
+        public void SetTargetConditions(IDetectorCondition<DetectorResponse> conditions)
         {
             TargetConditions = conditions;
         }
@@ -44,17 +44,17 @@ namespace ArbitraryArtifactDetector.Detectors
         /// <returns>True if it does.</returns>
         public bool HasPreConditions()
         {
-            return PreConditions != null && PreConditions.NotEmpty();
+            return PreConditions != null && (PreConditions.GetType() == typeof(DetectorConditionSet<ArtifactRuntimeInformation>) && ((DetectorConditionSet<ArtifactRuntimeInformation>) PreConditions).NotEmpty());
         }
 
         /// <summary>
         /// Checks whether the current setup and previous response match the conditions for execution of this detector.
         /// </summary>
-        /// <param name="previousResponse">Response from another detector run before.</param>
+        /// <param name="runtimeInformation">Information from other detectors run before.</param>
         /// <returns>True if the conditions are met.</returns>
-        public bool PreConditionsMatch(DetectorResponse previousResponse)
+        public bool PreConditionsMatch(ArtifactRuntimeInformation runtimeInformation)
         {
-            return PreConditions.ResponseMatchesConditions(previousResponse);
+            return PreConditions.ObjectMatchesConditions(runtimeInformation);
         }
 
         /// <summary>
@@ -64,7 +64,7 @@ namespace ArbitraryArtifactDetector.Detectors
         /// <returns>True if the conditions are met.</returns>
         public bool TargetConditionsMatch(DetectorResponse response)
         {
-            return PreConditions.ResponseMatchesConditions(response);
+            return TargetConditions.ObjectMatchesConditions(response);
         }
 
         /// <summary>

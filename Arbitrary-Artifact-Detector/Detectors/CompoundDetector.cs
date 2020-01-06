@@ -18,7 +18,7 @@ namespace ArbitraryArtifactDetector.Detectors
 
         }
 
-        public int AddDetector(IDetector detector, int priority = -1, int requiredCertainty = 0)
+        public int AddDetector(IDetector detector, int priority = -1)
         {
             if (priority < 0)
             {
@@ -55,7 +55,7 @@ namespace ArbitraryArtifactDetector.Detectors
             {
                 var currentDetector = entry.Value;
                 // Check if previous certainty meets required level.
-                if (previousResponse != null && currentDetector.HasPreConditions() && entry.Value.PreConditionsMatch(previousResponse))
+                if (previousResponse != null && currentDetector.HasPreConditions() && entry.Value.PreConditionsMatch(runtimeInformation))
                     break;
 
                 // Get the new chain element's response.

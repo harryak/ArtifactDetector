@@ -9,13 +9,13 @@ namespace ArbitraryArtifactDetector.Detectors
         /// Set conditions to check before this detector may be called.
         /// </summary>
         /// <param name="conditions">A set of conditions.</param>
-        void SetPreConditions(DetectorConditionSet conditions);
+        void SetPreConditions(IDetectorCondition<ArtifactRuntimeInformation> conditions);
 
         /// <summary>
         /// Set conditions to change the target for the response.
         /// </summary>
         /// <param name="conditions">A set of conditions.</param>
-        void SetTargetConditions(DetectorConditionSet conditions);
+        void SetTargetConditions(IDetectorCondition<DetectorResponse> conditions);
 
         /// <summary>
         /// Tells whether this detector has preconditions.
@@ -26,9 +26,9 @@ namespace ArbitraryArtifactDetector.Detectors
         /// <summary>
         /// Checks whether the current setup and previous response match the conditions for execution of this detector.
         /// </summary>
-        /// <param name="previousResponse">Response from another detector run before.</param>
+        /// <param name="runtimeInformation">Response from other detectors run before.</param>
         /// <returns>True if the conditions are met.</returns>
-        bool PreConditionsMatch(DetectorResponse previousResponse);
+        bool PreConditionsMatch(ArtifactRuntimeInformation runtimeInformation);
 
         /// <summary>
         /// Checks whether the response matches the conditions for evaluating to "artifact found".

@@ -172,10 +172,12 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="AADConfig.cs" />
+    <Compile Include="ArtifactReferenceImageCache.cs" />
     <Compile Include="DebugUtilities\Debuggable.cs" />
     <Compile Include="Detectors\BaseDetector.cs" />
     <Compile Include="Detectors\CompoundDetector.cs" />
     <Compile Include="Detectors\VisualFeatureExtractor\BaseVisualFeatureExtractor.cs" />
+    <Compile Include="Helper\StringExtensions.cs" />
     <Compile Include="Model\ArtifactRuntimeInformation.cs" />
     <Compile Include="Model\DetectorCondition\BaseDetectorCondition.cs" />
     <Compile Include="Model\DetectorCondition\EqualityDetectorCondition.cs" />
@@ -186,7 +188,6 @@
     <Compile Include="Model\DetectorCondition\LessThanEqualDetectorCondition.cs" />
     <Compile Include="Model\DetectorCondition\LessThanDetectorCondition.cs" />
     <Compile Include="RecipeParser\DetectorConditionParser.cs" />
-    <Compile Include="RecipeParser\DetectorConverter.cs" />
     <Compile Include="Detectors\DesktopIconDetector.cs" />
     <Compile Include="Detectors\ICompoundDetector.cs" />
     <Compile Include="Detectors\InstalledProgramsDetector.cs" />
@@ -212,15 +213,15 @@
     <Compile Include="Detectors\VisualFeatureExtractor\KazeDetector.cs" />
     <Compile Include="Helper\FileHelper.cs" />
     <Compile Include="DebugUtilities\AADStopwatch.cs" />
-    <Compile Include="ArtifactLibrary.cs" />
     <Compile Include="Model\ProcessedImage.cs" />
     <Compile Include="Model\ArtifactConfiguration.cs" />
     <Compile Include="Detectors\VisualFeatureExtractor\IVisualFeatureExtractor.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="RecipeParser\ArtifactConfigurationConverter.cs" />
     <Compile Include="RecipeParser\ArtifactConfigurationParser.cs" />
+    <Compile Include="RecipeParser\DetectorParser.cs" />
     <Compile Include="RecipeParser\Model\RawDetectorEntry.cs" />
+    <Compile Include="RecipeParser\Model\RawRecipe.cs" />
     <Compile Include="Setup.cs" />
     <Compile Include="SetupError.cs" />
     <Compile Include="Viewer\ImageViewer.cs">

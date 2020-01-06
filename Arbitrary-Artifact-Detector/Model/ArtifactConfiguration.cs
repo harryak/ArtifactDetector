@@ -1,4 +1,5 @@
-﻿using System;
+﻿using ArbitraryArtifactDetector.Detectors;
+using System;
 using System.Collections.Generic;
 
 namespace ArbitraryArtifactDetector.Model
@@ -9,6 +10,13 @@ namespace ArbitraryArtifactDetector.Model
     [Serializable]
     class ArtifactConfiguration
     {
+        /// <summary>
+        /// Name (primary identifier) of this artifact.
+        /// </summary>
+        public string ArtifactName { get; private set; }
+
+        public IDetector Detector { get; private set; }
+
         private string ReferenceImagePath { get; set; }
 
         private string[] ReferenceImageFiles { get; set; }
@@ -34,17 +42,13 @@ namespace ArbitraryArtifactDetector.Model
         private ProcessImagesFunction _processImagesFunction { get; set; } = null;
 
         /// <summary>
-        /// Name (primary identifier) of this artifact.
-        /// </summary>
-        public string ArtifactName { get; private set; }
-        
-        /// <summary>
         /// Simple constructor.
         /// </summary>
         /// <param name="artifactName"></param>
-        public ArtifactConfiguration(string artifactName, string imagePath = "", ProcessImagesFunction processImagesFunction = null)
+        public ArtifactConfiguration(string artifactName, IDetector detector, string imagePath = "", ProcessImagesFunction processImagesFunction = null)
         {
             ArtifactName = artifactName;
+            Detector = detector;
             ReferenceImagePath = imagePath;
             _processImagesFunction = processImagesFunction;
         }
