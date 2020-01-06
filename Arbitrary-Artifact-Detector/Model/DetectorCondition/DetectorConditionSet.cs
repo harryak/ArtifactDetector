@@ -4,12 +4,12 @@ using System.Linq;
 
 namespace ArbitraryArtifactDetector.DetectorCondition.Model
 {
-    class DetectorConditionSet : IDetectorCondition
+    class DetectorConditionSet<ObjectType> : IDetectorCondition<ObjectType>
     {
         /// <summary>
         /// All conditions in this set. Can be condition sets themselves.
         /// </summary>
-        private List<IDetectorCondition> Conditions { get; set; } = new List<IDetectorCondition>();
+        private List<IDetectorCondition<ObjectType>> Conditions { get; set; } = new List<IDetectorCondition<ObjectType>>();
 
         /// <summary>
         /// The connecting operator for this set of conditions.
@@ -30,7 +30,7 @@ namespace ArbitraryArtifactDetector.DetectorCondition.Model
         /// </summary>
         /// <param name="conditions">Array of conditions to be added.</param>
         /// <param name="conditionOperator">Optional. Connecting logical operator.</param>
-        public DetectorConditionSet(IDetectorCondition[] conditions, ConditionOperator conditionOperator = ConditionOperator.AND)
+        public DetectorConditionSet(IDetectorCondition<ObjectType>[] conditions, ConditionOperator conditionOperator = ConditionOperator.AND)
         {
             Conditions = conditions.ToList();
             Operator = conditionOperator;
@@ -41,7 +41,7 @@ namespace ArbitraryArtifactDetector.DetectorCondition.Model
         /// </summary>
         /// <param name="conditions">List of conditions to be added.</param>
         /// <param name="conditionOperator">Optional. Connecting logical operator.</param>
-        public DetectorConditionSet(List<IDetectorCondition> conditions, ConditionOperator conditionOperator = ConditionOperator.AND)
+        public DetectorConditionSet(List<IDetectorCondition<ObjectType>> conditions, ConditionOperator conditionOperator = ConditionOperator.AND)
         {
             Conditions = conditions;
             Operator = conditionOperator;
@@ -60,9 +60,15 @@ namespace ArbitraryArtifactDetector.DetectorCondition.Model
         /// Implements interface: Recursively evaluate all conditions in this set and connect them with the logical Operator.
         /// </summary>
         /// <param name="response">The detector response to evaluate.</param>
-        /// <returns>True if the conditions in this set apply to the response.</returns>
-        public bool ResponseMatchesConditions(DetectorResponse response)
+        /// <returns>True if the conditions in this set apply to the response or this is an empty set.</returns>
+        public bool ObjectMatchesConditions(ObjectType objectToCheck)
         {
+            // Empty set of conditions means "matches".
+            if (Conditions.Count < 1)
+            {
+                return true;
+            }
+
             // Get variable for the return value.
             bool returnValue;
 
@@ -77,16 +83,16 @@ namespace ArbitraryArtifactDetector.DetectorCondition.Model
             }
 
             // Go through all the conditions in this set to evaluate them.
-            foreach (IDetectorCondition condition in Conditions)
+            foreach (IDetectorCondition<ObjectType> condition in Conditions)
             {
                 // Connect the condition by the logical operator.
                 if (Operator == ConditionOperator.AND)
                 {
-                    returnValue &= condition.ResponseMatchesConditions(response);
+                    returnValue &= condition.ObjectMatchesConditions(objectToCheck);
                 }
                 else
                 {
-                    returnValue |= condition.ResponseMatchesConditions(response);
+                    returnValue |= condition.ObjectMatchesConditions(objectToCheck);
                 }
 
 
@@ -99,7 +105,7 @@ namespace ArbitraryArtifactDetector.DetectorCondition.Model
         /// Add another condition to the set of conditions.
         /// </summary>
         /// <param name="condition">The condition to add.</param>
-        public void AddCondition(IDetectorCondition condition)
+        public void AddCondition(IDetectorCondition<ObjectType> condition)
         {
             Conditions.Add(condition);
         }

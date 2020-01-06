@@ -6,19 +6,26 @@ using System.Text.RegularExpressions;
 
 namespace ArbitraryArtifactDetector.RecipeParser
 {
-    class DetectorConditionParser
+    class DetectorConditionParser<ObjectType>
     {
-        private static readonly Dictionary<string, Func<string, string, IDetectorCondition>> TranslateSimpleExpressionMap = new Dictionary<string, Func<string, string, IDetectorCondition>>()
+        private static readonly Dictionary<string, Func<string, string, IDetectorCondition<ObjectType>>> TranslateSimpleExpressionMap = new Dictionary<string, Func<string, string, IDetectorCondition<ObjectType>>>()
         {
-            {"<", (string leftPart, string rightPart) => new LessThanDetectorCondition(leftPart, rightPart) },
-            {"<=", (string leftPart, string rightPart) => new LessThanEqualDetectorCondition(leftPart, rightPart) },
-            {">", (string leftPart, string rightPart) => new GreaterThanDetectorCondition(leftPart, rightPart) },
-            {">=", (string leftPart, string rightPart) => new GreaterThanEqualDetectorCondition(leftPart, rightPart) },
-            {"=", (string leftPart, string rightPart) => new EqualityDetectorCondition(leftPart, rightPart) }
+            {"<", (string leftPart, string rightPart) => new LessThanDetectorCondition<ObjectType>(leftPart, rightPart) },
+            {"<=", (string leftPart, string rightPart) => new LessThanEqualDetectorCondition<ObjectType>(leftPart, rightPart) },
+            {">", (string leftPart, string rightPart) => new GreaterThanDetectorCondition<ObjectType>(leftPart, rightPart) },
+            {">=", (string leftPart, string rightPart) => new GreaterThanEqualDetectorCondition<ObjectType>(leftPart, rightPart) },
+            {"=", (string leftPart, string rightPart) => new EqualityDetectorCondition<ObjectType>(leftPart, rightPart) }
         };
 
-        public static IDetectorCondition ParseConditionString(string conditionString)
+        public static IDetectorCondition<ObjectType> ParseConditionString<ObjectType>(string conditionString)
         {
+            // Special word "none"
+            if (conditionString == "none")
+            {
+                // Empty condition set.
+                return new DetectorConditionSet<ObjectType>();
+            }
+
             // First check simplest case: No conjunction or disjunction.
             if (!conditionString.Contains('&') && !conditionString.Contains('|'))
             {
@@ -31,11 +38,11 @@ namespace ArbitraryArtifactDetector.RecipeParser
 
                 if (substrings.Length == 1)
                 {
-                    return new ExistsDetectorCondition(substrings[0]);
+                    return new ExistsDetectorCondition<ObjectType>(substrings[0]);
                 }
                 else if (substrings.Length == 3)
                 {
-                    return TranslateSimpleExpressionMap[substrings[1]](substrings[0], substrings[2]);
+                    return (IDetectorCondition<ObjectType>) TranslateSimpleExpressionMap[substrings[1]](substrings[0], substrings[2]);
                 }
 
                 throw new ArgumentOutOfRangeException("Can not parse the condition string.");
@@ -43,7 +50,7 @@ namespace ArbitraryArtifactDetector.RecipeParser
             else
             {
                 // Initialize return object, the conditions will be added later.
-                DetectorConditionSet conditions = new DetectorConditionSet();
+                DetectorConditionSet<ObjectType> conditions = new DetectorConditionSet<ObjectType>();
 
                 // Replace everything but the allowed characters for general conditions.
                 conditionString = Regex.Replace(conditionString, "[^a-zA-Z0-9<>=&|()]", "");
@@ -78,7 +85,7 @@ namespace ArbitraryArtifactDetector.RecipeParser
 
                     for (int i = 0; i < substrings.Length; i += 2)
                     {
-                        conditions.AddCondition(ParseConditionString(substrings[i]));
+                        conditions.AddCondition(ParseConditionString<ObjectType>(substrings[i]));
                     }
 
                     return conditions;
@@ -102,7 +109,7 @@ namespace ArbitraryArtifactDetector.RecipeParser
                     }
 
                     // Add the parsed contents up until the logical connector before the bracket.
-                    conditions.AddCondition(ParseConditionString(conditionString.Substring(0, firstOpeningBracketPosition - 2)));
+                    conditions.AddCondition(ParseConditionString<ObjectType>(conditionString.Substring(0, firstOpeningBracketPosition - 2)));
                 }
 
                 // Get index of last closing bracket.
@@ -138,11 +145,11 @@ namespace ArbitraryArtifactDetector.RecipeParser
                     }
 
                     // Add the parsed contents after the logical connector behind the bracket.
-                    conditions.AddCondition(ParseConditionString(conditionString.Substring(lastClosingBracketPosition + 2)));
+                    conditions.AddCondition(ParseConditionString<ObjectType>(conditionString.Substring(lastClosingBracketPosition + 2)));
                 }
 
                 // Finally: Parse and add everything between the first opening and the last closing bracket by recursive call.
-                conditions.AddCondition(ParseConditionString(conditionString.Substring(firstOpeningBracketPosition + 1, lastClosingBracketPosition - 1)));
+                conditions.AddCondition(ParseConditionString<ObjectType>(conditionString.Substring(firstOpeningBracketPosition + 1, lastClosingBracketPosition - 1)));
 
                 return conditions;
             }

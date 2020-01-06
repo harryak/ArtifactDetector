@@ -1,9 +1,7 @@
-﻿using ArbitraryArtifactDetector.Model;
-
-namespace ArbitraryArtifactDetector.DetectorCondition.Model
+﻿namespace ArbitraryArtifactDetector.DetectorCondition.Model
 {
-    interface IDetectorCondition
+    interface IDetectorCondition<T>
     {
-        bool ResponseMatchesConditions(DetectorResponse response);
+        bool ObjectMatchesConditions(T objectToCheck);
     }
 }
