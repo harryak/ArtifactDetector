@@ -188,6 +188,12 @@
     <Compile Include="AADConfig.cs" />
     <Compile Include="ArtifactReferenceImageCache.cs" />
     <Compile Include="DebugUtility\Debuggable.cs" />
+    <Compile Include="Detector\Configuration\BaseDetectorConfiguration.cs" />
+    <Compile Include="Detector\Configuration\IDetectorConfiguration.cs" />
+    <Compile Include="Detector\Configuration\MailDetectorConfiguration.cs" />
+    <Compile Include="Detector\Configuration\OpenWindowDetectorConfiguration.cs" />
+    <Compile Include="Detector\Configuration\ProcessDetectorConfiguration.cs" />
+    <Compile Include="Detector\OpenMailDetector.cs" />
     <Compile Include="Detector\ProcessDetector.cs" />
     <Compile Include="ProjectInstaller.cs">
       <SubType>Component</SubType>

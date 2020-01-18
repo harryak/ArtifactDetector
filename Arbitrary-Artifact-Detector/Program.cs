@@ -1,4 +1,6 @@
-﻿using ArbitraryArtifactDetector.Service;
+﻿using ArbitraryArtifactDetector.Detector;
+using ArbitraryArtifactDetector.Model;
+using ArbitraryArtifactDetector.Service;
 using ArbitraryArtifactDetector.Utility;
 using Microsoft.Extensions.Logging;
 using System;
@@ -46,6 +48,10 @@ namespace ArbitraryArtifactDetector
             ServiceBase.Run(ServicesToRun);
             Logger.LogInformation("Service started.");
             */
+
+            IDetector detector = new MailDetector(Setup, new Detector.Configuration.MailDetectorConfiguration("sykosch@cs.uni-bonn.de"));
+            ArtifactRuntimeInformation runtimeInfo = new ArtifactRuntimeInformation();
+            DetectorResponse response = detector.FindArtifact(ref runtimeInfo);
 
             return 0;
         }

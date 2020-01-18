@@ -7,12 +7,12 @@ namespace ArbitraryArtifactDetector.Model
     /// </summary>
     class ArtifactRuntimeInformation
     {
-        public float WindowVisibility { get; set; }
+        public float WindowVisibility { get; set; } = 0f;
 
         public ProcessedImage Screenshot { get; set; }
 
-        public IntPtr WindowHandle { get; set; }
+        public IntPtr WindowHandle { get; set; } = IntPtr.Zero;
 
-        public string WindowTitle { get; set; }
+        public string WindowTitle { get; set; } = "";
     }
 }

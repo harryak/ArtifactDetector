@@ -11,10 +11,6 @@ namespace ArbitraryArtifactDetector.Model
     class WindowToplevelInformation
     {
         /// <summary>
-        /// Information on the responsible executable's path.
-        /// </summary>
-        public FileInfo ExecutablePath = new FileInfo(Application.ExecutablePath);
-        /// <summary>
         /// Window handle from user32.dll.
         /// </summary>
         public IntPtr Handle = IntPtr.Zero;
@@ -47,7 +43,7 @@ namespace ArbitraryArtifactDetector.Model
         /// <returns></returns>
         public override string ToString()
         {
-            return ExecutablePath.Name;
+            return Title;
         }
     }
 }

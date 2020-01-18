@@ -71,7 +71,7 @@ namespace ArbitraryArtifactDetector.Service
         {
             // Call artifact detector (may be a compound detector) from artifact configuration.
             var artifactRuntimeInformation = new ArtifactRuntimeInformation();
-            return artifactConfiguration.Detector.FindArtifact(ref artifactRuntimeInformation, Setup);
+            return artifactConfiguration.Detector.FindArtifact(ref artifactRuntimeInformation);
         }
     }
 }

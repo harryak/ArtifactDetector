@@ -60,7 +60,7 @@ namespace ArbitraryArtifactDetector.Detector
                 && (systemComponent == null || (int) systemComponent == 0);
         }
 
-        public override DetectorResponse FindArtifact(ref ArtifactRuntimeInformation runtimeInformation, Setup setup, DetectorResponse previousResponse = null)
+        public override DetectorResponse FindArtifact(ref ArtifactRuntimeInformation runtimeInformation, DetectorResponse previousResponse = null)
         {
             throw new NotImplementedException();
         }
