@@ -1,5 +1,5 @@
-﻿using ArbitraryArtifactDetector.DebugUtilities;
-using ArbitraryArtifactDetector.Detectors.VisualFeatureExtractor;
+﻿using ArbitraryArtifactDetector.DebugUtility;
+using ArbitraryArtifactDetector.Detector.VisualFeatureExtractor;
 using ArbitraryArtifactDetector.Helper;
 using Microsoft.Extensions.Logging;
 using System;

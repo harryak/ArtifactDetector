@@ -40,5 +40,19 @@ namespace ArbitraryArtifactDetector
                 return ConfigurationManager.AppSettings.Get("MatchFilter");
             }
         }
+        public static bool Evaluate
+        {
+            get
+            {
+                return Convert.ToBoolean(ConfigurationManager.AppSettings.Get("Evaluate"));
+            }
+        }
+        public static bool Cache
+        {
+            get
+            {
+                return Convert.ToBoolean(ConfigurationManager.AppSettings.Get("Cache"));
+            }
+        }
     }
 }

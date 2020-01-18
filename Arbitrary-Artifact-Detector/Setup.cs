@@ -1,73 +1,32 @@
-﻿using ArbitraryArtifactDetector.DebugUtilities;
-using ArbitraryArtifactDetector.Helper;
+﻿using ArbitraryArtifactDetector.DebugUtility;
 using Microsoft.Extensions.Logging;
-using Mono.Options;
 using NLog.Extensions.Logging;
 using System;
 using System.IO;
+using System.Reflection;
 
 namespace ArbitraryArtifactDetector
 {
     [Serializable]
-    class Setup
+    internal class Setup
     {
-        private bool shouldShowHelp = false;
-
         /// <summary>
-        /// 
+        /// This class handles the parsing of the configuration files, plus the setup of the working environment.
         /// </summary>
-        private ILogger Logger { get; set; }
-        public AADStopwatch Stopwatch { get; set; } = null;
-
-        public string ArtifactGoal { get; set; } = "";
-        public string WorkingDirectory { get; set; } = "";
-        public bool ShouldEvaluate { get; set; } = false;
-        public bool ShouldCache { get; set; } = false;
-        public string LibraryFileName { get; } = "artifacts.bin";
-
-        public ILoggerFactory LoggerFactory { get; private set; }
-
-        /// <summary>
-        /// This class handles the parsing of the configuration files and command line arguments for this program, plus the setup of the working environment.
-        /// </summary>
-        /// <param name="commandLineArguments"></param>
-        public Setup(string[] commandLineArguments)
+        public Setup()
         {
             Logger = GetLogger("Setup");
 
             // Parse the command line.
-            Logger.LogDebug("Parsing the command line.");
-            var options = SetupCmdOptions();
-            try
-            {
-                options.Parse(commandLineArguments);
-            }
-            catch (OptionException e)
-            {
-                Logger.LogError("Error ocurred while parsing the options: {0} with option {1}.", e.Message, e.OptionName);
-                shouldShowHelp = true;
-            }
+            Logger.LogDebug("Getting the configuration.");
 
-            // Should we show the help?
-            if (shouldShowHelp || string.IsNullOrEmpty(ArtifactGoal))
-            {
-                ShowHelp(options);
-                throw new SetupError("Screenshot path or artifact goal not set.");
-            }
-            // We got the info.
-            Logger.LogInformation("We got the artifact goal {artifactGoal}.", ArtifactGoal);
+            ShouldCache = AADConfig.Cache;
+            ShouldEvaluate = AADConfig.Evaluate;
 
-            // Is there an existing and accessable working directory?
-            if (Directory.Exists(WorkingDirectory))
-            {
-                if (!FileHelper.DirectoryIsWritable(WorkingDirectory, out Exception exception))
-                {
-                    Logger.LogError("Can not write to working directory {path} with error: {0}.", WorkingDirectory, exception.Message);
-                }
-            }
+            WorkingDirectory = GetExecutingDirectory();
 
             // Determine if we use a stopwatch in this run.
-            if (ShouldEvaluate)
+            if (AADConfig.Evaluate)
             {
                 // Get stopwatch for evaluation.
                 Stopwatch = AADStopwatch.GetInstance();
@@ -75,13 +34,53 @@ namespace ArbitraryArtifactDetector
         }
 
         /// <summary>
-        /// Setup the loggerFactory.
+        /// Central point for saving the current artifact target.
         /// </summary>
-        /// <returns></returns>
-        private void SetupLogging()
+        public string ArtifactTarget { get; set; } = "";
+
+        /// <summary>
+        /// Holds the name for the serialized artifact info.
+        /// </summary>
+        public string LibraryFileName { get; } = "artifacts.bin";
+
+        /// <summary>
+        /// Factory for loggers.
+        /// </summary>
+        public ILoggerFactory LoggerFactory { get; private set; }
+
+        /// <summary>
+        /// Flag for determining whether the program should cache its data for next runs.
+        /// </summary>
+        public bool ShouldCache { get; } = false;
+
+        /// <summary>
+        /// Flag for determining whether this run should be evaluated.
+        /// </summary>
+        public bool ShouldEvaluate { get; } = false;
+
+        /// <summary>
+        /// Stopwatch for evaluation.
+        /// </summary>
+        public AADStopwatch Stopwatch { get; set; } = null;
+
+        /// <summary>
+        /// The working directory.
+        /// </summary>
+        public DirectoryInfo WorkingDirectory { get; }
+
+        /// <summary>
+        /// Logger instance for this setup.
+        /// </summary>
+        private ILogger Logger { get; set; }
+
+        /// <summary>
+        /// Get the directory this app is executed in.
+        /// </summary>
+        /// <returns>Directory information.</returns>
+        public static DirectoryInfo GetExecutingDirectory()
         {
-            LoggerFactory = new LoggerFactory();
-            LoggerFactory.AddProvider(new NLogLoggerProvider());
+            var location = new Uri(Assembly.GetEntryAssembly().GetName().CodeBase);
+            return new FileInfo(location.AbsolutePath).Directory;
         }
 
         /// <summary>
@@ -96,38 +95,13 @@ namespace ArbitraryArtifactDetector
         }
 
         /// <summary>
-        /// Prepares an option set for the command line.
+        /// Setup the loggerFactory.
         /// </summary>
         /// <returns></returns>
-        private OptionSet SetupCmdOptions()
+        private void SetupLogging()
         {
-            // Set default value to current directory for working directory.
-            WorkingDirectory = FileHelper.AddDirectorySeparator(Path.GetFullPath("."));
-
-            return new OptionSet
-            {
-                { "h|help", "Show this message and exit.", h => shouldShowHelp = h != null },
-                { "a|artifact=", "Name of the artifact to look for (required).", a => ArtifactGoal = a },
-                { "f|filepath=", "Path to the working directory (default is current directory). The recipes must be in this folder!", f => WorkingDirectory = FileHelper.AddDirectorySeparator(Path.GetFullPath(f)) },
-                { "c|cache", "Cache the artifact types.", c => ShouldCache = c != null },
-                { "e|evaluate", "Include stopwatch output.", e => ShouldEvaluate = e != null },
-            };
-        }
-
-        /// <summary>
-        /// Prints the command line options/help.
-        /// </summary>
-        /// <param name="options"></param>
-        private void ShowHelp(OptionSet options)
-        {
-            // show some app description message
-            Console.WriteLine("Usage: ArbitraryArtifact-Detector.exe [OPTIONS]+");
-            Console.WriteLine("Takes the supplied screenshot and looks in it for the artifact specified.");
-            Console.WriteLine();
-
-            // output the options
-            Console.WriteLine("Options:");
-            options.WriteOptionDescriptions(Console.Out);
+            LoggerFactory = new LoggerFactory();
+            LoggerFactory.AddProvider(new NLogLoggerProvider());
         }
     }
 }

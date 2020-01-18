@@ -1,4 +1,4 @@
-﻿using ArbitraryArtifactDetector.Detectors;
+﻿using ArbitraryArtifactDetector.Detector;
 using System;
 using System.Collections.Generic;
 
