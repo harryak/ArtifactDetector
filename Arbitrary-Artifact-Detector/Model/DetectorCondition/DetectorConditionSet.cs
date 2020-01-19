@@ -1,21 +1,19 @@
-﻿using ArbitraryArtifactDetector.Model;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
 
 namespace ArbitraryArtifactDetector.DetectorCondition.Model
 {
-    class DetectorConditionSet<ObjectType> : IDetectorCondition<ObjectType>
+    /// <summary>
+    /// Representation of the logical connector for a DetectorConditionSet.
+    /// </summary>
+    internal enum ConditionOperator
     {
-        /// <summary>
-        /// All conditions in this set. Can be condition sets themselves.
-        /// </summary>
-        private List<IDetectorCondition<ObjectType>> Conditions { get; set; } = new List<IDetectorCondition<ObjectType>>();
+        AND,
+        OR
+    }
 
-        /// <summary>
-        /// The connecting operator for this set of conditions.
-        /// </summary>
-        public ConditionOperator Operator { get; set; } = ConditionOperator.AND;
-
+    internal class DetectorConditionSet<ObjectType> : IDetectorCondition<ObjectType>
+    {
         /// <summary>
         /// Constructor for an empty set.
         /// </summary>
@@ -24,7 +22,7 @@ namespace ArbitraryArtifactDetector.DetectorCondition.Model
         {
             Operator = conditionOperator;
         }
-        
+
         /// <summary>
         /// Constructor for a non-empty set.
         /// </summary>
@@ -45,6 +43,25 @@ namespace ArbitraryArtifactDetector.DetectorCondition.Model
         {
             Conditions = conditions;
             Operator = conditionOperator;
+        }
+
+        /// <summary>
+        /// The connecting operator for this set of conditions.
+        /// </summary>
+        public ConditionOperator Operator { get; set; } = ConditionOperator.AND;
+
+        /// <summary>
+        /// All conditions in this set. Can be condition sets themselves.
+        /// </summary>
+        private List<IDetectorCondition<ObjectType>> Conditions { get; set; } = new List<IDetectorCondition<ObjectType>>();
+
+        /// <summary>
+        /// Add another condition to the set of conditions.
+        /// </summary>
+        /// <param name="condition">The condition to add.</param>
+        public void AddCondition(IDetectorCondition<ObjectType> condition)
+        {
+            Conditions.Add(condition);
         }
 
         /// <summary>
@@ -94,29 +111,9 @@ namespace ArbitraryArtifactDetector.DetectorCondition.Model
                 {
                     returnValue |= condition.ObjectMatchesConditions(objectToCheck);
                 }
-
-
             }
 
             return returnValue;
         }
-
-        /// <summary>
-        /// Add another condition to the set of conditions.
-        /// </summary>
-        /// <param name="condition">The condition to add.</param>
-        public void AddCondition(IDetectorCondition<ObjectType> condition)
-        {
-            Conditions.Add(condition);
-        }
-    }
-
-    /// <summary>
-    /// Representation of the logical connector for a DetectorConditionSet.
-    /// </summary>
-    public enum ConditionOperator
-    {
-        AND,
-        OR
     }
 }

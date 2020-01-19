@@ -71,6 +71,7 @@ namespace ArbitraryArtifactDetector.Detector
         public override DetectorResponse FindArtifact(ref ArtifactRuntimeInformation runtimeInformation, DetectorResponse previousResponse = null)
         {
             DetectorResponse response = null;
+            runtimeInformation.PreFillWith(PersistentRuntimeInformation);
 
             StartStopwatch();
             foreach (KeyValuePair<int, IDetector> entry in DetectorList)
@@ -84,7 +85,7 @@ namespace ArbitraryArtifactDetector.Detector
                 response = currentDetector.FindArtifact(ref runtimeInformation, previousResponse);
 
                 // If there is an artifact or there is none with 100 certainty, break.
-                if (currentDetector.HasTargetConditions() && currentDetector.TargetConditionsMatch(response))
+                if (currentDetector.HasTargetConditions() && !currentDetector.TargetConditionsMatch(response))
                     break;
 
                 // Copy to right variable for next run.

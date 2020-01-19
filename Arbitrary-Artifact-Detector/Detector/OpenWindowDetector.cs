@@ -20,12 +20,8 @@ namespace ArbitraryArtifactDetector.Detector
         /// </summary>
         /// <param name="setup">Global setup object for the application.</param>
         /// <param name="configuration">Configuration for this detector instance.</param>
-        public OpenWindowDetector(Setup setup, OpenWindowDetectorConfiguration configuration = null) : base(setup)
+        public OpenWindowDetector(Setup setup) : base(setup)
         {
-            if (configuration != null)
-            {
-                Configuration = configuration;
-            }
         }
 
         /// <summary>
@@ -35,11 +31,6 @@ namespace ArbitraryArtifactDetector.Detector
         /// <param name="lParam">Parameters for the current window.</param>
         /// <returns>Can be disregarded.</returns>
         private delegate bool EnumWindowsProc(IntPtr hWnd, int lParam);
-        
-        /// <summary>
-        /// This instances configuration.
-        /// </summary>
-        public OpenWindowDetectorConfiguration Configuration { get; }
 
         /// <summary>
         /// Find the artifact defined in the artifactConfiguration given some runtime information and a previous detector's response.
@@ -49,27 +40,22 @@ namespace ArbitraryArtifactDetector.Detector
         /// <returns>A response object containing information whether the artifact has been found.</returns>
         public override DetectorResponse FindArtifact(ref ArtifactRuntimeInformation runtimeInformation, DetectorResponse previousResponse = null)
         {
-            // Set windowHandle to what is given. The runtime information has precedence as it can be more accurate.
-            IntPtr windowHandle = runtimeInformation.WindowHandle != IntPtr.Zero ? runtimeInformation.WindowHandle : Configuration != null ? Configuration.WindowHandle : IntPtr.Zero;
-
-            string windowTitle = "";
-            // If the handle is not set use the window title instead (but there can be multiple windows with the same title.
-            if (windowHandle == IntPtr.Zero)
-            {
-                windowTitle = runtimeInformation.WindowTitle != "" ? runtimeInformation.WindowTitle : Configuration != null ? Configuration.WindowTitle : "";
-
-                if (windowTitle == "")
-                {
-                    throw new ArgumentException("Neither window handle nor window title given.");
-                }
-            }
-            
             // Stopwatch for evaluation.
             StartStopwatch();
 
+            // Check whether we have enough data to detect the artifact.
+            if (runtimeInformation.WindowHandle == IntPtr.Zero && runtimeInformation.WindowTitle == "")
+            {
+                throw new ArgumentException("Neither window handle nor window title given.");
+            }
+
+            // Copy to local variables for EnumWindowsProc.
+            IntPtr windowHandle = runtimeInformation.WindowHandle;
+            string windowTitle = runtimeInformation.WindowTitle;
+
             // Initialize list of windows for later use.
-            Dictionary<IntPtr, WindowToplevelInformation> windows = new Dictionary<IntPtr , WindowToplevelInformation>();
-            Dictionary<IntPtr, WindowToplevelInformation> matchingWindows = new Dictionary<IntPtr, WindowToplevelInformation>();
+            IList<WindowToplevelInformation> windows = new List<WindowToplevelInformation>();
+            IList<WindowToplevelInformation> matchingWindows = new List<WindowToplevelInformation>();
 
             // Use simple counting index as the windows' z-index, as EnumWindows sorts them by it.
             int i = 0;
@@ -126,12 +112,12 @@ namespace ArbitraryArtifactDetector.Detector
                     }
 
                     // Add the current window to all windows.
-                    windows[hWnd] = currentWindow;
+                    windows.Add(currentWindow);
 
                     // If it is one of the windows we want to find: Add to that list.
                     if (windowMatches)
                     {
-                        matchingWindows[hWnd] = currentWindow;
+                        matchingWindows.Add(currentWindow);
 
                         // If we know the handle there is only one window to find.
                         if (hWnd == windowHandle)
@@ -148,14 +134,18 @@ namespace ArbitraryArtifactDetector.Detector
                 0
             );
 
-            StopStopwatch("Got all opened windows in {0} ms.");
-
             // If we found not a single matching window the artifact can't be present.
             if (matchingWindows.Count < 1)
             {
+                StopStopwatch("Got all opened windows in {0} ms.");
                 return new DetectorResponse() { ArtifactPresent = false, Certainty = 100 };
             }
-            return null;
+
+            runtimeInformation.MatchingWindows = matchingWindows;
+
+            int certainty = 100 / matchingWindows.Count;
+            StopStopwatch("Got all opened windows in {0} ms.");
+            return new DetectorResponse() { ArtifactPresent = true, Certainty = certainty };
         }
 
         /// <summary>
@@ -183,7 +173,7 @@ namespace ArbitraryArtifactDetector.Detector
         /// <param name="windowsAbove">The windows above (z-index) the queried window.</param>
         /// <param name="queriedWindow">Queried window.</param>
         /// <returns>The percentage of how much of the window is visible.</returns>
-        private float CalculateWindowVisibility(Dictionary<IntPtr, WindowToplevelInformation> windowsAbove, WindowToplevelInformation queriedWindow)
+        private float CalculateWindowVisibility(IList<WindowToplevelInformation> windowsAbove, WindowToplevelInformation queriedWindow)
         {
             // If there is no area of the window, return "no visibility".
             if (queriedWindow.VisualInformation.rcClient.Area < 1)
@@ -193,9 +183,9 @@ namespace ArbitraryArtifactDetector.Detector
             float subtractArea = 0f;
 
             // Loop through all windows "above" to look if one window overlaps the queried window.
-            foreach (KeyValuePair<IntPtr, WindowToplevelInformation> windowAboveEntry in windowsAbove)
+            foreach (WindowToplevelInformation windowAboveEntry in windowsAbove)
             {
-                subtractArea += CalculateOverlappingArea(queriedWindow, windowAboveEntry.Value);
+                subtractArea += CalculateOverlappingArea(queriedWindow, windowAboveEntry);
 
                 if (subtractArea >= queriedWindow.VisualInformation.rcClient.Area)
                 {
@@ -213,13 +203,13 @@ namespace ArbitraryArtifactDetector.Detector
         /// Returns a dictionary that contains information of all the open windows.
         /// </summary>
         /// <returns>A dictionary that contains the handle and title of all the open windows.</returns>
-        private IDictionary<IntPtr, WindowToplevelInformation> GetOpenedWindows()
+        private IList<WindowToplevelInformation> GetOpenedWindows()
         {
             // Stopwatch for evaluation.
             StartStopwatch();
 
             // Initialize list of windows for later use.
-            Dictionary<IntPtr, WindowToplevelInformation> windows = new Dictionary<IntPtr , WindowToplevelInformation>();
+            IList<WindowToplevelInformation> windows = new List<WindowToplevelInformation>();
 
             // Use simple counting index as the windows' z-index, as EnumWindows sorts them by it.
             int i = 0;
@@ -272,7 +262,7 @@ namespace ArbitraryArtifactDetector.Detector
                     }
 
                     // Add the current window to all windows.
-                    windows[hWnd] = currentWindow;
+                    windows.Add(currentWindow);
 
                     // Increase the z-index if we got here.
                     i++;

@@ -33,6 +33,11 @@ namespace ArbitraryArtifactDetector.Detector
         protected IDetectorCondition<DetectorResponse> TargetConditions { get; set; }
 
         /// <summary>
+        /// Information about the artifact instance currently detecting.
+        /// </summary>
+        protected ArtifactRuntimeInformation PersistentRuntimeInformation { get; set; }
+
+        /// <summary>
         /// Find the artifact defined in the artifactConfiguration given some runtime information and a previous detector's response.
         /// </summary>
         /// <param name="runtimeInformation">Information about the artifact.</param>

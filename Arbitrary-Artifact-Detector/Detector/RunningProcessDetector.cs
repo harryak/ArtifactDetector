@@ -1,7 +1,4 @@
-﻿using ArbitraryArtifactDetector.Detector.Configuration;
-using ArbitraryArtifactDetector.Model;
-using System;
-using System.ComponentModel;
+﻿using ArbitraryArtifactDetector.Model;
 using System.Diagnostics;
 
 namespace ArbitraryArtifactDetector.Detector
@@ -12,29 +9,22 @@ namespace ArbitraryArtifactDetector.Detector
     /// Needs:  ProcessName
     /// Yields: WindowHandle
     /// </summary>
-    internal class ProcessDetector : BaseDetector, IDetector
+    internal class RunningProcessDetector : BaseDetector, IDetector
     {
         /// <summary>
         /// Constructor for this detector, taking the setup and its configuration.
         /// </summary>
         /// <param name="setup">Global setup object for the application.</param>
-        /// <param name="configuration">Configuration for this detector instance.</param>
-        public ProcessDetector(Setup setup, ProcessDetectorConfiguration configuration) : base(setup)
+        public RunningProcessDetector(Setup setup) : base(setup)
         {
-            Configuration = configuration;
         }
-
-        /// <summary>
-        /// This instances configuration.
-        /// </summary>
-        private ProcessDetectorConfiguration Configuration { get; }
 
         public override DetectorResponse FindArtifact(ref ArtifactRuntimeInformation runtimeInformation, DetectorResponse previousResponse = null)
         {
             Process[] processes;
 
             StartStopwatch();
-            processes = Process.GetProcessesByName(Configuration.ProcessName);
+            processes = Process.GetProcessesByName(runtimeInformation.ProcessName);
 
             if (processes.Length < 1)
             {

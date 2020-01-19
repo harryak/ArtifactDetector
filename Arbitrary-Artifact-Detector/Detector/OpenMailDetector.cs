@@ -2,6 +2,8 @@
 using ArbitraryArtifactDetector.DetectorCondition.Model;
 using ArbitraryArtifactDetector.Model;
 using Microsoft.Extensions.Logging;
+using System.IO;
+using System.Linq;
 
 namespace ArbitraryArtifactDetector.Detector
 {
@@ -23,7 +25,13 @@ namespace ArbitraryArtifactDetector.Detector
             Logger.Log(LogLevel.Debug, "Setting up MailDetector now.");
             Configuration = configuration;
 
-            var processDetector = new ProcessDetector(setup, new ProcessDetectorConfiguration(configuration.Executable));
+            PersistentRuntimeInformation = new ArtifactRuntimeInformation
+            {
+                ProcessName = GetProcessName(configuration.Executable)
+            };
+
+            var processDetector = new RunningProcessDetector(setup);
+            processDetector.SetTargetConditions(new EqualityDetectorCondition<DetectorResponse>("ArtifactPresent", true));
             AddDetector(processDetector);
 
             var openWindowDetector = new OpenWindowDetector(setup);
@@ -34,5 +42,12 @@ namespace ArbitraryArtifactDetector.Detector
         /// This instances configuration.
         /// </summary>
         private MailDetectorConfiguration Configuration { get; }
+
+        private string GetProcessName(FileInfo processExecutable)
+        {
+            // Take the executable name without suffix as program name.
+            string[] parts = processExecutable.Name.Split('.');
+            return string.Join(".", parts.Where(part => "." + part != processExecutable.Extension));
+        }
     }
 }

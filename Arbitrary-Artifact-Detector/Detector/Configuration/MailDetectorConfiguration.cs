@@ -6,7 +6,7 @@ namespace ArbitraryArtifactDetector.Detector.Configuration
     /// <summary>
     /// Configuration for the MailDetector to detect an opened mail.
     /// </summary>
-    internal class MailDetectorConfiguration : BaseDetectorConfiguration, IDetectorConfiguration
+    internal class MailDetectorConfiguration
     {
         /// <summary>
         /// Constructor: Expects a sender and a subject for the opened mail to detect.
