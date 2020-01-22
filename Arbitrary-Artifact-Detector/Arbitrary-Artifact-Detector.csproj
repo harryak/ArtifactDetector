@@ -244,7 +244,6 @@
     <Compile Include="Helper\FileHelper.cs" />
     <Compile Include="DebugUtility\AADStopwatch.cs" />
     <Compile Include="Model\ProcessedImage.cs" />
-    <Compile Include="Model\ArtifactConfiguration.cs" />
     <Compile Include="Detector\VisualFeatureExtractor\IVisualFeatureExtractor.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

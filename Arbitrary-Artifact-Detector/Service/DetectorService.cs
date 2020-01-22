@@ -1,4 +1,5 @@
-﻿using ArbitraryArtifactDetector.Model;
+﻿using ArbitraryArtifactDetector.Detector;
+using ArbitraryArtifactDetector.Model;
 using ArbitraryArtifactDetector.Parser;
 using Microsoft.Extensions.Logging;
 using System.IO;
@@ -38,7 +39,7 @@ namespace ArbitraryArtifactDetector.Service
         {
             // TODO: Setup watch task.
             // Determine appropriate artifact detector(s) by getting the artifact's recipe.
-            ArtifactConfiguration artifactConfiguration;
+            ArtifactRuntimeInformation artifactConfiguration;
             try
             {
                 artifactConfiguration = ArtifactConfigurationParser.ParseConfigurationString(artifactConfigurationString);
@@ -67,11 +68,11 @@ namespace ArbitraryArtifactDetector.Service
             // TODO: Add code here to perform any tear-down necessary to stop your service.
         }
 
-        private DetectorResponse Detect(ArtifactConfiguration artifactConfiguration)
+        private DetectorResponse Detect(IDetector detector)
         {
             // Call artifact detector (may be a compound detector) from artifact configuration.
             var artifactRuntimeInformation = new ArtifactRuntimeInformation();
-            return artifactConfiguration.Detector.FindArtifact(ref artifactRuntimeInformation);
+            return detector.FindArtifact(ref artifactRuntimeInformation);
         }
     }
 }
