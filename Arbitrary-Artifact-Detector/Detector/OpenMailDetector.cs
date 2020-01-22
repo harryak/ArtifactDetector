@@ -25,16 +25,16 @@ namespace ArbitraryArtifactDetector.Detector
             Logger.Log(LogLevel.Debug, "Setting up MailDetector now.");
             Configuration = configuration;
 
-            PersistentRuntimeInformation = new ArtifactRuntimeInformation
-            {
-                ProcessName = GetProcessName(configuration.Executable)
-            };
+            PersistentRuntimeInformation = new ArtifactRuntimeInformation();
+            // TODO: Take names from config/job.
+            PersistentRuntimeInformation.PossibleProcessNames.Add(GetProcessName(configuration.Executable));
 
             var processDetector = new RunningProcessDetector(setup);
             processDetector.SetTargetConditions(new EqualityDetectorCondition<DetectorResponse>("ArtifactPresent", true));
             AddDetector(processDetector);
 
             var openWindowDetector = new OpenWindowDetector(setup);
+            processDetector.SetTargetConditions(new EqualityDetectorCondition<DetectorResponse>("ArtifactPresent", true));
             AddDetector(openWindowDetector);
         }
 

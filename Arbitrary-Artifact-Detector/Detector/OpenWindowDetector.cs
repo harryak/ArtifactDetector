@@ -1,5 +1,4 @@
-﻿using ArbitraryArtifactDetector.Detector.Configuration;
-using ArbitraryArtifactDetector.Model;
+﻿using ArbitraryArtifactDetector.Model;
 using System;
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
@@ -19,7 +18,6 @@ namespace ArbitraryArtifactDetector.Detector
         /// Constructor for this detector, taking the setup and its configuration.
         /// </summary>
         /// <param name="setup">Global setup object for the application.</param>
-        /// <param name="configuration">Configuration for this detector instance.</param>
         public OpenWindowDetector(Setup setup) : base(setup)
         {
         }
@@ -44,18 +42,18 @@ namespace ArbitraryArtifactDetector.Detector
             StartStopwatch();
 
             // Check whether we have enough data to detect the artifact.
-            if (runtimeInformation.WindowHandle == IntPtr.Zero && runtimeInformation.WindowTitle == "")
+            if (runtimeInformation.MatchingWindowsInformation.Count < 1 && runtimeInformation.PossibleWindowTitles.Count < 1)
             {
                 throw new ArgumentException("Neither window handle nor window title given.");
             }
 
             // Copy to local variables for EnumWindowsProc.
-            IntPtr windowHandle = runtimeInformation.WindowHandle;
-            string windowTitle = runtimeInformation.WindowTitle;
+            ICollection<IntPtr> windowHandles = runtimeInformation.MatchingWindowsInformation.Keys;
+            IList<string> possibleWindowTitles = runtimeInformation.PossibleWindowTitles;
 
             // Initialize list of windows for later use.
             IList<WindowToplevelInformation> windows = new List<WindowToplevelInformation>();
-            IList<WindowToplevelInformation> matchingWindows = new List<WindowToplevelInformation>();
+            IDictionary<IntPtr, WindowToplevelInformation> matchingWindows = new Dictionary<IntPtr, WindowToplevelInformation>();
 
             // Use simple counting index as the windows' z-index, as EnumWindows sorts them by it.
             int i = 0;
@@ -102,7 +100,7 @@ namespace ArbitraryArtifactDetector.Detector
                         ZIndex = i
                     };
 
-                    bool windowMatches = (windowTitle != "" && currentWindowTitle.Contains(windowTitle)) || (hWnd == windowHandle);
+                    bool windowMatches = possibleWindowTitles.Contains(currentWindowTitle) || windowHandles.Contains(hWnd);
 
                     // If it is not the first/topmost (visible) window and one of the windows we want to find...
                     if (i > 0 && windowMatches)
@@ -117,10 +115,10 @@ namespace ArbitraryArtifactDetector.Detector
                     // If it is one of the windows we want to find: Add to that list.
                     if (windowMatches)
                     {
-                        matchingWindows.Add(currentWindow);
+                        matchingWindows.Add(hWnd, currentWindow);
 
-                        // If we know the handle there is only one window to find.
-                        if (hWnd == windowHandle)
+                        // Check if we found enough of the windows.
+                        if (matchingWindows.Count >= windowHandles.Count)
                         {
                             enoughWindowsFound = true;
                         }
@@ -141,7 +139,7 @@ namespace ArbitraryArtifactDetector.Detector
                 return new DetectorResponse() { ArtifactPresent = false, Certainty = 100 };
             }
 
-            runtimeInformation.MatchingWindows = matchingWindows;
+            runtimeInformation.MatchingWindowsInformation = matchingWindows;
 
             int certainty = 100 / matchingWindows.Count;
             StopStopwatch("Got all opened windows in {0} ms.");

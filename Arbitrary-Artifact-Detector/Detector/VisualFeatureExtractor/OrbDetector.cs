@@ -2,7 +2,7 @@
 
 namespace ArbitraryArtifactDetector.Detector.VisualFeatureExtractor
 {
-    class OrbDetector : BaseVisualFeatureExtractor, IVisualFeatureExtractor
+    internal class OrbDetector : BaseVisualFeatureExtractor, IVisualFeatureExtractor
     {
         public OrbDetector(Setup setup) : base(setup)
         {

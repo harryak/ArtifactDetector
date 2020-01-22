@@ -1,4 +1,6 @@
 ﻿using ArbitraryArtifactDetector.Model;
+using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 
 namespace ArbitraryArtifactDetector.Detector
@@ -21,22 +23,31 @@ namespace ArbitraryArtifactDetector.Detector
 
         public override DetectorResponse FindArtifact(ref ArtifactRuntimeInformation runtimeInformation, DetectorResponse previousResponse = null)
         {
-            Process[] processes;
+            List<Process> processes = new List<Process>();
 
             StartStopwatch();
-            processes = Process.GetProcessesByName(runtimeInformation.ProcessName);
+            foreach (string possibleProcessName in runtimeInformation.PossibleProcessNames)
+            {
+                processes.AddRange(Process.GetProcessesByName(possibleProcessName));
+            }
 
-            if (processes.Length < 1)
+            if (processes.Count < 1)
             {
                 StopStopwatch("FindArtifact finished in {0}ms.");
                 return new DetectorResponse() { ArtifactPresent = false, Certainty = 100 };
             }
 
-            runtimeInformation.WindowHandle = processes[0].MainWindowHandle;
+            foreach (Process currentProcess in processes)
+            {
+                if (currentProcess.MainWindowHandle != IntPtr.Zero)
+                {
+                    runtimeInformation.MatchingWindowsInformation.Add(currentProcess.MainWindowHandle, new WindowToplevelInformation());
+                }
+            }
 
             StopStopwatch("FindArtifact finished in {0}ms.");
 
-            int certainty = 100 / processes.Length;
+            int certainty = 100 / processes.Count;
             return new DetectorResponse() { ArtifactPresent = true, Certainty = certainty };
         }
     }

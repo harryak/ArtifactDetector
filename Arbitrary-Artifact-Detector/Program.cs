@@ -2,10 +2,12 @@
 using ArbitraryArtifactDetector.Model;
 using ArbitraryArtifactDetector.Service;
 using ArbitraryArtifactDetector.Utility;
+using ArbitraryArtifactDetector.Viewer;
+using Emgu.CV;
 using Microsoft.Extensions.Logging;
 using System;
-using System.IO;
 using System.ServiceProcess;
+using System.Windows.Forms;
 
 namespace ArbitraryArtifactDetector
 {
@@ -38,20 +40,31 @@ namespace ArbitraryArtifactDetector
 
             Logger.LogInformation("Creating service now.");
 
-            /*ServiceBase[] ServicesToRun;
+            ServiceBase[] ServicesToRun;
             ServicesToRun = new ServiceBase[]
             {
                 new DetectorService(Setup)
+                {
+                    ServiceName = "ITS.APE Detector Service"
+                }
             };
 
             Logger.LogInformation("Starting service DetectorService.");
             ServiceBase.Run(ServicesToRun);
             Logger.LogInformation("Service started.");
-            */
+            
+            // Prepare debug window output.
 
             IDetector detector = new MailDetector(Setup, new Detector.Configuration.MailDetectorConfiguration("sykosch@cs.uni-bonn.de"));
             ArtifactRuntimeInformation runtimeInfo = new ArtifactRuntimeInformation();
             DetectorResponse response = detector.FindArtifact(ref runtimeInfo);
+
+#if DEBUG
+            Mat screenshot = null;
+            // Show the results in a window.
+            if (screenshot != null)
+                Application.Run(new ImageViewer(screenshot));
+#endif
 
             return 0;
         }

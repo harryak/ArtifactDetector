@@ -4,6 +4,7 @@ using NLog.Extensions.Logging;
 using System;
 using System.IO;
 using System.Reflection;
+using System.Windows.Forms;
 
 namespace ArbitraryArtifactDetector
 {
@@ -31,6 +32,12 @@ namespace ArbitraryArtifactDetector
                 // Get stopwatch for evaluation.
                 Stopwatch = AADStopwatch.GetInstance();
             }
+
+# if DEBUG
+            // Setup display of images if being in debug mode.
+            Application.EnableVisualStyles();
+            Application.SetCompatibleTextRenderingDefault(false);
+#endif
         }
 
         /// <summary>
@@ -77,8 +84,12 @@ namespace ArbitraryArtifactDetector
         /// Get the directory this app is executed in.
         /// </summary>
         /// <returns>Directory information.</returns>
-        public static DirectoryInfo GetExecutingDirectory()
+        public DirectoryInfo GetExecutingDirectory()
         {
+            if (WorkingDirectory != null)
+            {
+                return WorkingDirectory;
+            }
             var location = new Uri(Assembly.GetEntryAssembly().GetName().CodeBase);
             return new FileInfo(location.AbsolutePath).Directory;
         }

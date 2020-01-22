@@ -14,22 +14,8 @@ using System.IO;
 
 namespace ArbitraryArtifactDetector.Detector.VisualFeatureExtractor
 {
-    abstract class BaseVisualFeatureExtractor : Debuggable, IVisualFeatureExtractor
+    internal abstract class BaseVisualFeatureExtractor : Debuggable, IVisualFeatureExtractor
     {
-        /// <summary>
-        /// Internal feature detector, to be set by children classes.
-        /// </summary>
-        protected Feature2D FeatureDetector { get; set; }
-        /// <summary>
-        /// Internal descriptor matcher, to be set by children classes.
-        /// </summary>
-        protected DescriptorMatcher DescriptorMatcher { get; set; }
-
-        /// <summary>
-        /// The filter used for matching the feature sets of two images.
-        /// </summary>
-        protected IMatchFilter MatchFilter { get; set; }
-
         /// <summary>
         /// Map for selecting a feature match filter by its name.
         /// </summary>
@@ -44,25 +30,25 @@ namespace ArbitraryArtifactDetector.Detector.VisualFeatureExtractor
         /// Constructor setting up the match filter.
         /// </summary>
         /// <param name="setup">The current excecution's setup.</param>
-        public BaseVisualFeatureExtractor(Setup setup) : base (setup)
+        public BaseVisualFeatureExtractor(Setup setup) : base(setup)
         {
             SetupMatchFilter(setup);
         }
 
         /// <summary>
-        /// Simple setup of the match filter by getting the right instance from the map.
+        /// Internal descriptor matcher, to be set by children classes.
         /// </summary>
-        /// <param name="setup">The current excecution's setup.</param>
-        private void SetupMatchFilter(Setup setup)
-        {
-            if (!visualFilterSelectionMap.ContainsKey(AADConfig.MatchFilterSelection))
-            {
-                throw new ArgumentNullException("Could not get match filter type: { 0 }", AADConfig.MatchFilterSelection);
-            }
+        protected DescriptorMatcher DescriptorMatcher { get; set; }
 
-            Logger.LogInformation("Using match filter {filterSelection}.", AADConfig.MatchFilterSelection);
-            MatchFilter = visualFilterSelectionMap[AADConfig.MatchFilterSelection](setup);
-        }
+        /// <summary>
+        /// Internal feature detector, to be set by children classes.
+        /// </summary>
+        protected Feature2D FeatureDetector { get; set; }
+
+        /// <summary>
+        /// The filter used for matching the feature sets of two images.
+        /// </summary>
+        protected IMatchFilter MatchFilter { get; set; }
 
         /// <summary>
         /// Extract features of the given image using an OpenCV feature extractor.
@@ -116,11 +102,11 @@ namespace ArbitraryArtifactDetector.Detector.VisualFeatureExtractor
         /// Analyze the given observed image, whether the artifact type can be found within.
         /// </summary>
         /// <param name="observedImage">The observed image.</param>
-        /// <param name="artifactType">The artifact type containing visual information.</param>
+        /// <param name="referenceImages">Reference images for the artifact type.</param>
         /// <param name="drawingResult">The result of the drawing (for Debug).</param>
         /// <param name="matchCount">Count of matches, if found.</param>
         /// <returns>A homography or null if none was found.</returns>
-        public bool ImageContainsArtifactType(ProcessedImage observedImage, ArtifactConfiguration artifactType, out Mat drawingResult, out int matchCount)
+        public bool ImageContainsArtifactType(ProcessedImage observedImage, ICollection<ProcessedImage> referenceImages, out Mat drawingResult, out int matchCount)
         {
             // Only needed for debugging purposes, otherwise will always be null.
             drawingResult = null;
@@ -133,7 +119,7 @@ namespace ArbitraryArtifactDetector.Detector.VisualFeatureExtractor
             // Get a matched artifact image or null.
             ProcessedImage matchedArtifact = FindMatch(
                 observedImage,
-                artifactType,
+                referenceImages,
                 out matches,
                 out matchesMask,
                 out homography,
@@ -208,7 +194,7 @@ namespace ArbitraryArtifactDetector.Detector.VisualFeatureExtractor
         /// <param name="matchesMask">Reference to the used result mask.</param>
         /// <param name="homography">Reference to a possible homography.</param>
         /// <returns>A matched artifact image, if available.</returns>
-        private ProcessedImage FindMatch(ProcessedImage observedImage, ArtifactConfiguration artifactType, out VectorOfVectorOfDMatch goodMatches, out Mat matchesMask, out Matrix<float> homography, out int matchCount)
+        private ProcessedImage FindMatch(ProcessedImage observedImage, ICollection<ProcessedImage> referenceImages, out VectorOfVectorOfDMatch goodMatches, out Mat matchesMask, out Matrix<float> homography, out int matchCount)
         {
             int minMatches = AADConfig.MinimumMatchesRequired;
             double uniquenessThreshold = AADConfig.MatchUniquenessThreshold;
@@ -230,7 +216,7 @@ namespace ArbitraryArtifactDetector.Detector.VisualFeatureExtractor
             StartStopwatch();
 
             int artifactNumber = 0;
-            foreach (var currentArtifactImage in artifactType.ReferenceImages)
+            foreach (var currentArtifactImage in referenceImages)
             {
                 // Add model descriptors to matcher.
                 DescriptorMatcher.Add(currentArtifactImage.Descriptors);
@@ -311,6 +297,34 @@ namespace ArbitraryArtifactDetector.Detector.VisualFeatureExtractor
         }
 
         /// <summary>
+        /// Calculate the ratio between two image sizes.
+        /// </summary>
+        /// <param name="image1">Size of image one.</param>
+        /// <param name="image2">Size of image two.</param>
+        /// <returns>The ratio.</returns>
+        private double GetSizeRatio(SizeF image1, SizeF image2)
+        {
+            double ratio;
+            double area1 = image1.Width * image1.Height;
+            double area2 = image2.Width * image2.Height;
+
+            double squaredAreaRatio;
+
+            if (area1 < area2)
+            {
+                squaredAreaRatio = area2 / area1;
+                ratio = Math.Sqrt(squaredAreaRatio);
+            }
+            else
+            {
+                squaredAreaRatio = area1 / area2;
+                ratio = Math.Sqrt(squaredAreaRatio);
+            }
+
+            return ratio;
+        }
+
+        /// <summary>
         /// Shorthand to load an image from a file.
         /// </summary>
         /// <param name="imagePath">Path to the image.</param>
@@ -339,6 +353,21 @@ namespace ArbitraryArtifactDetector.Detector.VisualFeatureExtractor
         }
 
         /// <summary>
+        /// Simple setup of the match filter by getting the right instance from the map.
+        /// </summary>
+        /// <param name="setup">The current excecution's setup.</param>
+        private void SetupMatchFilter(Setup setup)
+        {
+            if (!visualFilterSelectionMap.ContainsKey(AADConfig.MatchFilterSelection))
+            {
+                throw new ArgumentNullException("Could not get match filter type: { 0 }", AADConfig.MatchFilterSelection);
+            }
+
+            Logger.LogInformation("Using match filter {filterSelection}.", AADConfig.MatchFilterSelection);
+            MatchFilter = visualFilterSelectionMap[AADConfig.MatchFilterSelection](setup);
+        }
+
+        /// <summary>
         /// Transform all points in input list with the given matrix.
         /// </summary>
         /// <param name="input">List of points to transform.</param>
@@ -353,34 +382,6 @@ namespace ArbitraryArtifactDetector.Detector.VisualFeatureExtractor
             }
 
             return input;
-        }
-
-        /// <summary>
-        /// Calculate the ratio between two image sizes.
-        /// </summary>
-        /// <param name="image1">Size of image one.</param>
-        /// <param name="image2">Size of image two.</param>
-        /// <returns>The ratio.</returns>
-        private double GetSizeRatio(SizeF image1, SizeF image2)
-        {
-            double ratio;
-            double area1 = image1.Width * image1.Height;
-            double area2 = image2.Width * image2.Height;
-
-            double squaredAreaRatio;
-
-            if (area1 < area2)
-            {
-                squaredAreaRatio = area2 / area1;
-                ratio = Math.Sqrt(squaredAreaRatio);
-            }
-            else
-            {
-                squaredAreaRatio = area1 / area2;
-                ratio = Math.Sqrt(squaredAreaRatio);
-            }
-
-            return ratio;
         }
     }
 }

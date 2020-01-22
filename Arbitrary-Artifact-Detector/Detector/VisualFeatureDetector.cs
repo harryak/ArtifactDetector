@@ -56,7 +56,7 @@ namespace ArbitraryArtifactDetector.Detector
                 Logger.LogDebug("Creating new artifact library instance.");
                 try
                 {
-                    ArtifactLibrary = new ArtifactReferenceImageCache(Setup.WorkingDirectory.FullName, FeatureExtractor, Setup.GetLogger("ArtifactLibrary"), Stopwatch);
+                    ArtifactLibrary = ArtifactReferenceImageCache.GetInstance(Setup, FeatureExtractor, Setup.GetLogger("ArtifactLibrary"), Stopwatch);
                 }
                 catch (Exception e)
                 {
@@ -65,18 +65,9 @@ namespace ArbitraryArtifactDetector.Detector
                 }
             }
 
-            ArtifactConfiguration artifactType = null;
-            try
-            {
-                artifactType = ArtifactLibrary.GetArtifactType(Setup.ArtifactTarget);
-            }
-            catch (Exception e)
-            {
-                Logger.LogError("Could not get artifact type: {0}", e.Message);
-                throw new ArgumentNullException("Could not get artifact type: { 0 }", e.Message);
-            }
+            ICollection<ProcessedImage> referenceImages = ArtifactLibrary.GetProcessedImages();
 
-            if (artifactType.ReferenceImages.Count < 1)
+            if (referenceImages.Count < 1)
             {
                 Logger.LogError("Could not get any images for the artifact type.");
                 throw new ArgumentNullException("No images for the artifact type found.");
@@ -84,10 +75,10 @@ namespace ArbitraryArtifactDetector.Detector
 
             // Make screenshot of artifact window and extract the features.
             ProcessedImage observedImage = FeatureExtractor.ExtractFeatures(
-                WindowCapturer.CaptureWindow(runtimeInformation.WindowHandle)
+                WindowCapturer.CaptureWindow(runtimeInformation.MatchingWindowsInformation.GetEnumerator().Current.Key)
                 );
 
-            bool artifactTypeFound = FeatureExtractor.ImageContainsArtifactType(observedImage, artifactType, out Mat drawingResult, out int matchCount);
+            bool artifactTypeFound = FeatureExtractor.ImageContainsArtifactType(observedImage, referenceImages, out Mat drawingResult, out int matchCount);
 
 #if DEBUG
             // Prepare debug window output.
@@ -101,7 +92,7 @@ namespace ArbitraryArtifactDetector.Detector
             // Cache the artifact library.
             if (Setup.ShouldCache)
             {
-                ArtifactLibrary.ExportToFile(Setup.LibraryFileName, Setup.WorkingDirectory.FullName);
+                ArtifactLibrary.Save();
                 Logger.LogInformation("Exported artifact library to {libraryFileName}.", Setup.WorkingDirectory + Setup.LibraryFileName);
             }
 
@@ -140,7 +131,7 @@ namespace ArbitraryArtifactDetector.Detector
             {
                 try
                 {
-                    ArtifactLibrary = ArtifactReferenceImageCache.FromFile(setup.WorkingDirectory.FullName + setup.LibraryFileName, FeatureExtractor, setup.Stopwatch, setup.LoggerFactory);
+                    ArtifactLibrary = ArtifactReferenceImageCache.GetInstance(setup, FeatureExtractor, setup.GetLogger("ArtifactReferenceImageCache"), setup.Stopwatch);
                     Logger.LogDebug("Loaded artifact library from file {0}.", setup.WorkingDirectory.FullName + setup.LibraryFileName);
                 }
                 catch (SerializationException)

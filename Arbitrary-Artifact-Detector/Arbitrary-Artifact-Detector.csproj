@@ -186,7 +186,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="AADConfig.cs" />
-    <Compile Include="ArtifactReferenceImageCache.cs" />
+    <Compile Include="Detector\ArtifactReferenceImageCache.cs" />
     <Compile Include="DebugUtility\Debuggable.cs" />
     <Compile Include="Detector\Configuration\MailDetectorConfiguration.cs" />
     <Compile Include="Detector\OpenMailDetector.cs" />

@@ -1,10 +1,10 @@
 ﻿using ArbitraryArtifactDetector.Model;
 using Emgu.CV;
-using System.Drawing;
+using System.Collections.Generic;
 
 namespace ArbitraryArtifactDetector.Detector.VisualFeatureExtractor
 {
-    interface IVisualFeatureExtractor
+    internal interface IVisualFeatureExtractor
     {
         /// <summary>
         /// Extract features of the given image using an OpenCV feature extractor.
@@ -24,10 +24,10 @@ namespace ArbitraryArtifactDetector.Detector.VisualFeatureExtractor
         /// Analyze the given observed image, whether the artifact type can be found within.
         /// </summary>
         /// <param name="observedImage">The observed image.</param>
-        /// <param name="artifactType">The artifact type containing visual information.</param>
+        /// <param name="referenceImages">Reference images for this artifact type.</param>
         /// <param name="drawingResult">The resulting image to draw in a window.</param>
         /// <param name="matchCount">Count of matches, if one was found.</param>
         /// <returns>Whether a match was found.</returns>
-        bool ImageContainsArtifactType(ProcessedImage observedImage, ArtifactConfiguration artifactType, out Mat drawingResult, out int matchCount);
+        bool ImageContainsArtifactType(ProcessedImage observedImage, ICollection<ProcessedImage> referenceImages, out Mat drawingResult, out int matchCount);
     }
 }

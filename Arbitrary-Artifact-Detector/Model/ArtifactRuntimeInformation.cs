@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Emgu.CV;
+using System;
 using System.Collections.Generic;
 
 namespace ArbitraryArtifactDetector.Model
@@ -8,19 +9,37 @@ namespace ArbitraryArtifactDetector.Model
     /// </summary>
     internal class ArtifactRuntimeInformation
     {
-        public string ProcessName { get; set; } = "";
-        public ProcessedImage Screenshot { get; set; }
-        public IList<WindowToplevelInformation> MatchingWindows { get; set; } = new List<WindowToplevelInformation>();
-        public string WindowTitle { get; internal set; } = "";
-        public IntPtr WindowHandle { get; internal set; } = IntPtr.Zero;
+        /// <summary>
+        /// Name of the artifact type, immutable once created.
+        /// </summary>
+        public string ArtifactName { get; private set; }
+
+        /// <summary>
+        /// Possible names of the processes.
+        /// </summary>
+        public IList<string> PossibleProcessNames { get; set; } = new List<string>();
+
+        /// <summary>
+        /// Screenshots of the matching windows.
+        /// </summary>
+        public IDictionary<int, Mat> Screenshots { get; set; } = new Dictionary<int, Mat>();
+
+        /// <summary>
+        /// Information about the matching windows.
+        /// </summary>
+        public IDictionary<IntPtr, WindowToplevelInformation> MatchingWindowsInformation { get; set; } = new Dictionary<IntPtr, WindowToplevelInformation>();
+
+        /// <summary>
+        /// Possible (fragments of the) titles of the windows to get.
+        /// </summary>
+        public IList<string> PossibleWindowTitles { get; internal set; } = new List<string>();
 
         public void PreFillWith(ArtifactRuntimeInformation runtimeInformation)
         {
-            ProcessName = runtimeInformation.ProcessName;
-            Screenshot = runtimeInformation.Screenshot;
-            WindowHandle = runtimeInformation.WindowHandle;
-            MatchingWindows = runtimeInformation.MatchingWindows;
-            WindowTitle = runtimeInformation.WindowTitle;
+            PossibleProcessNames = runtimeInformation.PossibleProcessNames;
+            Screenshots = runtimeInformation.Screenshots;
+            MatchingWindowsInformation = runtimeInformation.MatchingWindowsInformation;
+            PossibleWindowTitles = runtimeInformation.PossibleWindowTitles;
         }
     }
 }

@@ -3,7 +3,7 @@ using Emgu.CV.Flann;
 
 namespace ArbitraryArtifactDetector.Detector.VisualFeatureExtractor
 {
-    class KazeDetector : BaseVisualFeatureExtractor, IVisualFeatureExtractor
+    internal class KazeDetector : BaseVisualFeatureExtractor, IVisualFeatureExtractor
     {
         public KazeDetector(Setup setup) : base(setup)
         {

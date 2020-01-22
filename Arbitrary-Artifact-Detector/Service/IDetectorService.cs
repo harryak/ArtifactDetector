@@ -8,8 +8,10 @@ namespace ArbitraryArtifactDetector.Service
         )]
     public interface IDetectorService
     {
+        [OperationContract]
         void StartWatch(string artifactConfigurationString);
 
+        [OperationContract]
         void StopWatch();
     }
 }
