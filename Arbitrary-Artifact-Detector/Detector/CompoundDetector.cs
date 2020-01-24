@@ -71,7 +71,7 @@ namespace ArbitraryArtifactDetector.Detector
         public override DetectorResponse FindArtifact(ref ArtifactRuntimeInformation runtimeInformation, DetectorResponse previousResponse = null)
         {
             DetectorResponse response = null;
-            runtimeInformation.PreFillWith(PersistentRuntimeInformation);
+            runtimeInformation.Copy(PersistentRuntimeInformation);
 
             StartStopwatch();
             foreach (KeyValuePair<int, IDetector> entry in DetectorList)

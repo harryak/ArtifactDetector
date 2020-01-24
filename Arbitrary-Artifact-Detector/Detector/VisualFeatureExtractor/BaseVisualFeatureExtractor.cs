@@ -340,7 +340,7 @@ namespace ArbitraryArtifactDetector.Detector.VisualFeatureExtractor
             }
             else
             {
-                throw new FileNotFoundException("The image couldn't be found");
+                throw new FileNotFoundException("The image couldn't be found.");
             }
 
             if (image.IsEmpty)

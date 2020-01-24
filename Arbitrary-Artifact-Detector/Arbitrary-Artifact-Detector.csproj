@@ -191,6 +191,7 @@
     <Compile Include="Detector\Configuration\MailDetectorConfiguration.cs" />
     <Compile Include="Detector\OpenMailDetector.cs" />
     <Compile Include="Detector\RunningProcessDetector.cs" />
+    <Compile Include="Model\ArtifactConfiguration.cs" />
     <Compile Include="ProjectInstaller.cs">
       <SubType>Component</SubType>
     </Compile>

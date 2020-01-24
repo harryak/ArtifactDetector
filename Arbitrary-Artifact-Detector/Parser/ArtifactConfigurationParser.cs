@@ -14,7 +14,7 @@ namespace ArbitraryArtifactDetector.Parser
         /// <param name="setup">The current setup of this program.</param>
         public ArtifactConfigurationParser(Setup setup) : base(setup) { }
 
-        public ArtifactRuntimeInformation ParseConfigurationString(string artifactConfigurationString)
+        public ArtifactConfiguration ParseConfigurationString(string artifactConfigurationString)
         {
             StartStopwatch();
 

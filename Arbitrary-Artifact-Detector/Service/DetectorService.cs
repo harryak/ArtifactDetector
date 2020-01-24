@@ -1,20 +1,46 @@
-﻿using ArbitraryArtifactDetector.Detector;
-using ArbitraryArtifactDetector.Model;
+﻿using ArbitraryArtifactDetector.Model;
 using ArbitraryArtifactDetector.Parser;
 using Microsoft.Extensions.Logging;
+using System;
 using System.IO;
+using System.ServiceModel;
 using System.ServiceProcess;
+using System.Timers;
 
 namespace ArbitraryArtifactDetector.Service
 {
+    /// <summary>
+    /// Detector service class that waits for another process to call "StartWatch", then tries to detect
+    /// the configured artifact until "StopWatch" is called.
+    /// </summary>
     partial class DetectorService : ServiceBase, IDetectorService
     {
+        /// <summary>
+        /// The current configuration of artifact to be looked for.
+        /// </summary>
+        private ArtifactConfiguration artifactConfiguration = null;
+
+        /// <summary>
+        /// Timer to call detection in interval.
+        /// </summary>
+        private Timer detectionTimer = null;
+
+        /// <summary>
+        /// Host for this service to be callable.
+        /// </summary>
+        private ServiceHost serviceHost = null;
+
+        /// <summary>
+        /// Instantiate service with setup.
+        /// </summary>
+        /// <param name="setup">Setup of this application.</param>
         public DetectorService(Setup setup)
         {
             InitializeComponent();
 
             Setup = setup;
-            Logger = setup.GetLogger("DetectorService");
+            Logger = Setup.GetLogger("DetectorService");
+            ArtifactConfigurationParser = new ArtifactConfigurationParser(Setup);
         }
 
         /// <summary>
@@ -33,46 +59,106 @@ namespace ArbitraryArtifactDetector.Service
         private ArtifactConfigurationParser ArtifactConfigurationParser { get; set; }
 
         /// <summary>
-        /// Start watching an artifact.
+        /// Start watching an artifact in an interval of configured length.
         /// </summary>
-        public void StartWatch(string artifactConfigurationString)
+        public void StartWatch(string artifactType, string artifactConfigurationString, string referenceImagePath, int intervalLength)
         {
-            // TODO: Setup watch task.
-            // Determine appropriate artifact detector(s) by getting the artifact's recipe.
-            ArtifactRuntimeInformation artifactConfiguration;
+            // Check parameters for validity.
+            if (artifactType == "" || artifactConfigurationString == "" || referenceImagePath == "" || intervalLength < 1)
+            {
+                Logger.LogError("Invalid or empty argument for StartWatch. Not going to execute watch task.");
+
+                // Stop execution.
+                return;
+            }
+
+            try
+            {
+                DirectoryInfo referenceImageFile = new DirectoryInfo(referenceImagePath);
+            }
+            catch (Exception exception)
+            {
+                Logger.LogError("Can not access the supplied reference image path with error: {0}. Not going to execute watch task.", exception.Message);
+
+                // Stop execution.
+                return;
+            }
+
+            // Determine appropriate artifact detector(s) and runtime information by getting the artifact's configuration from arguments.
             try
             {
                 artifactConfiguration = ArtifactConfigurationParser.ParseConfigurationString(artifactConfigurationString);
             }
             catch (IOException exception)
             {
-                Logger.LogError("Can not read the artifact's recipe with error: {0}", exception.Message);
+                Logger.LogError("Can not read the artifact's recipe with error: {0}. Not going to execute watch task.", exception.Message);
+
+                // Stop execution.
+                return;
             }
 
-            // TODO: Call detect in loop.
+            // Start detection loop.
+            detectionTimer.Interval = intervalLength;
+            detectionTimer.Start();
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
         public void StopWatch()
         {
-            throw new System.NotImplementedException();
+            // Stop detection loop, wait for finishing and collect results.
+            detectionTimer.Stop();
+
+            // Set configuration to null to be empty on next run.
+            artifactConfiguration = null;
         }
 
+        /// <summary>
+        /// Starts this service by opening a service host.
+        /// </summary>
+        /// <param name="args"></param>
         protected override void OnStart(string[] args)
         {
-            ArtifactConfigurationParser = new ArtifactConfigurationParser(Setup);
-            // TODO: Add code here to start your service.
+            if (serviceHost != null)
+            {
+                serviceHost.Close();
+            }
+
+            serviceHost = new ServiceHost(typeof(DetectorService));
+            serviceHost.Open();
+
+            // Setup detection timer to call detection in loop.
+            detectionTimer = new Timer(1000);
+            detectionTimer.Elapsed += DetectionEventHandler;
         }
 
         protected override void OnStop()
         {
-            // TODO: Add code here to perform any tear-down necessary to stop your service.
+            if (serviceHost != null)
+            {
+                serviceHost.Close();
+                serviceHost = null;
+            }
+
+            // Dispose detection timer just in case.
+            detectionTimer.Dispose();
         }
 
-        private DetectorResponse Detect(IDetector detector)
+        private DetectorResponse Detect(ArtifactConfiguration configuration)
         {
             // Call artifact detector (may be a compound detector) from artifact configuration.
-            var artifactRuntimeInformation = new ArtifactRuntimeInformation();
-            return detector.FindArtifact(ref artifactRuntimeInformation);
+            var artifactRuntimeInformation = (ArtifactRuntimeInformation) configuration.RuntimeInformation.Clone();
+            return configuration.Detector.FindArtifact(ref artifactRuntimeInformation);
+        }
+
+        /// <summary>
+        /// Method that gets continuously called by timer (in intervals) to detect the artifact.
+        /// </summary>
+        /// <param name="source"></param>
+        /// <param name="eventArgs"></param>
+        private void DetectionEventHandler(object source, ElapsedEventArgs eventArgs)
+        {
         }
     }
 }

@@ -114,10 +114,6 @@ namespace ArbitraryArtifactDetector.Detector
         /// </summary>
         private Dictionary<string, ProcessedImage> ProcessedImages { get; }
 
-        public ICollection<ProcessedImage> GetProcessedImages() {
-            return ProcessedImages.Values;
-        }
-
         /// <summary>
         /// Extracts a saved library from the given file.
         /// </summary>
@@ -175,29 +171,39 @@ namespace ArbitraryArtifactDetector.Detector
         }
 
         /// <summary>
-        /// Exports this library to a file.
+        /// Returns the processed image for the image stored at the given file path.
+        /// Looks up in cache before doing real extraction.
         /// </summary>
-        public void Save()
+        /// <param name="filePath">Path to image to process.</param>
+        /// <param name="save">Flag if the image should be saved to cache after extraction.</param>
+        /// <returns>The retrieved artifact type.</returns>
+        public ProcessedImage GetProcessedImage(string filePath, bool save = true)
         {
-            // We do not need to export anything, if nothing's changed.
-            if (!DataChanged) return;
+            if (!ProcessedImages.ContainsKey(filePath))
+            {
+                ProcessImage(filePath, save);
+            }
 
-            // Set flag to false just in case.
-            DataChanged = false;
-
-            var binaryFormatter = new BinaryFormatter();
-            FileHelper.WriteToFile(PersistentFilePath.FullName, stream => binaryFormatter.Serialize(stream, this), FileMode.Create);
+            return ProcessedImages[filePath];
         }
 
         /// <summary>
-        /// Returns the artifact type given by its name.
-        /// If the name is not found in the library, a new feature
-        /// extraction is done.
+        /// Returns all previously processed images as collection.
         /// </summary>
-        /// <param name="name">Name of the artifact</param>
-        /// <param name="stopwatch">An optional stopwatch for evaluation.</param>
+        /// <returns>Collection of processed images.</returns>
+        public ICollection<ProcessedImage> GetProcessedImages()
+        {
+            return ProcessedImages.Values;
+        }
+
+        /// <summary>
+        /// Process the image stored at the given file path and add it to the cache.
+        /// Looks up in cache before doing real extraction.
+        /// </summary>
+        /// <param name="filePath">Path to image to process.</param>
+        /// <param name="save">Flag if the image should be saved to cache after extraction.</param>
         /// <returns>The retrieved artifact type.</returns>
-        public ProcessedImage GetProcessedImage(string filePath)
+        public void ProcessImage(string filePath, bool save = true)
         {
             if (Stopwatch != null)
             {
@@ -214,18 +220,52 @@ namespace ArbitraryArtifactDetector.Detector
                 {
                     // Add to cache list.
                     ProcessedImages.Add(filePath, image);
-                    // Save this to cache file.
-                    Save();
+
+                    if (save)
+                    {
+                        // Save this to cache file.
+                        Save();
+                    }
                 }
             }
 
             if (Stopwatch != null)
             {
-                Stopwatch.Stop("artifacttype_retrieved");
-                Logger.LogDebug("Retrieved artifact type in {0} ms.", Stopwatch.ElapsedMilliseconds);
+                Stopwatch.Stop("image_processed");
+                Logger.LogDebug("Processed image in {0} ms.", Stopwatch.ElapsedMilliseconds);
+            }
+        }
+
+        /// <summary>
+        /// Fills the cache with all images in given path.
+        /// </summary>
+        /// <param name="path">Directory to scan for files.</param>
+        public void ProcessImagesInPath(DirectoryInfo path)
+        {
+            // Go through all .png files in given path and subdirectories.
+            foreach (FileInfo imageFile in path.GetFiles("*.png", SearchOption.AllDirectories))
+            {
+                // Process image for the current path. Don't save object to cache, we will do that later.
+                ProcessImage(imageFile.FullName, false);
             }
 
-            return ProcessedImages[filePath];
+            // Save object to cache file.
+            Save();
+        }
+
+        /// <summary>
+        /// Exports this library to a file.
+        /// </summary>
+        private void Save()
+        {
+            // We do not need to export anything, if nothing's changed.
+            if (!DataChanged) return;
+
+            // Set flag to false just in case.
+            DataChanged = false;
+
+            var binaryFormatter = new BinaryFormatter();
+            FileHelper.WriteToFile(PersistentFilePath.FullName, stream => binaryFormatter.Serialize(stream, this), FileMode.Create);
         }
     }
 }
