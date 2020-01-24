@@ -50,28 +50,38 @@ namespace ArbitraryArtifactDetector.Detector
         /// <exception cref="ArgumentNullException">If there are no images.</exception>
         public override DetectorResponse FindArtifact(ref ArtifactRuntimeInformation runtimeInformation, DetectorResponse previousResponse = null)
         {
+            // Shorthand for reference images.
             ICollection<ProcessedImage> referenceImages = runtimeInformation.ReferenceImages.GetProcessedImages();
 
+            // Do we have reference images?
             if (referenceImages.Count < 1)
             {
                 throw new ArgumentNullException("No images for the artifact type found.");
             }
 
-            // Make screenshot of artifact window and extract the features.
-            // TODO: Do this in loop for all matching windows.
-            ProcessedImage observedImage = FeatureExtractor.ExtractFeatures(
-                WindowCapturer.CaptureWindow(runtimeInformation.MatchingWindowsInformation.GetEnumerator().Current.Key)
-                );
-
-            bool artifactTypeFound = FeatureExtractor.ImageContainsArtifactType(observedImage, referenceImages, out Mat drawingResult, out int matchCount);
+            // For all matching windows:
+            bool artifactFound = false;
+            foreach (KeyValuePair<IntPtr, WindowToplevelInformation> matchingWindowEntry in runtimeInformation.MatchingWindowsInformation)
+            {
+                // Make screenshot of artifact window and extract the features.
+                ProcessedImage observedImage = FeatureExtractor.ExtractFeatures(WindowCapturer.CaptureWindow(matchingWindowEntry.Key));
+                artifactFound = FeatureExtractor.ImageContainsArtifactType(observedImage, referenceImages, out Mat drawingResult, out int matchCount);
 
 #if DEBUG
-            // Show the results in a window.
-            if (drawingResult != null)
-                Application.Run(new ImageViewer(drawingResult));
+                // Show the results in a window.
+                if (drawingResult != null)
+                    Application.Run(new ImageViewer(drawingResult));
 #endif
 
-            return new DetectorResponse() { ArtifactPresent = artifactTypeFound, Certainty = 100 };
+                // Stop if the artifact was found.
+                if (artifactFound)
+                {
+                    break;
+                }
+            }
+
+            //TODO: Adjust certainty.
+            return new DetectorResponse() { ArtifactPresent = artifactFound, Certainty = 100 };
         }
 
         /// <summary>
@@ -88,7 +98,7 @@ namespace ArbitraryArtifactDetector.Detector
                 throw new ArgumentException("Could not instantiate feature extractor, wrong name given.");
             }
 
-            Logger.LogInformation("Using feature extractor {extractorSelection}.", AADConfig.FeatureExtractorSelection);
+            Logger.LogDebug("Using feature extractor {extractorSelection}.", AADConfig.FeatureExtractorSelection);
             FeatureExtractor = visualFeatureExtractorSelectionMap[AADConfig.FeatureExtractorSelection](setup);
         }
     }
