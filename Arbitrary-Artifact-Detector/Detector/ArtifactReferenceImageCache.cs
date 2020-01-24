@@ -57,13 +57,13 @@ namespace ArbitraryArtifactDetector.Detector
         /// Needs a file path to operate in and an artifact artifactDetector.
         /// </summary>
         /// <param name="artifactType">Name of the artifact type this cache is for.</param>
-        /// <param name="persistentFilePath">The path of all library resources.</param>
+        /// <param name="setup">Setup of this application.</param>
         /// <param name="visualFeatureExtrator">A visual feature extractor instance to get features from images.</param>
         /// <param name="logger">Logger to use for logging.</param>
         /// <param name="stopwatch">Optional, stopwatch for evaluation.</param>
-        private ArtifactReferenceImageCache(Setup setup, IVisualFeatureExtractor visualFeatureExtrator, ILogger logger, AADStopwatch stopwatch = null)
+        private ArtifactReferenceImageCache(string artifactType, Setup setup, IVisualFeatureExtractor visualFeatureExtrator, ILogger logger, AADStopwatch stopwatch = null)
         {
-            _artifactType = setup.ArtifactTarget;
+            _artifactType = artifactType;
 
             VisualFeatureExtractor = visualFeatureExtrator ?? throw new ArgumentNullException(nameof(visualFeatureExtrator));
 
@@ -85,19 +85,9 @@ namespace ArbitraryArtifactDetector.Detector
         public string ArtifactType { get => _artifactType; }
 
         /// <summary>
-        /// Flag to tell whether the data in this cache has changed.
-        /// </summary>
-        public bool DataChanged { get; set; }
-
-        /// <summary>
-        /// Accessors for the logger. Need to be explicit to omit property from serialization.
-        /// </summary>
-        public ILogger Logger { get => _logger; private set => _logger = value; }
-
-        /// <summary>
         /// Accessors for the file path. Need to be explicit to omit property from serialization.
         /// </summary>
-        public FileInfo PersistentFilePath { get => _persistentFilePath; set => _persistentFilePath = value; }
+        public FileInfo PersistentFilePath { get => _persistentFilePath; private set => _persistentFilePath = value; }
 
         /// <summary>
         /// Accessors for the stopwatch. Need to be explicit to omit property from serialization.
@@ -110,6 +100,16 @@ namespace ArbitraryArtifactDetector.Detector
         public IVisualFeatureExtractor VisualFeatureExtractor { get => _visualFeatureExtractor; set => _visualFeatureExtractor = value; }
 
         /// <summary>
+        /// Flag to tell whether the data in this cache has changed.
+        /// </summary>
+        private bool DataChanged { get; set; }
+
+        /// <summary>
+        /// Accessors for the logger. Need to be explicit to omit property from serialization.
+        /// </summary>
+        private ILogger Logger { get => _logger; set => _logger = value; }
+
+        /// <summary>
         /// This map is a storage for already processed features.
         /// </summary>
         private Dictionary<string, ProcessedImage> ProcessedImages { get; }
@@ -117,19 +117,20 @@ namespace ArbitraryArtifactDetector.Detector
         /// <summary>
         /// Extracts a saved library from the given file.
         /// </summary>
-        /// <param name="fileName">Filename to load the library from.</param>
-        /// <param name="artifactDetector">A new artifact artifactDetector for the loaded instance.</param>
-        /// <param name="stopwatch">An optional stopwatch for evaluation.</param>
-        /// <param name="logger">A logging instance.</param>
-        /// <returns>The read artifact library.</returns>
-        public static ArtifactReferenceImageCache GetInstance(Setup setup, IVisualFeatureExtractor artifactDetector, ILogger logger, AADStopwatch stopwatch = null)
+        /// <param name="artifactType">Name of the artifact type this cache is for.</param>
+        /// <param name="setup">Setup of this application.</param>
+        /// <param name="visualFeatureExtrator">A visual feature extractor instance to get features from images.</param>
+        /// <param name="logger">Logger to use for logging.</param>
+        /// <param name="stopwatch">Optional, stopwatch for evaluation.</param>
+        /// <returns>A cached or new instance of the cache.</returns>
+        public static ArtifactReferenceImageCache GetInstance(string artifactType, Setup setup, IVisualFeatureExtractor artifactDetector, ILogger logger, AADStopwatch stopwatch = null)
         {
             // Start stopwatch if there is one.
             if (stopwatch != null)
                 stopwatch.Restart();
 
             // Build filename from working directory and artifact target.
-            string fileName = Path.Combine(setup.WorkingDirectory.FullName, setup.ArtifactTarget + persistentFileExtension);
+            string fileName = Path.Combine(setup.WorkingDirectory.FullName, artifactType + persistentFileExtension);
 
             // New instance of this class to be filled.
             ArtifactReferenceImageCache artifactLibrary = null;
@@ -156,15 +157,18 @@ namespace ArbitraryArtifactDetector.Detector
                 if (exception is FileNotFoundException || exception is DirectoryNotFoundException || exception is UnauthorizedAccessException)
                 {
                     logger.LogInformation("No processed image cache existing or not accessible, creating new instance.");
-                    artifactLibrary = new ArtifactReferenceImageCache(setup, artifactDetector, logger, stopwatch);
+                    artifactLibrary = new ArtifactReferenceImageCache(artifactType, setup, artifactDetector, logger, stopwatch);
                 }
-                throw;
+                else
+                {
+                    throw;
+                }
             }
 
             if (stopwatch != null)
             {
                 stopwatch.Stop("library_retrieved");
-                logger.LogDebug("Retrieved full artifact library in {0} ms.", stopwatch.ElapsedMilliseconds);
+                logger.LogDebug("Retrieved full artifact library in {0}ms.", stopwatch.ElapsedMilliseconds);
             }
 
             return artifactLibrary;
@@ -232,7 +236,7 @@ namespace ArbitraryArtifactDetector.Detector
             if (Stopwatch != null)
             {
                 Stopwatch.Stop("image_processed");
-                Logger.LogDebug("Processed image in {0} ms.", Stopwatch.ElapsedMilliseconds);
+                Logger.LogDebug("Processed image in {0}ms.", Stopwatch.ElapsedMilliseconds);
             }
         }
 

@@ -1,10 +1,13 @@
-﻿using ArbitraryArtifactDetector.Model;
+﻿using ArbitraryArtifactDetector.DebugUtility;
+using ArbitraryArtifactDetector.Model;
 using ArbitraryArtifactDetector.Parser;
 using Microsoft.Extensions.Logging;
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.ServiceModel;
 using System.ServiceProcess;
+using System.Threading.Tasks;
 using System.Timers;
 
 namespace ArbitraryArtifactDetector.Service
@@ -34,7 +37,7 @@ namespace ArbitraryArtifactDetector.Service
         /// Instantiate service with setup.
         /// </summary>
         /// <param name="setup">Setup of this application.</param>
-        public DetectorService(Setup setup)
+        public DetectorService(Setup setup, AADStopwatch stopwach = null)
         {
             InitializeComponent();
 
@@ -44,41 +47,41 @@ namespace ArbitraryArtifactDetector.Service
         }
 
         /// <summary>
-        /// Logger instance for this class.
-        /// </summary>
-        private static ILogger Logger { get; set; }
-
-        /// <summary>
-        /// Setup for this run, holding arguments and other necessary objects.
-        /// </summary>
-        private static Setup Setup { get; set; }
-
-        /// <summary>
         /// Instance of the artifact configuration parser.
         /// </summary>
         private ArtifactConfigurationParser ArtifactConfigurationParser { get; set; }
 
+        private List<Task> DetectionTasks { get; } = new List<Task>();
+
+        /// <summary>
+        /// Logger instance for this class.
+        /// </summary>
+        private ILogger Logger { get; }
+
+        /// <summary>
+        /// Setup for this run, holding arguments and other necessary objects.
+        /// </summary>
+        private Setup Setup { get; }
+
+        /// <summary>
+        /// Either null or instance of a stopwatch to evaluate this service.
+        /// </summary>
+        private AADStopwatch Stopwatch { get; } = null;
+
         /// <summary>
         /// Start watching an artifact in an interval of configured length.
         /// </summary>
-        public void StartWatch(string artifactType, string artifactConfigurationString, string referenceImagePath, int intervalLength)
+        public void StartWatch(string artifactType, string artifactConfigurationString, string referenceImagesPath, int intervalLength)
         {
+            if (Stopwatch != null)
+            {
+                Stopwatch.Restart();
+            }
+
             // Check parameters for validity.
-            if (artifactType == "" || artifactConfigurationString == "" || referenceImagePath == "" || intervalLength < 1)
+            if (artifactType == "" || artifactConfigurationString == "" || intervalLength < 1)
             {
                 Logger.LogError("Invalid or empty argument for StartWatch. Not going to execute watch task.");
-
-                // Stop execution.
-                return;
-            }
-
-            try
-            {
-                DirectoryInfo referenceImageFile = new DirectoryInfo(referenceImagePath);
-            }
-            catch (Exception exception)
-            {
-                Logger.LogError("Can not access the supplied reference image path with error: {0}. Not going to execute watch task.", exception.Message);
 
                 // Stop execution.
                 return;
@@ -97,13 +100,34 @@ namespace ArbitraryArtifactDetector.Service
                 return;
             }
 
+            // If there is a path to reference images given: Try to get it and extract images from it to the artifact configuration.
+            if (referenceImagesPath != "")
+            {
+                try
+                {
+                    DirectoryInfo referenceImagesPathObj = new DirectoryInfo(referenceImagesPath);
+                    artifactConfiguration.RuntimeInformation.ReferenceImages.ProcessImagesInPath(referenceImagesPathObj);
+                }
+                catch (Exception exception)
+                {
+                    Logger.LogError("Can not access the supplied reference image path with error: {0}. Using possibly empty reference image cache.", exception.Message);
+                }
+            }
+
+            if (Stopwatch != null)
+            {
+                Stopwatch.Stop("watch_start");
+                Logger.LogDebug("Finished setup of watch task in {0}ms.", Stopwatch.ElapsedMilliseconds);
+            }
+
             // Start detection loop.
+            Logger.LogInformation("Starting watch task now with interval of {0}ms.", intervalLength);
             detectionTimer.Interval = intervalLength;
             detectionTimer.Start();
         }
 
         /// <summary>
-        /// 
+        ///
         /// </summary>
         public void StopWatch()
         {
@@ -145,11 +169,12 @@ namespace ArbitraryArtifactDetector.Service
             detectionTimer.Dispose();
         }
 
-        private DetectorResponse Detect(ArtifactConfiguration configuration)
+        private void DetectAsync()
         {
             // Call artifact detector (may be a compound detector) from artifact configuration.
-            var artifactRuntimeInformation = (ArtifactRuntimeInformation) configuration.RuntimeInformation.Clone();
-            return configuration.Detector.FindArtifact(ref artifactRuntimeInformation);
+            var artifactRuntimeInformation = (ArtifactRuntimeInformation) artifactConfiguration.RuntimeInformation.Clone();
+            var response = artifactConfiguration.Detector.FindArtifact(ref artifactRuntimeInformation);
+            //TODO: Save response to timetable.
         }
 
         /// <summary>
@@ -159,6 +184,8 @@ namespace ArbitraryArtifactDetector.Service
         /// <param name="eventArgs"></param>
         private void DetectionEventHandler(object source, ElapsedEventArgs eventArgs)
         {
+            // Fire and forget detection.
+            Task.Run(() => DetectAsync());
         }
     }
 }

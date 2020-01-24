@@ -77,7 +77,7 @@ namespace ArbitraryArtifactDetector.Detector
                 NativeMethods.CloseHandle(vProcess);
             }
 
-            StopStopwatch("Got all opened windows in {0} ms.");
+            StopStopwatch("Got all opened windows in {0}ms.");
 
             return icons;
         }

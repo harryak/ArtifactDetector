@@ -41,16 +41,6 @@ namespace ArbitraryArtifactDetector
         }
 
         /// <summary>
-        /// Central point for saving the current artifact target.
-        /// </summary>
-        public string ArtifactTarget { get; set; } = "";
-
-        /// <summary>
-        /// Holds the name for the serialized artifact info.
-        /// </summary>
-        public string LibraryFileName { get; } = "artifacts.bin";
-
-        /// <summary>
         /// Factory for loggers.
         /// </summary>
         public ILoggerFactory LoggerFactory { get; private set; }

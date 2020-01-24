@@ -20,7 +20,7 @@ namespace ArbitraryArtifactDetector.Detector
             GetInstalledProgramsFromRegistry(RegistryView.Registry32, ref programs);
             GetInstalledProgramsFromRegistry(RegistryView.Registry64, ref programs);
 
-            StopStopwatch("Got installed programs in {0} ms.");
+            StopStopwatch("Got installed programs in {0}ms.");
 
             return programs;
         }

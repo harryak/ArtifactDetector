@@ -65,7 +65,7 @@ namespace ArbitraryArtifactDetector.Detector.VisualFeatureExtractor
             // Get the descriptors from the EmguCV feature detector.
             FeatureDetector.DetectAndCompute(image.GetUMat(AccessType.Read), null, keyPoints, descriptors, false);
 
-            StopStopwatch("Extracted features from image in {0} ms.");
+            StopStopwatch("Extracted features from image in {0}ms.");
 
             if (descriptors.Width < 1)
             {
@@ -291,7 +291,7 @@ namespace ArbitraryArtifactDetector.Detector.VisualFeatureExtractor
                 artifactNumber++;
             }
 
-            StopStopwatch("Matching finished in {0} ms.");
+            StopStopwatch("Matching finished in {0}ms.");
 
             return matchingArtifact;
         }

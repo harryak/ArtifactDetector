@@ -6,8 +6,6 @@ using Emgu.CV;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
-using System.IO;
-using System.Runtime.Serialization;
 using System.Windows.Forms;
 
 namespace ArbitraryArtifactDetector.Detector
@@ -28,11 +26,19 @@ namespace ArbitraryArtifactDetector.Detector
                 { "orb",   (Setup setup) => { return new OrbDetector(setup); } }
             };
 
+        /// <summary>
+        /// Default constructor for detectors.
+        /// </summary>
+        /// <param name="setup">The setup of the application.</param>
+        /// <exception cref="ArgumentException">If the visual feature extractor configuration is invalid.</exception>
         public VisualFeatureDetector(Setup setup) : base(setup)
         {
+            SetupFeatureExtractor(setup);
         }
 
-        public ArtifactReferenceImageCache ArtifactLibrary { get; set; } = null;
+        /// <summary>
+        /// Feature extractor used in this run.
+        /// </summary>
         protected IVisualFeatureExtractor FeatureExtractor { get; set; }
 
         /// <summary>
@@ -40,40 +46,19 @@ namespace ArbitraryArtifactDetector.Detector
         /// </summary>
         /// <param name="runtimeInformation">Information about the artifact.</param>
         /// <param name="previousResponse">Optional: Response from another detector run before.</param>
-        ///
         /// <returns>A response object containing information whether the artifact has been found.</returns>
+        /// <exception cref="ArgumentNullException">If there are no images.</exception>
         public override DetectorResponse FindArtifact(ref ArtifactRuntimeInformation runtimeInformation, DetectorResponse previousResponse = null)
         {
-            // Should we use a cache for the artifact library?
-            if (Setup.ShouldCache)
-            {
-                FetchArtifactLibrary(Setup);
-            }
-
-            // Some error occurred, get an empty library.
-            if (ArtifactLibrary == null)
-            {
-                Logger.LogDebug("Creating new artifact library instance.");
-                try
-                {
-                    ArtifactLibrary = ArtifactReferenceImageCache.GetInstance(Setup, FeatureExtractor, Setup.GetLogger("ArtifactLibrary"), Stopwatch);
-                }
-                catch (Exception e)
-                {
-                    Logger.LogError("Could not instantiate artifact library: {0}", e.Message);
-                    throw new SetupError("Could not instantiate artifact library.");
-                }
-            }
-
-            ICollection<ProcessedImage> referenceImages = ArtifactLibrary.GetProcessedImages();
+            ICollection<ProcessedImage> referenceImages = runtimeInformation.ReferenceImages.GetProcessedImages();
 
             if (referenceImages.Count < 1)
             {
-                Logger.LogError("Could not get any images for the artifact type.");
                 throw new ArgumentNullException("No images for the artifact type found.");
             }
 
             // Make screenshot of artifact window and extract the features.
+            // TODO: Do this in loop for all matching windows.
             ProcessedImage observedImage = FeatureExtractor.ExtractFeatures(
                 WindowCapturer.CaptureWindow(runtimeInformation.MatchingWindowsInformation.GetEnumerator().Current.Key)
                 );
@@ -81,80 +66,30 @@ namespace ArbitraryArtifactDetector.Detector
             bool artifactTypeFound = FeatureExtractor.ImageContainsArtifactType(observedImage, referenceImages, out Mat drawingResult, out int matchCount);
 
 #if DEBUG
-            // Prepare debug window output.
-            Application.EnableVisualStyles();
-            Application.SetCompatibleTextRenderingDefault(false);
             // Show the results in a window.
             if (drawingResult != null)
                 Application.Run(new ImageViewer(drawingResult));
 #endif
 
-            // Cache the artifact library.
-            if (Setup.ShouldCache)
-            {
-                ArtifactLibrary.Save();
-                Logger.LogInformation("Exported artifact library to {libraryFileName}.", Setup.WorkingDirectory + Setup.LibraryFileName);
-            }
-
-            Logger.LogInformation("The comparison yielded {0}.", artifactTypeFound);
-
-            if (Setup.ShouldEvaluate)
-            {
-                try
-                {
-                    bool printHeader = false;
-                    if (!File.Exists("output.csv")) printHeader = true;
-                    using (StreamWriter file = new StreamWriter("output.csv", true))
-                    {
-                        if (printHeader) file.WriteLine("artifactDetector;screenshot_path;artifact_goal;" + Setup.Stopwatch.LabelsToCSV() + ";found;match_count");
-
-                        file.WriteLine(AADConfig.FeatureExtractorSelection + ";" + Setup.ArtifactTarget + ";" + Setup.Stopwatch.TimesToCSVinNSprecision() + ";" + artifactTypeFound + ";" + matchCount);
-                    }
-                }
-                catch (Exception e)
-                {
-                    Logger.LogError("Could not write to output.csv: {0}", e.Message);
-                }
-            }
-
             return new DetectorResponse() { ArtifactPresent = artifactTypeFound, Certainty = 100 };
         }
 
         /// <summary>
-        /// Get the artifact library from a file.
+        /// Set instance of visual feature extractor to value in configuration file.
         /// </summary>
-        /// <param name="logger"></param>
-        private void FetchArtifactLibrary(Setup setup)
+        /// <param name="setup">The setup of this application.</param>
+        /// <returns>True on success.</returns>
+        /// <exception cref="ArgumentException">If the visual feature extractor configuration is invalid.</exception>
+        private void SetupFeatureExtractor(Setup setup)
         {
-            // Get the artifact library from a file.
-            if (File.Exists(setup.WorkingDirectory.FullName + setup.LibraryFileName))
+            // If the value in the configuration is invalid throw error.
+            if (!visualFeatureExtractorSelectionMap.ContainsKey(AADConfig.FeatureExtractorSelection))
             {
-                try
-                {
-                    ArtifactLibrary = ArtifactReferenceImageCache.GetInstance(setup, FeatureExtractor, setup.GetLogger("ArtifactReferenceImageCache"), setup.Stopwatch);
-                    Logger.LogDebug("Loaded artifact library from file {0}.", setup.WorkingDirectory.FullName + setup.LibraryFileName);
-                }
-                catch (SerializationException)
-                {
-                    Logger.LogWarning("Deserialization of artifact library failed.");
-                }
-            }
-            else
-            {
-                Logger.LogDebug("Artifact library file not found at {0}.", setup.WorkingDirectory.FullName + setup.LibraryFileName);
-            }
-        }
-
-        private bool SetupFeatureExtractor(Setup setup)
-        {
-            if (visualFeatureExtractorSelectionMap.ContainsKey(AADConfig.FeatureExtractorSelection))
-            {
-                Logger.LogInformation("Using feature extractor {extractorSelection}.", AADConfig.FeatureExtractorSelection);
-                FeatureExtractor = visualFeatureExtractorSelectionMap[AADConfig.FeatureExtractorSelection](setup);
-                return true;
+                throw new ArgumentException("Could not instantiate feature extractor, wrong name given.");
             }
 
-            return false;
+            Logger.LogInformation("Using feature extractor {extractorSelection}.", AADConfig.FeatureExtractorSelection);
+            FeatureExtractor = visualFeatureExtractorSelectionMap[AADConfig.FeatureExtractorSelection](setup);
         }
     }
 }
