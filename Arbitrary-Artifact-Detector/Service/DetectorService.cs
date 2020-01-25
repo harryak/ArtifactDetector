@@ -5,8 +5,10 @@ using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.ServiceModel;
 using System.ServiceProcess;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Timers;
 
@@ -26,12 +28,34 @@ namespace ArbitraryArtifactDetector.Service
         /// <summary>
         /// Timer to call detection in interval.
         /// </summary>
-        private Timer detectionTimer = null;
+        private System.Timers.Timer detectionTimer = null;
+
+        private string responsesPath;
+        private string compiledResponsesPath;
+
+        /// <summary>
+        /// List of all responses during the watch task.
+        /// </summary>
+        private StreamWriter detectorResponses;
+
+        /// <summary>
+        /// Mutex for detector response list.
+        /// </summary>
+        private Mutex detectorResponsesAccess = new Mutex();
 
         /// <summary>
         /// Host for this service to be callable.
         /// </summary>
         private ServiceHost serviceHost = null;
+
+        /// <summary>
+        /// Either null or instance of a stopwatch to evaluate this service.
+        /// </summary>
+        private AADStopwatch stopwatch = null;
+
+        private List<Task> DetectingTasks = new List<Task>();
+
+        private bool isRunning = false;
 
         /// <summary>
         /// Instantiate service with setup.
@@ -47,11 +71,17 @@ namespace ArbitraryArtifactDetector.Service
         }
 
         /// <summary>
+        /// Destructor of service.
+        /// </summary>
+        ~DetectorService()
+        {
+            detectorResponsesAccess.Dispose();
+        }
+
+        /// <summary>
         /// Instance of the artifact configuration parser.
         /// </summary>
         private ArtifactConfigurationParser ArtifactConfigurationParser { get; set; }
-
-        private List<Task> DetectionTasks { get; } = new List<Task>();
 
         /// <summary>
         /// Logger instance for this class.
@@ -64,18 +94,24 @@ namespace ArbitraryArtifactDetector.Service
         private Setup Setup { get; }
 
         /// <summary>
-        /// Either null or instance of a stopwatch to evaluate this service.
-        /// </summary>
-        private AADStopwatch Stopwatch { get; } = null;
-
-        /// <summary>
         /// Start watching an artifact in an interval of configured length.
         /// </summary>
         public void StartWatch(string artifactType, string artifactConfigurationString, string referenceImagesPath, int intervalLength)
         {
-            if (Stopwatch != null)
+            // Set flag of this to "isRunning" to only start one watch task at a time.
+            if (!isRunning)
             {
-                Stopwatch.Restart();
+                isRunning = true;
+            }
+            else
+            {
+                Logger.LogError("Can't start watch since it is already running.");
+                return;
+            }
+
+            if (stopwatch != null)
+            {
+                stopwatch.Restart();
             }
 
             // Check parameters for validity.
@@ -114,10 +150,14 @@ namespace ArbitraryArtifactDetector.Service
                 }
             }
 
-            if (Stopwatch != null)
+            responsesPath = Path.Combine(Setup.WorkingDirectory.FullName, artifactConfiguration.RuntimeInformation.ArtifactName, "-raw-", DateTime.Now.ToString(), ".csv");
+            compiledResponsesPath = Path.Combine(Setup.WorkingDirectory.FullName, artifactConfiguration.RuntimeInformation.ArtifactName, "-results-", DateTime.Now.ToString(), ".csv");
+            detectorResponses = new StreamWriter(responsesPath);
+
+            if (stopwatch != null)
             {
-                Stopwatch.Stop("watch_start");
-                Logger.LogDebug("Finished setup of watch task in {0}ms.", Stopwatch.ElapsedMilliseconds);
+                stopwatch.Stop("watch_start");
+                Logger.LogDebug("Finished setup of watch task in {0}ms.", stopwatch.ElapsedMilliseconds);
             }
 
             // Start detection loop.
@@ -134,8 +174,67 @@ namespace ArbitraryArtifactDetector.Service
             // Stop detection loop, wait for finishing and collect results.
             detectionTimer.Stop();
 
+            // Wait for all threads to finish and compile detectorResponses then.
+            Task.WaitAll(DetectingTasks.ToArray());
+
+            // Wait for writing stream to finish via mutex and release both them to be safe.
+            if (detectorResponsesAccess.WaitOne())
+            {
+                detectorResponses.Dispose();
+                detectorResponsesAccess.Dispose();
+            }
+
+            CompileResponses();
+
             // Set configuration to null to be empty on next run.
             artifactConfiguration = null;
+
+            // Make ready for next watch task.
+            isRunning = false;
+        }
+
+        private void CompileResponses()
+        {
+            int errorWindowSize = 5;
+            Dictionary<long, int> errorWindowValues = new Dictionary<long, int>();
+            // Integer division always floors value, so add one.
+            int thresholdSum = errorWindowSize + 1 / 2;
+            int currentSum;
+            bool artifactCurrentlyFound = false;
+
+            using (StreamReader reader = new StreamReader(responsesPath))
+            using (StreamWriter writer = new StreamWriter(compiledResponsesPath))
+            {
+                string[] currentValues;
+
+                while (!reader.EndOfStream)
+                {
+                    // First: Keep window at right size. We add one value now, so greater equal is the right choice here.
+                    if (errorWindowValues.Count >= errorWindowSize)
+                    {
+                        errorWindowValues.Remove(errorWindowValues.Keys.First());
+                    }
+
+                    // Then: Add next value to window.
+                    currentValues = reader.ReadLine().Split(',');
+                    errorWindowValues.Add(Convert.ToInt64(currentValues[0]), Convert.ToInt32(currentValues[1]));
+
+                    // See if the average of the window changes.
+                    currentSum = errorWindowValues.Values.Sum();
+                    if (!artifactCurrentlyFound && currentSum >= thresholdSum)
+                    {
+                        // Artifact detected now.
+                        artifactCurrentlyFound = true;
+                        writer.WriteLine("{0},present", errorWindowValues.Keys.ElementAt(thresholdSum));
+                    }
+                    else if (artifactCurrentlyFound && currentSum < thresholdSum)
+                    {
+                        // Artifact no longer detected.
+                        artifactCurrentlyFound = false;
+                        writer.WriteLine("{0},absent", errorWindowValues.Keys.ElementAt(thresholdSum));
+                    }
+                }
+            }
         }
 
         /// <summary>
@@ -153,10 +252,13 @@ namespace ArbitraryArtifactDetector.Service
             serviceHost.Open();
 
             // Setup detection timer to call detection in loop.
-            detectionTimer = new Timer(1000);
+            detectionTimer = new System.Timers.Timer();
             detectionTimer.Elapsed += DetectionEventHandler;
         }
 
+        /// <summary>
+        /// Stops service by closing the service host.
+        /// </summary>
         protected override void OnStop()
         {
             if (serviceHost != null)
@@ -169,12 +271,30 @@ namespace ArbitraryArtifactDetector.Service
             detectionTimer.Dispose();
         }
 
-        private void DetectAsync()
+        /// <summary>
+        /// Method to detect the currently given artifact and write the response to the responses dictionary with time.
+        /// </summary>
+        private void Detect()
         {
+            int certaintyThreshold = 60;
+
             // Call artifact detector (may be a compound detector) from artifact configuration.
             var artifactRuntimeInformation = (ArtifactRuntimeInformation) artifactConfiguration.RuntimeInformation.Clone();
             var response = artifactConfiguration.Detector.FindArtifact(ref artifactRuntimeInformation);
-            //TODO: Save response to timetable.
+            var responseTime = DateTime.Now;
+
+            // Save response to timetable.
+            if (detectorResponsesAccess.WaitOne())
+            {
+                // Write response prepended with time to responses file and flush.
+                // Use sortable and millisecond-precise timestamp for entry.
+                int artifactPresent = response.ArtifactPresent && response.Certainty >= certaintyThreshold ? 1 : 0 ;
+                detectorResponses.WriteLine("{0:yyMMddHHmmssfff},{1}", responseTime, artifactPresent);
+                detectorResponses.Flush();
+
+                // Release mutex and finish.
+                detectorResponsesAccess.ReleaseMutex();
+            }
         }
 
         /// <summary>
@@ -184,8 +304,12 @@ namespace ArbitraryArtifactDetector.Service
         /// <param name="eventArgs"></param>
         private void DetectionEventHandler(object source, ElapsedEventArgs eventArgs)
         {
-            // Fire and forget detection.
-            Task.Run(() => DetectAsync());
+            // Clean up already completed tasks from list to save memory.
+            DetectingTasks.RemoveAll(x => x.IsCompleted);
+
+            // Fire detection and add task to list.
+            var newTask = Task.Factory.StartNew(() => Detect());
+            DetectingTasks.Add(newTask);
         }
     }
 }
