@@ -21,7 +21,7 @@ namespace ArbitraryArtifactDetector.Detector
             desktopHandle = NativeMethods.FindWindowEx(desktopHandle, IntPtr.Zero, "SHELLDLL_DefView", null);
             desktopHandle = NativeMethods.FindWindowEx(desktopHandle, IntPtr.Zero, "SysListView32", "FolderView");
 
-            int iconCount = NativeMethods.SendMessage(desktopHandle, LVM_GETITEMCOUNT, 0, 0);
+            int iconCount = NativeMethods.SendMessage(desktopHandle, LVM_GETITEMCOUNT, IntPtr.Zero, IntPtr.Zero);
 
             NativeMethods.GetWindowThreadProcessId(desktopHandle, out uint vProcessId);
 
@@ -50,7 +50,7 @@ namespace ArbitraryArtifactDetector.Detector
                             Marshal.UnsafeAddrOfPinnedArrayElement(vItem, 0),
                             Marshal.SizeOf(typeof(NativeMethods.LVITEM)), ref vNumberOfBytesRead);
 
-                    NativeMethods.SendMessage(desktopHandle, LVM_GETITEMW, i, vPointer.ToInt32());
+                    NativeMethods.SendMessage(desktopHandle, LVM_GETITEMW, new IntPtr(i), vPointer);
 
                     NativeMethods.ReadProcessMemory(vProcess,
                             (IntPtr) ((int) vPointer + Marshal.SizeOf(typeof(NativeMethods.LVITEM))),
@@ -61,7 +61,7 @@ namespace ArbitraryArtifactDetector.Detector
                             (int)vNumberOfBytesRead);
                     iconName = iconName.Substring(0, iconName.IndexOf('\0'));
 
-                    NativeMethods.SendMessage(desktopHandle, LVM_GETITEMPOSITION, i, vPointer.ToInt32());
+                    NativeMethods.SendMessage(desktopHandle, LVM_GETITEMPOSITION, new IntPtr(i), vPointer);
 
                     Point[] vPoint = new Point[1];
                     NativeMethods.ReadProcessMemory(vProcess, vPointer,
@@ -93,14 +93,14 @@ namespace ArbitraryArtifactDetector.Detector
 
         internal class NativeMethods
         {
-            [DllImport("user32.DLL")]
+            [DllImport("user32.dll", CharSet = CharSet.Unicode)]
             internal static extern IntPtr FindWindow(string lpszClass, string lpszWindow);
 
-            [DllImport("user32.DLL")]
+            [DllImport("user32.dll", CharSet = CharSet.Unicode)]
             internal static extern IntPtr FindWindowEx(IntPtr hwndParent, IntPtr hwndChildAfter, string lpszClass, string lpszWindow);
 
             [DllImport("user32.dll")]
-            internal static extern int SendMessage(IntPtr hWnd, uint Msg, int wParam, int lParam);
+            internal static extern int SendMessage(IntPtr hWnd, uint Msg, IntPtr wParam, IntPtr lParam);
 
             [DllImport("user32.dll")]
             internal static extern uint GetWindowThreadProcessId(IntPtr hWnd, out uint dwProcessId);

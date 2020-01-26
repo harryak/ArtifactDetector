@@ -4,6 +4,7 @@ using ArbitraryArtifactDetector.Parser;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.ServiceModel;
@@ -61,11 +62,20 @@ namespace ArbitraryArtifactDetector.Service
         /// Instantiate service with setup.
         /// </summary>
         /// <param name="setup">Setup of this application.</param>
-        public DetectorService(Setup setup, AADStopwatch stopwach = null)
+        public DetectorService()
         {
             InitializeComponent();
 
-            Setup = setup;
+            // Get setup of service.
+            try
+            {
+                Setup = new Setup();
+            }
+            catch (SetupError)
+            {
+                return;
+            }
+            
             Logger = Setup.GetLogger("DetectorService");
             ArtifactConfigurationParser = new ArtifactConfigurationParser(Setup);
         }
@@ -96,9 +106,9 @@ namespace ArbitraryArtifactDetector.Service
         /// <summary>
         /// Start watching an artifact in an interval of configured length.
         /// </summary>
-        public void StartWatch(string artifactType, string artifactConfigurationString, string referenceImagesPath, int intervalLength)
+        public bool StartWatch(string artifactType, string artifactConfigurationString, string referenceImagesPath, int intervalLength)
         {
-            // Set flag of this to "isRunning" to only start one watch task at a time.
+            // Set flag of this to "isRunning" early to only start one watch task at a time.
             if (!isRunning)
             {
                 isRunning = true;
@@ -106,7 +116,7 @@ namespace ArbitraryArtifactDetector.Service
             else
             {
                 Logger.LogError("Can't start watch since it is already running.");
-                return;
+                return false;
             }
 
             if (stopwatch != null)
@@ -118,9 +128,10 @@ namespace ArbitraryArtifactDetector.Service
             if (artifactType == "" || artifactConfigurationString == "" || intervalLength < 1)
             {
                 Logger.LogError("Invalid or empty argument for StartWatch. Not going to execute watch task.");
+                isRunning = false;
 
                 // Stop execution.
-                return;
+                return false;
             }
 
             // Determine appropriate artifact detector(s) and runtime information by getting the artifact's configuration from arguments.
@@ -131,9 +142,10 @@ namespace ArbitraryArtifactDetector.Service
             catch (IOException exception)
             {
                 Logger.LogError("Can not read the artifact's recipe with error: {0}. Not going to execute watch task.", exception.Message);
+                isRunning = false;
 
                 // Stop execution.
-                return;
+                return false;
             }
 
             // If there is a path to reference images given: Try to get it and extract images from it to the artifact configuration.
@@ -164,13 +176,19 @@ namespace ArbitraryArtifactDetector.Service
             Logger.LogInformation("Starting watch task now with interval of {0}ms.", intervalLength);
             detectionTimer.Interval = intervalLength;
             detectionTimer.Start();
+            return true;
         }
 
         /// <summary>
-        ///
+        /// Stop watching the artifact currently watched.
         /// </summary>
-        public void StopWatch()
+        public bool StopWatch()
         {
+            if (!isRunning)
+            {
+                return false;
+            }
+
             // Stop detection loop, wait for finishing and collect results.
             detectionTimer.Stop();
 
@@ -191,8 +209,13 @@ namespace ArbitraryArtifactDetector.Service
 
             // Make ready for next watch task.
             isRunning = false;
+
+            return true;
         }
 
+        /// <summary>
+        /// Compile all responses previously written to file at responsesPath and write to compiledResponsesPath.
+        /// </summary>
         private void CompileResponses()
         {
             int errorWindowSize = 5;
@@ -225,13 +248,13 @@ namespace ArbitraryArtifactDetector.Service
                     {
                         // Artifact detected now.
                         artifactCurrentlyFound = true;
-                        writer.WriteLine("{0},present", errorWindowValues.Keys.ElementAt(thresholdSum));
+                        writer.WriteLine("{0},1", errorWindowValues.Keys.ElementAt(thresholdSum));
                     }
                     else if (artifactCurrentlyFound && currentSum < thresholdSum)
                     {
                         // Artifact no longer detected.
                         artifactCurrentlyFound = false;
-                        writer.WriteLine("{0},absent", errorWindowValues.Keys.ElementAt(thresholdSum));
+                        writer.WriteLine("{0},0", errorWindowValues.Keys.ElementAt(thresholdSum));
                     }
                 }
             }
@@ -243,6 +266,9 @@ namespace ArbitraryArtifactDetector.Service
         /// <param name="args"></param>
         protected override void OnStart(string[] args)
         {
+            // Uncomment this to debug.
+            Debugger.Launch();
+
             if (serviceHost != null)
             {
                 serviceHost.Close();

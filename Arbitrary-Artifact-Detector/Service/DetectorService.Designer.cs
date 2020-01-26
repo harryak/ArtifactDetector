@@ -17,6 +17,20 @@
             {
                 components.Dispose();
             }
+
+            if (detectorResponses != null)
+            {
+                detectorResponses.Dispose();
+            }
+            if (detectorResponsesAccess != null)
+            {
+                detectorResponsesAccess.Dispose();
+            }
+            if (serviceHost != null)
+            {
+                serviceHost.Close();
+            }
+
             base.Dispose(disposing);
         }
 

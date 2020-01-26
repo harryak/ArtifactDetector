@@ -1,6 +1,4 @@
 ﻿using ArbitraryArtifactDetector.Service;
-using ArbitraryArtifactDetector.Viewer;
-using Emgu.CV;
 using Microsoft.Extensions.Logging;
 using System;
 using System.ServiceProcess;
@@ -23,42 +21,22 @@ namespace ArbitraryArtifactDetector
         [STAThread]
         private static int Main(string[] args)
         {
-            // 1. Initalize program setup with command line arguments.
-            try
-            {
-                Setup = new Setup();
-            }
-            catch (SetupError)
-            {
-                return -1;
-            }
-
-            Logger = Setup.GetLogger("Main");
-
-            Logger.LogInformation("Creating service now.");
-
             ServiceBase[] ServicesToRun;
             ServicesToRun = new ServiceBase[]
             {
-                new DetectorService(Setup)
+                new DetectorService()
                 {
                     ServiceName = "ITS.APE Detector Service"
                 }
             };
-
-            Logger.LogInformation("Starting service DetectorService.");
+            
+            // Start service.
             ServiceBase.Run(ServicesToRun);
-            Logger.LogInformation("Service started.");
 
 #if DEBUG
             // Prepare debug window output.
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
-
-            /*Mat screenshot = null;
-            // Show the results in a window.
-            if (screenshot != null)
-                Application.Run(new ImageViewer(screenshot));*/
 #endif
 
             return 0;
