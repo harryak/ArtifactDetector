@@ -127,11 +127,10 @@ namespace ArbitraryArtifactDetector.Service
                 // Stop execution.
                 return false;
             }
-
-            ArtifactConfiguration configuration;
+            
             try
             {
-                configuration = JsonConvert.DeserializeObject<ArtifactConfiguration>(jsonEncodedParameters);
+                artifactConfiguration = JsonConvert.DeserializeObject<ArtifactConfiguration>(jsonEncodedParameters);
             }
             catch (Exception e)
             {
@@ -142,8 +141,8 @@ namespace ArbitraryArtifactDetector.Service
                 return false;
             }
 
-            responsesPath = Path.Combine(Setup.WorkingDirectory.FullName, artifactConfiguration.RuntimeInformation.ArtifactName, "-raw-", DateTime.Now.ToString(), ".csv");
-            compiledResponsesPath = Path.Combine(Setup.WorkingDirectory.FullName, artifactConfiguration.RuntimeInformation.ArtifactName, "-results-", DateTime.Now.ToString(), ".csv");
+            responsesPath = Path.Combine(Setup.WorkingDirectory.FullName, artifactConfiguration.RuntimeInformation.ArtifactName + "-raw-" + DateTime.Now.ToString("yyyyMMddHHmmss") + ".csv");
+            compiledResponsesPath = Path.Combine(Setup.WorkingDirectory.FullName, artifactConfiguration.RuntimeInformation.ArtifactName + "-results-" + DateTime.Now.ToString("yyyyMMddHHmmss") + ".csv");
             detectorResponses = new StreamWriter(responsesPath);
 
             if (stopwatch != null)
@@ -154,7 +153,12 @@ namespace ArbitraryArtifactDetector.Service
 
             // Start detection loop.
             Logger.LogInformation("Starting watch task now with interval of {0}ms.", artifactConfiguration.DetectionInterval);
-            detectionTimer.Interval = artifactConfiguration.DetectionInterval;
+            
+            detectionTimer = new System.Timers.Timer
+            {
+                Interval = artifactConfiguration.DetectionInterval
+            };
+
             detectionTimer.Start();
             return true;
         }
@@ -256,10 +260,6 @@ namespace ArbitraryArtifactDetector.Service
 
             serviceHost = new ServiceHost(typeof(DetectorService));
             serviceHost.Open();
-
-            // Setup detection timer to call detection in loop.
-            detectionTimer = new System.Timers.Timer();
-            detectionTimer.Elapsed += DetectionEventHandler;
         }
 
         /// <summary>
