@@ -5,11 +5,14 @@ using System.Collections.Generic;
 
 namespace ArbitraryArtifactDetector.Detector
 {
-    class InstalledProgramsDetector : BaseDetector, IDetector
+    internal class InstalledProgramsDetector : BaseDetector, IDetector
     {
-        const string registry_key = @"SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall";
+        private const string registry_key = @"SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall";
 
-        public InstalledProgramsDetector(Setup setup) : base(setup) { }
+        public override DetectorResponse FindArtifact(ref ArtifactRuntimeInformation runtimeInformation, DetectorResponse previousResponse = null)
+        {
+            throw new NotImplementedException();
+        }
 
         public IDictionary<int, InstalledProgram> GetInstalledPrograms()
         {
@@ -58,11 +61,6 @@ namespace ArbitraryArtifactDetector.Detector
                 && string.IsNullOrEmpty(releaseType)
                 && string.IsNullOrEmpty(parentName)
                 && (systemComponent == null || (int) systemComponent == 0);
-        }
-
-        public override DetectorResponse FindArtifact(ref ArtifactRuntimeInformation runtimeInformation, DetectorResponse previousResponse = null)
-        {
-            throw new NotImplementedException();
         }
     }
 }

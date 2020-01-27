@@ -1,22 +1,21 @@
 ﻿using Microsoft.Extensions.Logging;
-using System.Diagnostics;
 
 namespace ArbitraryArtifactDetector.DebugUtility
 {
-    class Debuggable
+    internal class Debuggable
     {
-        protected ILogger Logger { get; set; }
-        protected AADStopwatch Stopwatch { get; set; }
-
         /// <summary>
         /// Debuggable classes have a logger and a stopwatch.
         /// </summary>
         /// <param name="setup">The current execution's setup.</param>
-        internal Debuggable(Setup setup)
+        internal Debuggable()
         {
-            Logger = setup.GetLogger(GetType().Name);
-            Stopwatch = setup.Stopwatch;
+            Logger = Setup.GetInstance().GetLogger(GetType().Name);
+            Stopwatch = Setup.GetInstance().Stopwatch;
         }
+
+        protected ILogger Logger { get; set; }
+        protected AADStopwatch Stopwatch { get; set; }
 
         /// <summary>
         /// Wrapper to start the stopwatch after checking it actually exists.

@@ -5,7 +5,7 @@ namespace ArbitraryArtifactDetector.Detector.VisualFeatureExtractor
 {
     internal class KazeDetector : BaseVisualFeatureExtractor, IVisualFeatureExtractor
     {
-        public KazeDetector(Setup setup) : base(setup)
+        public KazeDetector()
         {
             FeatureDetector = new KAZE();
 

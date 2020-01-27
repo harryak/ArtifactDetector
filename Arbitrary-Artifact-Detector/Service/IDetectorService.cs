@@ -9,7 +9,7 @@ namespace ArbitraryArtifactDetector.Service
     public interface IDetectorService
     {
         [OperationContract]
-        bool StartWatch(string artifactType, string detectorConfigurationString, string referenceImagePath, int intervalLength);
+        bool StartWatch(string jsonEncodedParameters);
 
         [OperationContract]
         bool StopWatch();

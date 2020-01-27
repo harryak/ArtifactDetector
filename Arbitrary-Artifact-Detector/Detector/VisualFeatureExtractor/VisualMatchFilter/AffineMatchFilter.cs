@@ -12,7 +12,7 @@ namespace ArbitraryArtifactDetector.Detector.VisualFeatureExtractor.VisualMatchF
     /// </summary>
     class AffineMatchFilter : BaseMatchFilter, IMatchFilter
     {
-        public AffineMatchFilter(Setup setup) : base(setup) { }
+        public AffineMatchFilter() { }
 
         public override Matrix<float> GetRanSaCTransformationMatrix(VectorOfKeyPoint modelKeyPoints, VectorOfKeyPoint queryKeyPoints, VectorOfVectorOfDMatch matches, ref Mat mask, int iterations, double inlierRatio, int patchSize)
         {

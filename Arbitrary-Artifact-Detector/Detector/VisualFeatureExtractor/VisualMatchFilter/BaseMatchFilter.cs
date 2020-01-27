@@ -9,8 +9,6 @@ namespace ArbitraryArtifactDetector.Detector.VisualFeatureExtractor.VisualMatchF
 {
     abstract class BaseMatchFilter : Debuggable, IMatchFilter
     {
-        protected BaseMatchFilter(Setup setup) : base(setup) { }
-
         public abstract Matrix<float> GetRanSaCTransformationMatrix(VectorOfKeyPoint modelKeyPoints, VectorOfKeyPoint queryKeyPoints, VectorOfVectorOfDMatch matches, ref Mat mask, int iterations, double inlierRatio, int patchSize);
 
         /// <summary>

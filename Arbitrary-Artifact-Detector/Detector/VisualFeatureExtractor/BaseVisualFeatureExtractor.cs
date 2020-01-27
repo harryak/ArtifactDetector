@@ -19,20 +19,20 @@ namespace ArbitraryArtifactDetector.Detector.VisualFeatureExtractor
         /// <summary>
         /// Map for selecting a feature match filter by its name.
         /// </summary>
-        private readonly Dictionary<string, Func<Setup, IMatchFilter>> visualFilterSelectionMap =
-            new Dictionary<string, Func<Setup, IMatchFilter>>()
+        private readonly Dictionary<string, Func<IMatchFilter>> visualFilterSelectionMap =
+            new Dictionary<string, Func<IMatchFilter>>()
             {
-                { "simple", (Setup setup) => { return new SimpleMatchFilter(setup); } },
-                { "affine", (Setup setup) => { return new AffineMatchFilter(setup); } },
+                { "simple", () => { return new SimpleMatchFilter(); } },
+                { "affine", () => { return new AffineMatchFilter(); } },
             };
 
         /// <summary>
         /// Constructor setting up the match filter.
         /// </summary>
         /// <param name="setup">The current excecution's setup.</param>
-        public BaseVisualFeatureExtractor(Setup setup) : base(setup)
+        public BaseVisualFeatureExtractor()
         {
-            SetupMatchFilter(setup);
+            SetupMatchFilter();
         }
 
         /// <summary>
@@ -356,7 +356,7 @@ namespace ArbitraryArtifactDetector.Detector.VisualFeatureExtractor
         /// Simple setup of the match filter by getting the right instance from the map.
         /// </summary>
         /// <param name="setup">The current excecution's setup.</param>
-        private void SetupMatchFilter(Setup setup)
+        private void SetupMatchFilter()
         {
             if (!visualFilterSelectionMap.ContainsKey(AADConfig.MatchFilterSelection))
             {
@@ -364,7 +364,7 @@ namespace ArbitraryArtifactDetector.Detector.VisualFeatureExtractor
             }
 
             Logger.LogInformation("Using match filter {filterSelection}.", AADConfig.MatchFilterSelection);
-            MatchFilter = visualFilterSelectionMap[AADConfig.MatchFilterSelection](setup);
+            MatchFilter = visualFilterSelectionMap[AADConfig.MatchFilterSelection]();
         }
 
         /// <summary>

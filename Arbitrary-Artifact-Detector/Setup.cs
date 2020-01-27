@@ -8,13 +8,14 @@ using System.Windows.Forms;
 
 namespace ArbitraryArtifactDetector
 {
-    [Serializable]
     internal class Setup
     {
+        private static Setup _instance;
+
         /// <summary>
         /// This class handles the parsing of the configuration files, plus the setup of the working environment.
         /// </summary>
-        public Setup()
+        private Setup()
         {
             Logger = GetLogger("Setup");
 
@@ -38,6 +39,16 @@ namespace ArbitraryArtifactDetector
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
 #endif
+        }
+
+        public static Setup GetInstance()
+        {
+            if (_instance == null)
+            {
+                _instance = new Setup();
+            }
+
+            return _instance;
         }
 
         /// <summary>

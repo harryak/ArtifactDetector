@@ -12,10 +12,15 @@ namespace ArbitraryArtifactDetector.Detector
         /// <summary>
         /// Provide the setup, please
         /// </summary>
-        protected BaseDetector(Setup setup) : base(setup)
+        protected BaseDetector()
         {
-            Setup = setup;
+            Setup = Setup.GetInstance();
         }
+
+        /// <summary>
+        /// Information about the artifact instance currently detecting.
+        /// </summary>
+        protected ArtifactRuntimeInformation PersistentRuntimeInformation { get; set; }
 
         /// <summary>
         /// Conditions that have to be fulfilled before this detector should be run.
@@ -31,11 +36,6 @@ namespace ArbitraryArtifactDetector.Detector
         /// Conditions that have to be fulfilled to yield "match" after calling FindArtifact.
         /// </summary>
         protected IDetectorCondition<DetectorResponse> TargetConditions { get; set; }
-
-        /// <summary>
-        /// Information about the artifact instance currently detecting.
-        /// </summary>
-        protected ArtifactRuntimeInformation PersistentRuntimeInformation { get; set; }
 
         /// <summary>
         /// Find the artifact defined in the artifactConfiguration given some runtime information and a previous detector's response.

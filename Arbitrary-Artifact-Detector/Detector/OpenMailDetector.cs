@@ -14,15 +14,13 @@ namespace ArbitraryArtifactDetector.Detector
         /// <summary>
         /// Constructor for this detector, taking the setup and its configuration.
         /// </summary>
-        /// <param name="setup">Global setup object for the application.</param>
-        /// <param name="configuration">Configuration for this detector instance.</param>
-        public MailDetector(Setup setup) : base(setup)
+        public MailDetector()
         {
-            var processDetector = new RunningProcessDetector(setup);
+            var processDetector = new RunningProcessDetector();
             processDetector.SetTargetConditions(new EqualityDetectorCondition<DetectorResponse>("ArtifactPresent", true));
             AddDetector(processDetector);
 
-            var openWindowDetector = new OpenWindowDetector(setup);
+            var openWindowDetector = new OpenWindowDetector();
             processDetector.SetTargetConditions(new EqualityDetectorCondition<DetectorResponse>("ArtifactPresent", true));
             AddDetector(openWindowDetector);
         }

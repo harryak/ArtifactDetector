@@ -15,14 +15,6 @@ namespace ArbitraryArtifactDetector.Detector
     internal class OpenWindowDetector : BaseDetector, IDetector
     {
         /// <summary>
-        /// Constructor for this detector, taking the setup and its configuration.
-        /// </summary>
-        /// <param name="setup">Global setup object for the application.</param>
-        public OpenWindowDetector(Setup setup) : base(setup)
-        {
-        }
-
-        /// <summary>
         /// Delegate function to loop over windows.
         /// </summary>
         /// <param name="hWnd">Input window handle.</param>

@@ -8,10 +8,6 @@ namespace ArbitraryArtifactDetector.Detector
     /// </summary>
     internal class CompoundDetector : BaseDetector, ICompoundDetector
     {
-        public CompoundDetector(Setup setup) : base(setup)
-        {
-        }
-
         /// <summary>
         /// List of detector configurations.
         /// </summary>

@@ -3,7 +3,7 @@
     /// <summary>
     /// A detector made up from several detectors.
     /// </summary>
-    interface ICompoundDetector : IDetector
+    internal interface ICompoundDetector : IDetector
     {
         /// <summary>
         /// Add a new detector to the chain of detectors.

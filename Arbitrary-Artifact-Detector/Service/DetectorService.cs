@@ -1,7 +1,7 @@
 ﻿using ArbitraryArtifactDetector.DebugUtility;
 using ArbitraryArtifactDetector.Model;
-using ArbitraryArtifactDetector.Parser;
 using Microsoft.Extensions.Logging;
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -66,10 +66,10 @@ namespace ArbitraryArtifactDetector.Service
         {
             InitializeComponent();
 
-            // Get setup of service.
+            // Get setup of service for the first time.
             try
             {
-                Setup = new Setup();
+                Setup = Setup.GetInstance();
             }
             catch (SetupError)
             {
@@ -77,7 +77,6 @@ namespace ArbitraryArtifactDetector.Service
             }
             
             Logger = Setup.GetLogger("DetectorService");
-            ArtifactConfigurationParser = new ArtifactConfigurationParser(Setup);
         }
 
         /// <summary>
@@ -87,11 +86,6 @@ namespace ArbitraryArtifactDetector.Service
         {
             detectorResponsesAccess.Dispose();
         }
-
-        /// <summary>
-        /// Instance of the artifact configuration parser.
-        /// </summary>
-        private ArtifactConfigurationParser ArtifactConfigurationParser { get; set; }
 
         /// <summary>
         /// Logger instance for this class.
@@ -106,7 +100,7 @@ namespace ArbitraryArtifactDetector.Service
         /// <summary>
         /// Start watching an artifact in an interval of configured length.
         /// </summary>
-        public bool StartWatch(string artifactType, string artifactConfigurationString, string referenceImagesPath, int intervalLength)
+        public bool StartWatch(string jsonEncodedParameters)
         {
             // Set flag of this to "isRunning" early to only start one watch task at a time.
             if (!isRunning)
@@ -125,7 +119,7 @@ namespace ArbitraryArtifactDetector.Service
             }
 
             // Check parameters for validity.
-            if (artifactType == "" || artifactConfigurationString == "" || intervalLength < 1)
+            if (jsonEncodedParameters == null || jsonEncodedParameters == "")
             {
                 Logger.LogError("Invalid or empty argument for StartWatch. Not going to execute watch task.");
                 isRunning = false;
@@ -134,32 +128,18 @@ namespace ArbitraryArtifactDetector.Service
                 return false;
             }
 
-            // Determine appropriate artifact detector(s) and runtime information by getting the artifact's configuration from arguments.
+            ArtifactConfiguration configuration;
             try
             {
-                artifactConfiguration = ArtifactConfigurationParser.ParseConfigurationString(artifactConfigurationString);
+                configuration = JsonConvert.DeserializeObject<ArtifactConfiguration>(jsonEncodedParameters);
             }
-            catch (IOException exception)
+            catch (Exception e)
             {
-                Logger.LogError("Can not read the artifact's recipe with error: {0}. Not going to execute watch task.", exception.Message);
+                Logger.LogError("Exception while deserializing JSON parameters: {0}.", e.Message);
                 isRunning = false;
 
                 // Stop execution.
                 return false;
-            }
-
-            // If there is a path to reference images given: Try to get it and extract images from it to the artifact configuration.
-            if (referenceImagesPath != "")
-            {
-                try
-                {
-                    DirectoryInfo referenceImagesPathObj = new DirectoryInfo(referenceImagesPath);
-                    artifactConfiguration.RuntimeInformation.ReferenceImages.ProcessImagesInPath(referenceImagesPathObj);
-                }
-                catch (Exception exception)
-                {
-                    Logger.LogError("Can not access the supplied reference image path with error: {0}. Using possibly empty reference image cache.", exception.Message);
-                }
             }
 
             responsesPath = Path.Combine(Setup.WorkingDirectory.FullName, artifactConfiguration.RuntimeInformation.ArtifactName, "-raw-", DateTime.Now.ToString(), ".csv");
@@ -173,8 +153,8 @@ namespace ArbitraryArtifactDetector.Service
             }
 
             // Start detection loop.
-            Logger.LogInformation("Starting watch task now with interval of {0}ms.", intervalLength);
-            detectionTimer.Interval = intervalLength;
+            Logger.LogInformation("Starting watch task now with interval of {0}ms.", artifactConfiguration.DetectionInterval);
+            detectionTimer.Interval = artifactConfiguration.DetectionInterval;
             detectionTimer.Start();
             return true;
         }

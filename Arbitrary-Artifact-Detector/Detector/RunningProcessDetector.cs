@@ -13,14 +13,6 @@ namespace ArbitraryArtifactDetector.Detector
     /// </summary>
     internal class RunningProcessDetector : BaseDetector, IDetector
     {
-        /// <summary>
-        /// Constructor for this detector, taking the setup and its configuration.
-        /// </summary>
-        /// <param name="setup">Global setup object for the application.</param>
-        public RunningProcessDetector(Setup setup) : base(setup)
-        {
-        }
-
         public override DetectorResponse FindArtifact(ref ArtifactRuntimeInformation runtimeInformation, DetectorResponse previousResponse = null)
         {
             List<Process> processes = new List<Process>();

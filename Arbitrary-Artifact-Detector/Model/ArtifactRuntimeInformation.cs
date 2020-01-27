@@ -1,5 +1,7 @@
-﻿using ArbitraryArtifactDetector.Detector;
+﻿using ArbitraryArtifactDetector.Converter;
+using ArbitraryArtifactDetector.Detector;
 using Emgu.CV;
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 
@@ -10,6 +12,10 @@ namespace ArbitraryArtifactDetector.Model
     /// </summary>
     internal class ArtifactRuntimeInformation : ICloneable
     {
+        public ArtifactRuntimeInformation()
+        {
+        }
+
         /// <summary>
         /// Constructor taking the arguments that can be known on first instantiation.
         /// </summary>
@@ -28,31 +34,39 @@ namespace ArbitraryArtifactDetector.Model
         /// <summary>
         /// Name of the artifact type, immutable once created.
         /// </summary>
+        [JsonProperty("artifact_name")]
         public string ArtifactName { get; private set; }
 
         /// <summary>
         /// Information about the matching windows.
         /// </summary>
+        [JsonIgnore]
         public IDictionary<IntPtr, WindowToplevelInformation> MatchingWindowsInformation { get; set; } = new Dictionary<IntPtr, WindowToplevelInformation>();
 
         /// <summary>
         /// Possible names of the processes.
         /// </summary>
+        [JsonProperty("process_names")]
+        [JsonConverter(typeof(StringToListConverter))]
         public IList<string> PossibleProcessNames { get; set; } = new List<string>();
 
         /// <summary>
         /// Possible (fragments of the) titles of the windows to get.
         /// </summary>
+        [JsonProperty("window_titles")]
+        [JsonConverter(typeof(StringToListConverter))]
         public IList<string> PossibleWindowTitles { get; internal set; } = new List<string>();
 
         /// <summary>
         /// Image cache for reference image.
         /// </summary>
+        [JsonIgnore]
         public ArtifactReferenceImageCache ReferenceImages { get; set; }
 
         /// <summary>
         /// Screenshots of the matching windows.
-        /// </summary>
+        /// </summary
+        [JsonIgnore]
         public IDictionary<int, Mat> Screenshots { get; set; } = new Dictionary<int, Mat>();
 
         /// <summary>

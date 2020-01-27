@@ -123,8 +123,11 @@ namespace ArbitraryArtifactDetector.Detector
         /// <param name="logger">Logger to use for logging.</param>
         /// <param name="stopwatch">Optional, stopwatch for evaluation.</param>
         /// <returns>A cached or new instance of the cache.</returns>
-        public static ArtifactReferenceImageCache GetInstance(string artifactType, Setup setup, IVisualFeatureExtractor artifactDetector, ILogger logger, AADStopwatch stopwatch = null)
+        public static ArtifactReferenceImageCache GetInstance(string artifactType, Setup setup, IVisualFeatureExtractor artifactDetector)
         {
+            AADStopwatch stopwatch = setup.Stopwatch;
+            ILogger logger = setup.GetLogger("ReferenceImageCache");
+
             // Start stopwatch if there is one.
             if (stopwatch != null)
                 stopwatch.Restart();

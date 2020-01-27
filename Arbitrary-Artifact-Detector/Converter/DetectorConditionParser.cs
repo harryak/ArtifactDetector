@@ -1,13 +1,13 @@
 ﻿using ArbitraryArtifactDetector.DetectorCondition.Model;
+using ArbitraryArtifactDetector.Helper;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
-using ArbitraryArtifactDetector.Helper;
 
-namespace ArbitraryArtifactDetector.Parser
+namespace ArbitraryArtifactDetector.Converter
 {
-    class DetectorConditionParser<ObjectType>
+    internal class DetectorConditionParser<ObjectType>
     {
         private static readonly Dictionary<string, Func<string, string, IDetectorCondition<ObjectType>>> TranslateSimpleExpressionMap = new Dictionary<string, Func<string, string, IDetectorCondition<ObjectType>>>()
         {
@@ -21,7 +21,7 @@ namespace ArbitraryArtifactDetector.Parser
         public static IDetectorCondition<ObjectType> ParseConditionString(string conditionString)
         {
             // Special word "none"
-            if (conditionString == "none")
+            if (conditionString == "" || conditionString == "none")
             {
                 // Empty condition set.
                 return new DetectorConditionSet<ObjectType>();

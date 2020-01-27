@@ -7,9 +7,14 @@ using System.Text;
 
 namespace ArbitraryArtifactDetector.Detector
 {
-    class DesktopIconDetector : BaseDetector, IDetector
+    internal class DesktopIconDetector : BaseDetector, IDetector
     {
-        public DesktopIconDetector(Setup setup) : base(setup) { }
+        private delegate bool EnumWindowsProc(IntPtr hWnd, int lParam);
+
+        public override DetectorResponse FindArtifact(ref ArtifactRuntimeInformation runtimeInformation, DetectorResponse previousResponse = null)
+        {
+            throw new NotImplementedException();
+        }
 
         public IDictionary<int, DesktopIcon> GetDesktopIcons()
         {
@@ -82,17 +87,13 @@ namespace ArbitraryArtifactDetector.Detector
             return icons;
         }
 
-        private delegate bool EnumWindowsProc(IntPtr hWnd, int lParam);
-
-        public override DetectorResponse FindArtifact(ref ArtifactRuntimeInformation runtimeInformation, DetectorResponse previousResponse = null)
-        {
-            throw new NotImplementedException();
-        }
-
         #region DLL imports
 
         internal class NativeMethods
         {
+            [DllImport("kernel32.dll")]
+            internal static extern bool CloseHandle(IntPtr handle);
+
             [DllImport("user32.dll", CharSet = CharSet.Unicode)]
             internal static extern IntPtr FindWindow(string lpszClass, string lpszWindow);
 
@@ -100,10 +101,16 @@ namespace ArbitraryArtifactDetector.Detector
             internal static extern IntPtr FindWindowEx(IntPtr hwndParent, IntPtr hwndChildAfter, string lpszClass, string lpszWindow);
 
             [DllImport("user32.dll")]
-            internal static extern int SendMessage(IntPtr hWnd, uint Msg, IntPtr wParam, IntPtr lParam);
+            internal static extern uint GetWindowThreadProcessId(IntPtr hWnd, out uint dwProcessId);
+
+            [DllImport("kernel32.dll")]
+            internal static extern IntPtr OpenProcess(uint dwDesiredAccess, bool bInheritHandle, uint dwProcessId);
+
+            [DllImport("kernel32.dll")]
+            internal static extern bool ReadProcessMemory(IntPtr hProcess, IntPtr lpBaseAddress, IntPtr lpBuffer, int nSize, ref uint vNumberOfBytesRead);
 
             [DllImport("user32.dll")]
-            internal static extern uint GetWindowThreadProcessId(IntPtr hWnd, out uint dwProcessId);
+            internal static extern int SendMessage(IntPtr hWnd, uint Msg, IntPtr wParam, IntPtr lParam);
 
             [DllImport("kernel32.dll")]
             internal static extern IntPtr VirtualAllocEx(IntPtr hProcess, IntPtr lpAddress, uint dwSize, uint flAllocationType, uint flProtect);
@@ -112,53 +119,47 @@ namespace ArbitraryArtifactDetector.Detector
             internal static extern bool VirtualFreeEx(IntPtr hProcess, IntPtr lpAddress, uint dwSize, uint dwFreeType);
 
             [DllImport("kernel32.dll")]
-            internal static extern IntPtr OpenProcess(uint dwDesiredAccess, bool bInheritHandle, uint dwProcessId);
-
-            [DllImport("kernel32.dll")]
             internal static extern bool WriteProcessMemory(IntPtr hProcess, IntPtr lpBaseAddress, IntPtr lpBuffer, int nSize, ref uint vNumberOfBytesRead);
-
-            [DllImport("kernel32.dll")]
-            internal static extern bool ReadProcessMemory(IntPtr hProcess, IntPtr lpBaseAddress, IntPtr lpBuffer, int nSize, ref uint vNumberOfBytesRead);
-
-            [DllImport("kernel32.dll")]
-            internal static extern bool CloseHandle(IntPtr handle);
 
             internal struct LVITEM
             {
-                public int mask;
+                public int cchTextMax;
+                public int cColumns;
+                public int iGroupId;
+                public int iImage;
+                public int iIndent;
                 public int iItem;
                 public int iSubItem;
+                public IntPtr lParam;
+                public int mask;
+                public IntPtr pszText;
+
+                // string
+                public IntPtr puColumns;
+
                 public int state;
                 public int stateMask;
-                public IntPtr pszText; // string
-                public int cchTextMax;
-                public int iImage;
-                public IntPtr lParam;
-                public int iIndent;
-                public int iGroupId;
-                public int cColumns;
-                public IntPtr puColumns;
             }
         }
 
-        #endregion
+        #endregion DLL imports
 
         #region Windows Messages
 
+        private const int LVIF_TEXT = 0x0001;
         private const uint LVM_FIRST = 0x1000;
         private const uint LVM_GETITEMCOUNT = LVM_FIRST + 4;
-        private const uint LVM_GETITEMW = LVM_FIRST + 75;
         private const uint LVM_GETITEMPOSITION = LVM_FIRST + 16;
+        private const uint LVM_GETITEMW = LVM_FIRST + 75;
         private const uint LVM_SETITEMPOSITION = LVM_FIRST + 15;
-        private const uint PROCESS_VM_OPERATION = 0x0008;
-        private const uint PROCESS_VM_READ = 0x0010;
-        private const uint PROCESS_VM_WRITE = 0x0020;
         private const uint MEM_COMMIT = 0x1000;
         private const uint MEM_RELEASE = 0x8000;
         private const uint MEM_RESERVE = 0x2000;
         private const uint PAGE_READWRITE = 4;
-        private const int LVIF_TEXT = 0x0001;
+        private const uint PROCESS_VM_OPERATION = 0x0008;
+        private const uint PROCESS_VM_READ = 0x0010;
+        private const uint PROCESS_VM_WRITE = 0x0020;
 
-        #endregion
+        #endregion Windows Messages
     }
 }

@@ -5,7 +5,7 @@ namespace ArbitraryArtifactDetector.Detector.VisualFeatureExtractor
 {
     class BriskDetector : BaseVisualFeatureExtractor, IVisualFeatureExtractor
     {
-        public BriskDetector(Setup setup) : base(setup)
+        public BriskDetector()
         {
             FeatureDetector = new Brisk();
 

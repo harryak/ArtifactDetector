@@ -12,7 +12,7 @@ namespace ArbitraryArtifactDetector.Detector.VisualFeatureExtractor.VisualMatchF
     /// </summary>
     class SimpleMatchFilter : BaseMatchFilter, IMatchFilter
     {
-        public SimpleMatchFilter(Setup setup) : base(setup) { }
+        public SimpleMatchFilter() { }
 
         public override Matrix<float> GetRanSaCTransformationMatrix(VectorOfKeyPoint modelKeyPoints, VectorOfKeyPoint queryKeyPoints, VectorOfVectorOfDMatch matches, ref Mat mask, int iterations, double inlierRatio, int patchSize)
         {
