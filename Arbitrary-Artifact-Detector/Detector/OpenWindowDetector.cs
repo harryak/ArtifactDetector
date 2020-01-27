@@ -283,7 +283,7 @@ namespace ArbitraryArtifactDetector.Detector
             [return: MarshalAs(UnmanagedType.Bool)]
             public static extern bool GetWindowPlacement(IntPtr hWnd, ref WindowPlacement lpwndpl);
 
-            [DllImport("user32.dll")]
+            [DllImport("user32.dll", CharSet = CharSet.Unicode)]
             public static extern int GetWindowText(IntPtr hWnd, StringBuilder lpString, int nMaxCount);
 
             [DllImport("user32.dll")]

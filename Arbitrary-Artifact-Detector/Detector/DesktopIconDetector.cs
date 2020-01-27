@@ -121,6 +121,7 @@ namespace ArbitraryArtifactDetector.Detector
             [DllImport("kernel32.dll")]
             internal static extern bool WriteProcessMemory(IntPtr hProcess, IntPtr lpBaseAddress, IntPtr lpBuffer, int nSize, ref uint vNumberOfBytesRead);
 
+#pragma warning disable CS0649
             internal struct LVITEM
             {
                 public int cchTextMax;
@@ -141,6 +142,7 @@ namespace ArbitraryArtifactDetector.Detector
                 public int stateMask;
             }
         }
+#pragma warning restore CS0649
 
         #endregion DLL imports
 

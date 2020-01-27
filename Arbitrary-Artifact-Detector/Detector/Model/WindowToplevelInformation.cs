@@ -7,7 +7,6 @@ namespace ArbitraryArtifactDetector.Model
     /// <summary>
     /// Data class to contain a Windows windows' information.
     /// </summary>
-    [Serializable]
     class WindowToplevelInformation
     {
         /// <summary>

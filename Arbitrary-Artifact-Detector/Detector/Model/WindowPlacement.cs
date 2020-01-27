@@ -1,12 +1,10 @@
-﻿using System;
-using System.Runtime.InteropServices;
+﻿using System.Runtime.InteropServices;
 
 namespace ArbitraryArtifactDetector.Model
 {
     /// <summary>
     /// Contains information about the placement of a window on the screen.
     /// </summary>
-    [Serializable]
     [StructLayout(LayoutKind.Sequential)]
     internal struct WindowPlacement
     {
