@@ -1,4 +1,4 @@
-﻿using ArbitraryArtifactDetector.Service;
+﻿using ArbitraryArtifactDetector.Services;
 using Microsoft.Extensions.Logging;
 using System;
 using System.ServiceProcess;

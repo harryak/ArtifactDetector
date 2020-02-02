@@ -190,83 +190,84 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="AADConfig.cs" />
-    <Compile Include="Converter\StringToListConverter.cs" />
-    <Compile Include="Detector\ArtifactReferenceImageCache.cs" />
-    <Compile Include="DebugUtility\Debuggable.cs" />
-    <Compile Include="Detector\Configuration\MailDetectorConfiguration.cs" />
-    <Compile Include="Detector\OpenMailDetector.cs" />
-    <Compile Include="Detector\RunningProcessDetector.cs" />
-    <Compile Include="Detector\VisualFeatureExtractor\VisualFeatureExtractorFactory.cs" />
-    <Compile Include="Model\ArtifactConfiguration.cs" />
-    <Compile Include="Converter\DetectorConverter.cs" />
+    <Compile Include="Converters\StringToListConverter.cs" />
+    <Compile Include="Detectors\ArtifactReferenceImageCache.cs" />
+    <Compile Include="DebugUtilities\Debuggable.cs" />
+    <Compile Include="Detectors\Configuration\MailDetectorConfiguration.cs" />
+    <Compile Include="Detectors\OpenMailDetector.cs" />
+    <Compile Include="Detectors\RunningProcessDetector.cs" />
+    <Compile Include="Detectors\VisualFeatureExtractor\VisualFeatureExtractorFactory.cs" />
+    <Compile Include="Models\ArtifactConfiguration.cs" />
+    <Compile Include="Converters\DetectorConverter.cs" />
+    <Compile Include="Models\ServiceState.cs" />
     <Compile Include="ProjectInstaller.cs">
       <SubType>Component</SubType>
     </Compile>
     <Compile Include="ProjectInstaller.Designer.cs">
       <DependentUpon>ProjectInstaller.cs</DependentUpon>
     </Compile>
-    <Compile Include="Service\DetectorService.cs">
+    <Compile Include="Services\DetectorService.cs">
       <SubType>Component</SubType>
     </Compile>
-    <Compile Include="Service\DetectorService.Designer.cs">
+    <Compile Include="Services\DetectorService.Designer.cs">
       <DependentUpon>DetectorService.cs</DependentUpon>
     </Compile>
-    <Compile Include="Detector\BaseDetector.cs" />
-    <Compile Include="Detector\CompoundDetector.cs" />
-    <Compile Include="Detector\VisualFeatureExtractor\BaseVisualFeatureExtractor.cs" />
-    <Compile Include="Helper\StringExtensions.cs" />
-    <Compile Include="Model\ArtifactRuntimeInformation.cs" />
-    <Compile Include="Model\DetectorCondition\BaseDetectorCondition.cs" />
-    <Compile Include="Model\DetectorCondition\EqualityDetectorCondition.cs" />
-    <Compile Include="Model\DetectorCondition\ExistsDetectorCondition.cs" />
-    <Compile Include="Model\DetectorCondition\GreaterThanEqualDetectorCondition.cs" />
-    <Compile Include="Model\DetectorCondition\IDetectorCondition.cs" />
-    <Compile Include="Model\DetectorCondition\GreaterThanDetectorCondition.cs" />
-    <Compile Include="Model\DetectorCondition\LessThanEqualDetectorCondition.cs" />
-    <Compile Include="Model\DetectorCondition\LessThanDetectorCondition.cs" />
-    <Compile Include="Converter\DetectorConditionParser.cs" />
-    <Compile Include="Detector\DesktopIconDetector.cs" />
-    <Compile Include="Detector\ICompoundDetector.cs" />
-    <Compile Include="Detector\InstalledProgramsDetector.cs" />
-    <Compile Include="Detector\Model\InstalledProgram.cs" />
-    <Compile Include="Detector\Model\WindowVisualInformation.cs" />
-    <Compile Include="Detector\OpenWindowDetector.cs" />
-    <Compile Include="Detector\Model\DesktopIcon.cs" />
-    <Compile Include="Detector\Model\WindowPosition.cs" />
-    <Compile Include="Detector\Model\Rectangle.cs" />
-    <Compile Include="Detector\Model\ShowWindowCommand.cs" />
-    <Compile Include="Detector\Model\WindowToplevelInformation.cs" />
-    <Compile Include="Detector\Model\WindowPlacement.cs" />
-    <Compile Include="Detector\IDetector.cs" />
-    <Compile Include="Utility\DefaultApplicationFinder.cs" />
-    <Compile Include="Utility\WindowCapturer.cs" />
-    <Compile Include="Model\DetectorCondition\DetectorConditionSet.cs" />
-    <Compile Include="Model\DetectorResponse.cs" />
-    <Compile Include="Detector\VisualFeatureDetector.cs" />
-    <Compile Include="Detector\VisualFeatureExtractor\BriskDetector.cs" />
-    <Compile Include="Detector\VisualFeatureExtractor\AkazeDetector.cs" />
-    <Compile Include="Detector\VisualFeatureExtractor\VisualMatchFilter\SimpleMatchFilter.cs" />
-    <Compile Include="Detector\VisualFeatureExtractor\VisualMatchFilter\AffineMatchFilter.cs" />
-    <Compile Include="Detector\VisualFeatureExtractor\OrbDetector.cs" />
-    <Compile Include="Detector\VisualFeatureExtractor\KazeDetector.cs" />
-    <Compile Include="Helper\FileHelper.cs" />
-    <Compile Include="DebugUtility\AADStopwatch.cs" />
-    <Compile Include="Model\ProcessedImage.cs" />
-    <Compile Include="Detector\VisualFeatureExtractor\IVisualFeatureExtractor.cs" />
+    <Compile Include="Detectors\BaseDetector.cs" />
+    <Compile Include="Detectors\CompoundDetector.cs" />
+    <Compile Include="Detectors\VisualFeatureExtractor\BaseVisualFeatureExtractor.cs" />
+    <Compile Include="Helpers\StringExtensions.cs" />
+    <Compile Include="Models\ArtifactRuntimeInformation.cs" />
+    <Compile Include="Models\DetectorConditions\BaseDetectorCondition.cs" />
+    <Compile Include="Models\DetectorConditions\EqualityDetectorCondition.cs" />
+    <Compile Include="Models\DetectorConditions\ExistsDetectorCondition.cs" />
+    <Compile Include="Models\DetectorConditions\GreaterThanEqualDetectorCondition.cs" />
+    <Compile Include="Models\DetectorConditions\IDetectorCondition.cs" />
+    <Compile Include="Models\DetectorConditions\GreaterThanDetectorCondition.cs" />
+    <Compile Include="Models\DetectorConditions\LessThanEqualDetectorCondition.cs" />
+    <Compile Include="Models\DetectorConditions\LessThanDetectorCondition.cs" />
+    <Compile Include="Converters\DetectorConditionParser.cs" />
+    <Compile Include="Detectors\DesktopIconDetector.cs" />
+    <Compile Include="Detectors\ICompoundDetector.cs" />
+    <Compile Include="Detectors\InstalledProgramsDetector.cs" />
+    <Compile Include="Detectors\Model\InstalledProgram.cs" />
+    <Compile Include="Detectors\Model\WindowVisualInformation.cs" />
+    <Compile Include="Detectors\OpenWindowDetector.cs" />
+    <Compile Include="Detectors\Model\DesktopIcon.cs" />
+    <Compile Include="Detectors\Model\WindowPosition.cs" />
+    <Compile Include="Detectors\Model\Rectangle.cs" />
+    <Compile Include="Detectors\Model\ShowWindowCommand.cs" />
+    <Compile Include="Detectors\Model\WindowToplevelInformation.cs" />
+    <Compile Include="Detectors\Model\WindowPlacement.cs" />
+    <Compile Include="Detectors\IDetector.cs" />
+    <Compile Include="Utilities\DefaultApplicationFinder.cs" />
+    <Compile Include="Utilities\WindowCapturer.cs" />
+    <Compile Include="Models\DetectorConditions\DetectorConditionSet.cs" />
+    <Compile Include="Models\DetectorResponse.cs" />
+    <Compile Include="Detectors\VisualFeatureDetector.cs" />
+    <Compile Include="Detectors\VisualFeatureExtractor\BriskDetector.cs" />
+    <Compile Include="Detectors\VisualFeatureExtractor\AkazeDetector.cs" />
+    <Compile Include="Detectors\VisualFeatureExtractor\VisualMatchFilter\SimpleMatchFilter.cs" />
+    <Compile Include="Detectors\VisualFeatureExtractor\VisualMatchFilter\AffineMatchFilter.cs" />
+    <Compile Include="Detectors\VisualFeatureExtractor\OrbDetector.cs" />
+    <Compile Include="Detectors\VisualFeatureExtractor\KazeDetector.cs" />
+    <Compile Include="Helpers\FileHelper.cs" />
+    <Compile Include="DebugUtilities\AADStopwatch.cs" />
+    <Compile Include="Models\ProcessedImage.cs" />
+    <Compile Include="Detectors\VisualFeatureExtractor\IVisualFeatureExtractor.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="Converter\ReferenceImageConverter.cs" />
-    <Compile Include="Service\IDetectorService.cs" />
+    <Compile Include="Converters\ReferenceImageConverter.cs" />
+    <Compile Include="Services\IDetectorService.cs" />
     <Compile Include="Setup.cs" />
     <Compile Include="SetupError.cs" />
-    <Compile Include="Viewer\ImageViewer.cs">
+    <Compile Include="Viewers\ImageViewer.cs">
       <SubType>Form</SubType>
     </Compile>
-    <Compile Include="Viewer\ImageViewer.Designer.cs">
+    <Compile Include="Viewers\ImageViewer.Designer.cs">
       <DependentUpon>ImageViewer.cs</DependentUpon>
     </Compile>
-    <Compile Include="Detector\VisualFeatureExtractor\VisualMatchFilter\BaseMatchFilter.cs" />
-    <Compile Include="Detector\VisualFeatureExtractor\VisualMatchFilter\IMatchFilter.cs" />
+    <Compile Include="Detectors\VisualFeatureExtractor\VisualMatchFilter\BaseMatchFilter.cs" />
+    <Compile Include="Detectors\VisualFeatureExtractor\VisualMatchFilter\IMatchFilter.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config">
@@ -285,7 +286,7 @@
     <EmbeddedResource Include="ProjectInstaller.resx">
       <DependentUpon>ProjectInstaller.cs</DependentUpon>
     </EmbeddedResource>
-    <EmbeddedResource Include="Viewer\ImageViewer.resx">
+    <EmbeddedResource Include="Viewers\ImageViewer.resx">
       <DependentUpon>ImageViewer.cs</DependentUpon>
     </EmbeddedResource>
   </ItemGroup>

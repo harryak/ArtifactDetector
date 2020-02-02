@@ -1,4 +1,4 @@
-﻿using ArbitraryArtifactDetector.DebugUtility;
+﻿using ArbitraryArtifactDetector.DebugUtilities;
 using Microsoft.Extensions.Logging;
 using NLog.Extensions.Logging;
 using System;
