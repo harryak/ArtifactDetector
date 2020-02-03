@@ -24,7 +24,7 @@ namespace ArbitraryArtifactDetector.Converters
 
             outputInformation.ReferenceImages = ArtifactReferenceImageCache.GetInstance(outputInformation.ArtifactName, Setup.GetInstance(), VisualFeatureExtractorFactory.GetFeatureExtractor());
 
-            jObject.TryGetValue("reference_images", out JToken referenceImagePath);
+            jObject.TryGetValue("reference_images_path", out JToken referenceImagePath);
             DirectoryInfo filePath = new DirectoryInfo(referenceImagePath.Value<string>());
 
             outputInformation.ReferenceImages.ProcessImagesInPath(filePath);
