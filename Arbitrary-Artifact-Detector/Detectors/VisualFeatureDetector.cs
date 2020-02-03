@@ -64,7 +64,7 @@ namespace ArbitraryArtifactDetector.Detectors
             }
 
             //TODO: Adjust certainty.
-            return new DetectorResponse() { ArtifactPresent = artifactFound, Certainty = 100 };
+            return new DetectorResponse() { ArtifactPresent = artifactFound ? DetectorResponse.ArtifactPresence.Certain : DetectorResponse.ArtifactPresence.Impossible };
         }
     }
 }

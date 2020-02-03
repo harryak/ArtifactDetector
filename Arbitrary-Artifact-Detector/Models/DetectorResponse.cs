@@ -2,7 +2,13 @@
 {
     class DetectorResponse
     {
-        public bool ArtifactPresent { get; set; }
-        public int Certainty { get; set; }
+        public ArtifactPresence ArtifactPresent { get; set; }
+
+        public enum ArtifactPresence
+        {
+            Certain,
+            Possible,
+            Impossible
+        }
     }
 }

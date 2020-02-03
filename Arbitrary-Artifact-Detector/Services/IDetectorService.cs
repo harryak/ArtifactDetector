@@ -12,6 +12,6 @@ namespace ArbitraryArtifactDetector.Services
         bool StartWatch(string jsonEncodedParameters);
 
         [OperationContract]
-        bool StopWatch();
+        string StopWatch(string jsonEncodedParameters);
     }
 }

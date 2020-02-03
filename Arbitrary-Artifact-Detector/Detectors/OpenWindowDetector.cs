@@ -128,14 +128,13 @@ namespace ArbitraryArtifactDetector.Detectors
             if (matchingWindows.Count < 1)
             {
                 StopStopwatch("Got all opened windows in {0}ms.");
-                return new DetectorResponse() { ArtifactPresent = false, Certainty = 100 };
+                return new DetectorResponse() { ArtifactPresent = DetectorResponse.ArtifactPresence.Impossible };
             }
 
             runtimeInformation.MatchingWindowsInformation = matchingWindows;
-
-            int certainty = 100 / matchingWindows.Count;
+            
             StopStopwatch("Got all opened windows in {0}ms.");
-            return new DetectorResponse() { ArtifactPresent = true, Certainty = certainty };
+            return new DetectorResponse() { ArtifactPresent = DetectorResponse.ArtifactPresence.Possible };
         }
 
         /// <summary>

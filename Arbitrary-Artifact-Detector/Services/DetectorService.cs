@@ -169,11 +169,11 @@ namespace ArbitraryArtifactDetector.Services
         /// <summary>
         /// Stop watching the artifact currently watched.
         /// </summary>
-        public bool StopWatch()
+        public string StopWatch(string jsonEncodedParameters)
         {
             if (!serviceState.IsRunning)
             {
-                return false;
+                return "";
             }
 
             // Stop detection loop, wait for finishing and collect results.
@@ -186,7 +186,9 @@ namespace ArbitraryArtifactDetector.Services
                 detectorResponsesAccess.Dispose();
             }
 
-            CompileResponses();
+            StopWatchParameters parameters = JsonConvert.DeserializeObject<StopWatchParameters>(jsonEncodedParameters);
+
+            CompileResponses(parameters.ErrorWindowSize);
 
             // Set configuration to null to be empty on next run.
             serviceState.ArtifactConfiguration = null;
@@ -194,7 +196,7 @@ namespace ArbitraryArtifactDetector.Services
             // Make ready for next watch task.
             serviceState.IsRunning = false;
 
-            return true;
+            return serviceState.CompiledResponsesPath;
         }
 
         /// <summary>
@@ -260,10 +262,11 @@ namespace ArbitraryArtifactDetector.Services
         /// <summary>
         /// Compile all responses previously written to file at responsesPath and write to compiledResponsesPath.
         /// </summary>
-        private void CompileResponses()
+        private void CompileResponses(int errorWindowSize)
         {
-            int errorWindowSize = 5;
+            // Buffer the values inside the current error window.
             Dictionary<long, int> errorWindowValues = new Dictionary<long, int>();
+
             // Integer division always floors value, so add one.
             int thresholdSum = errorWindowSize + 1 / 2;
             int currentSum;
@@ -309,8 +312,6 @@ namespace ArbitraryArtifactDetector.Services
         /// </summary>
         private void Detect()
         {
-            int certaintyThreshold = 60;
-
             // Call artifact detector (may be a compound detector) from artifact configuration.
             var artifactRuntimeInformation = (ArtifactRuntimeInformation) serviceState.ArtifactConfiguration.RuntimeInformation.Clone();
             var response = serviceState.ArtifactConfiguration.Detector.FindArtifact(ref artifactRuntimeInformation);
@@ -321,7 +322,7 @@ namespace ArbitraryArtifactDetector.Services
             {
                 // Write response prepended with time to responses file and flush.
                 // Use sortable and millisecond-precise timestamp for entry.
-                int artifactPresent = response.ArtifactPresent && response.Certainty >= certaintyThreshold ? 1 : 0 ;
+                DetectorResponse.ArtifactPresence artifactPresent = response.ArtifactPresent;
                 detectorResponses.WriteLine("{0:yyMMddHHmmss},{1}", responseTime, artifactPresent);
                 detectorResponses.Flush();
 

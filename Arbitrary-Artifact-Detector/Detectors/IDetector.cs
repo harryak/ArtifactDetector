@@ -1,4 +1,4 @@
-﻿using ArbitraryArtifactDetector.DetectorConditions.Model;
+﻿using ArbitraryArtifactDetector.DetectorConditions;
 using ArbitraryArtifactDetector.Models;
 
 namespace ArbitraryArtifactDetector.Detectors

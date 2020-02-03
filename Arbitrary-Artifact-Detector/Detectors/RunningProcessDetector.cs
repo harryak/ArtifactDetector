@@ -26,7 +26,7 @@ namespace ArbitraryArtifactDetector.Detectors
             if (processes.Count < 1)
             {
                 StopStopwatch("FindArtifact finished in {0}ms.");
-                return new DetectorResponse() { ArtifactPresent = false, Certainty = 100 };
+                return new DetectorResponse() { ArtifactPresent = DetectorResponse.ArtifactPresence.Impossible };
             }
 
             foreach (Process currentProcess in processes)
@@ -38,9 +38,8 @@ namespace ArbitraryArtifactDetector.Detectors
             }
 
             StopStopwatch("FindArtifact finished in {0}ms.");
-
-            int certainty = 100 / processes.Count;
-            return new DetectorResponse() { ArtifactPresent = true, Certainty = certainty };
+            
+            return new DetectorResponse() { ArtifactPresent = DetectorResponse.ArtifactPresence.Possible };
         }
     }
 }
