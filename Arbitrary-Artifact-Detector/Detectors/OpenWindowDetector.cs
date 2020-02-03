@@ -272,7 +272,7 @@ namespace ArbitraryArtifactDetector.Detectors
         {
             [DllImport("user32.dll", SetLastError = true)]
             [return: MarshalAs(UnmanagedType.Bool)]
-            public static extern bool EnumWindows(EnumWindowsProc enumFunc, int lParam);
+            public static extern bool EnumWindows(EnumWindowsProc enumFunc, [MarshalAs(UnmanagedType.SysInt)] int lParam);
 
             [DllImport("user32.dll", SetLastError = true)]
             [return: MarshalAs(UnmanagedType.Bool)]
@@ -283,9 +283,11 @@ namespace ArbitraryArtifactDetector.Detectors
             public static extern bool GetWindowPlacement(IntPtr hWnd, ref WindowPlacement lpwndpl);
 
             [DllImport("user32.dll", CharSet = CharSet.Unicode)]
-            public static extern int GetWindowText(IntPtr hWnd, StringBuilder lpString, int nMaxCount);
+            [return: MarshalAs(UnmanagedType.U4)]
+            public static extern int GetWindowText(IntPtr hWnd, StringBuilder lpString, [MarshalAs(UnmanagedType.U4)] int nMaxCount);
 
-            [DllImport("user32.dll")]
+            [DllImport("user32.dll", SetLastError = true)]
+            [return: MarshalAs(UnmanagedType.U4)]
             public static extern int GetWindowTextLength(IntPtr hWnd);
 
             [DllImport("user32.dll")]
