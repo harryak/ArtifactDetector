@@ -1,4 +1,4 @@
-﻿using ArbitraryArtifactDetector.DetectorConditions.Model;
+﻿using ArbitraryArtifactDetector.DetectorConditions;
 using ArbitraryArtifactDetector.Helpers;
 using System;
 using System.Collections.Generic;

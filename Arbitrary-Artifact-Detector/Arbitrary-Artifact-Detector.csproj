@@ -259,8 +259,8 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Converters\ReferenceImageConverter.cs" />
     <Compile Include="Services\IDetectorService.cs" />
-    <Compile Include="Setup.cs" />
-    <Compile Include="SetupError.cs" />
+    <Compile Include="Utilities\Setup.cs" />
+    <Compile Include="Utilities\SetupError.cs" />
     <Compile Include="Viewers\ImageViewer.cs">
       <SubType>Form</SubType>
     </Compile>

@@ -6,7 +6,7 @@ using System.IO;
 using System.Reflection;
 using System.Windows.Forms;
 
-namespace ArbitraryArtifactDetector
+namespace ArbitraryArtifactDetector.Utilities
 {
     internal class Setup
     {

@@ -2,6 +2,7 @@
 using ArbitraryArtifactDetector.Detectors.VisualFeatureExtractor;
 using ArbitraryArtifactDetector.Helpers;
 using ArbitraryArtifactDetector.Models;
+using ArbitraryArtifactDetector.Utilities;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;

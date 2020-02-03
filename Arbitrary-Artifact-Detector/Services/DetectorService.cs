@@ -1,5 +1,6 @@
 ﻿using ArbitraryArtifactDetector.DebugUtilities;
 using ArbitraryArtifactDetector.Models;
+using ArbitraryArtifactDetector.Utilities;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using System;

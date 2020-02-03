@@ -1,6 +1,7 @@
 ﻿using ArbitraryArtifactDetector.DebugUtilities;
 using ArbitraryArtifactDetector.DetectorConditions;
 using ArbitraryArtifactDetector.Models;
+using ArbitraryArtifactDetector.Utilities;
 
 namespace ArbitraryArtifactDetector.Detectors
 {

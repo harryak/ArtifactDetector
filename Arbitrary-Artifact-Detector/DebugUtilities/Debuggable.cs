@@ -1,4 +1,5 @@
-﻿using Microsoft.Extensions.Logging;
+﻿using ArbitraryArtifactDetector.Utilities;
+using Microsoft.Extensions.Logging;
 
 namespace ArbitraryArtifactDetector.DebugUtilities
 {

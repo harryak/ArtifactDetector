@@ -1,6 +1,7 @@
 ﻿using ArbitraryArtifactDetector.Detectors;
 using ArbitraryArtifactDetector.Detectors.VisualFeatureExtractor;
 using ArbitraryArtifactDetector.Models;
+using ArbitraryArtifactDetector.Utilities;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System;
