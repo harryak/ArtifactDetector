@@ -16,7 +16,11 @@ namespace ArbitraryArtifactDetector
         [STAThread]
         private static int Main(string[] args)
         {
-            ServiceBase[] ServicesToRun;
+            Detectors.TrayIconDetector detector = new Detectors.TrayIconDetector();
+            Models.ArtifactRuntimeInformation runtimeInformation = new Models.ArtifactRuntimeInformation();
+            detector.FindArtifact(ref runtimeInformation);
+
+            /*ServiceBase[] ServicesToRun;
             ServicesToRun = new ServiceBase[]
             {
                 new DetectorService()
@@ -26,7 +30,7 @@ namespace ArbitraryArtifactDetector
             };
 
             // Start service.
-            ServiceBase.Run(ServicesToRun);
+            ServiceBase.Run(ServicesToRun);*/
 
 #if DEBUG
             // Prepare debug window output.

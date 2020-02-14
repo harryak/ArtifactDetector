@@ -10,7 +10,7 @@ using System.Windows.Forms;
 namespace ArbitraryArtifactDetector.Detectors
 {
     /// <summary>
-    /// Base class for all artifact detectors.
+    /// Image recognizing detector.
     /// </summary>
     internal class VisualFeatureDetector : BaseDetector, IDetector
     {

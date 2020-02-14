@@ -194,6 +194,7 @@
     <Compile Include="Detectors\ArtifactReferenceImageCache.cs" />
     <Compile Include="DebugUtilities\Debuggable.cs" />
     <Compile Include="Detectors\Configuration\MailDetectorConfiguration.cs" />
+    <Compile Include="Detectors\TrayIconDetector.cs" />
     <Compile Include="Detectors\OpenMailDetector.cs" />
     <Compile Include="Detectors\RunningProcessDetector.cs" />
     <Compile Include="Detectors\VisualFeatureExtractor\VisualFeatureExtractorFactory.cs" />

@@ -1,6 +1,7 @@
 ﻿using ArbitraryArtifactDetector.Models;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text;
 
@@ -92,7 +93,7 @@ namespace ArbitraryArtifactDetector.Detectors
                         ZIndex = i
                     };
 
-                    bool windowMatches = possibleWindowTitles.Contains(currentWindowTitle) || windowHandles.Contains(hWnd);
+                    bool windowMatches = possibleWindowTitles.FirstOrDefault(s => currentWindowTitle.Contains(s)) != default(string) || windowHandles.Contains(hWnd);
 
                     // If it is not the first/topmost (visible) window and one of the windows we want to find...
                     if (i > 0 && windowMatches)

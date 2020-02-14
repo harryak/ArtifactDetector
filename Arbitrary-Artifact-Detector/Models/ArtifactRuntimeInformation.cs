@@ -58,6 +58,13 @@ namespace ArbitraryArtifactDetector.Models
         public IList<string> PossibleWindowTitles { get; internal set; } = new List<string>();
 
         /// <summary>
+        /// Possible (fragments of the) titles of the windows to get.
+        /// </summary>
+        [JsonProperty("icon_titles")]
+        [JsonConverter(typeof(StringToListConverter))]
+        public IList<string> PossibleIconTitles { get; internal set; } = new List<string>();
+
+        /// <summary>
         /// Image cache for reference image.
         /// </summary>
         [JsonIgnore]
