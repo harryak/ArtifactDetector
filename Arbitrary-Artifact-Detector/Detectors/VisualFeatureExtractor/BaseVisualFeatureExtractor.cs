@@ -1,6 +1,6 @@
-﻿using ArbitraryArtifactDetector.DebugUtilities;
-using ArbitraryArtifactDetector.Detectors.VisualFeatureExtractor.VisualMatchFilter;
-using ArbitraryArtifactDetector.Models;
+﻿using ItsApe.ArtifactDetector.DebugUtilities;
+using ItsApe.ArtifactDetector.Detectors.VisualFeatureExtractor.VisualMatchFilter;
+using ItsApe.ArtifactDetector.Models;
 using Emgu.CV;
 using Emgu.CV.CvEnum;
 using Emgu.CV.Features2D;
@@ -12,7 +12,7 @@ using System.Collections.Generic;
 using System.Drawing;
 using System.IO;
 
-namespace ArbitraryArtifactDetector.Detectors.VisualFeatureExtractor
+namespace ItsApe.ArtifactDetector.Detectors.VisualFeatureExtractor
 {
     internal abstract class BaseVisualFeatureExtractor : Debuggable, IVisualFeatureExtractor
     {

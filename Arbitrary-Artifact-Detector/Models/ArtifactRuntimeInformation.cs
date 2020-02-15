@@ -1,11 +1,11 @@
-﻿using ArbitraryArtifactDetector.Converters;
-using ArbitraryArtifactDetector.Detectors;
+﻿using ItsApe.ArtifactDetector.Converters;
+using ItsApe.ArtifactDetector.Detectors;
 using Emgu.CV;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 
-namespace ArbitraryArtifactDetector.Models
+namespace ItsApe.ArtifactDetector.Models
 {
     /// <summary>
     /// This class contains information on an artifact collected during the runtime by various detectors.

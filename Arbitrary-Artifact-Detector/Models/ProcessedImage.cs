@@ -3,7 +3,7 @@ using Emgu.CV.Util;
 using System;
 using System.Drawing;
 
-namespace ArbitraryArtifactDetector.Models
+namespace ItsApe.ArtifactDetector.Models
 {
     [Serializable]
     public class ProcessedImage

@@ -1,15 +1,15 @@
-﻿using ArbitraryArtifactDetector.DebugUtilities;
-using ArbitraryArtifactDetector.Detectors.VisualFeatureExtractor;
-using ArbitraryArtifactDetector.Helpers;
-using ArbitraryArtifactDetector.Models;
-using ArbitraryArtifactDetector.Utilities;
+﻿using ItsApe.ArtifactDetector.DebugUtilities;
+using ItsApe.ArtifactDetector.Detectors.VisualFeatureExtractor;
+using ItsApe.ArtifactDetector.Helpers;
+using ItsApe.ArtifactDetector.Models;
+using ItsApe.ArtifactDetector.Utilities;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Runtime.Serialization.Formatters.Binary;
 
-namespace ArbitraryArtifactDetector.Detectors
+namespace ItsApe.ArtifactDetector.Detectors
 {
     /// <summary>
     /// This class manages type info of artifacts.

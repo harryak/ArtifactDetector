@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace ArbitraryArtifactDetector.DetectorConditions
+namespace ItsApe.ArtifactDetector.DetectorConditions
 {
     /// <summary>
     /// Specialized condition to check if an aspect of the ObjectType greater than or equal to a value.

@@ -1,6 +1,6 @@
 ﻿using System.Drawing;
 
-namespace ArbitraryArtifactDetector.Models
+namespace ItsApe.ArtifactDetector.Models
 {
     class DesktopIcon
     {

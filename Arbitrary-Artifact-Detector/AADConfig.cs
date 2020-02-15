@@ -2,7 +2,7 @@
 using System.Configuration;
 using System.IO;
 
-namespace ArbitraryArtifactDetector
+namespace ItsApe.ArtifactDetector
 {
     /// <summary>
     /// Class for configuration of the AAD.

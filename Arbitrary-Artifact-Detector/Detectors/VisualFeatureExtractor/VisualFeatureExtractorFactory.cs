@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 
-namespace ArbitraryArtifactDetector.Detectors.VisualFeatureExtractor
+namespace ItsApe.ArtifactDetector.Detectors.VisualFeatureExtractor
 {
     internal class VisualFeatureExtractorFactory
     {

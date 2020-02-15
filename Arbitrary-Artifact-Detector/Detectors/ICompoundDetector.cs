@@ -1,4 +1,4 @@
-﻿namespace ArbitraryArtifactDetector.Detectors
+﻿namespace ItsApe.ArtifactDetector.Detectors
 {
     /// <summary>
     /// A detector made up from several detectors.

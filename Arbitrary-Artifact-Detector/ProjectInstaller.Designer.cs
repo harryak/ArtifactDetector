@@ -1,4 +1,4 @@
-﻿namespace ArbitraryArtifactDetector
+﻿namespace ItsApe.ArtifactDetector
 {
     partial class ProjectInstaller
     {

@@ -1,13 +1,13 @@
-﻿using ArbitraryArtifactDetector.Detectors.VisualFeatureExtractor;
-using ArbitraryArtifactDetector.Models;
-using ArbitraryArtifactDetector.Utilities;
-using ArbitraryArtifactDetector.Viewers;
+﻿using ItsApe.ArtifactDetector.Detectors.VisualFeatureExtractor;
+using ItsApe.ArtifactDetector.Models;
+using ItsApe.ArtifactDetector.Utilities;
+using ItsApe.ArtifactDetector.Viewers;
 using Emgu.CV;
 using System;
 using System.Collections.Generic;
 using System.Windows.Forms;
 
-namespace ArbitraryArtifactDetector.Detectors
+namespace ItsApe.ArtifactDetector.Detectors
 {
     /// <summary>
     /// Image recognizing detector.

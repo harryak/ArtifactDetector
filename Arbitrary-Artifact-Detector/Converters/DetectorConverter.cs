@@ -1,11 +1,11 @@
-﻿using ArbitraryArtifactDetector.Detectors;
-using ArbitraryArtifactDetector.Models;
+﻿using ItsApe.ArtifactDetector.Detectors;
+using ItsApe.ArtifactDetector.Models;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 
-namespace ArbitraryArtifactDetector.Converters
+namespace ItsApe.ArtifactDetector.Converters
 {
     internal class DetectorConverter : JsonConverter<IDetector>
     {

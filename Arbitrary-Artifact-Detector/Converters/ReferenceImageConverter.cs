@@ -1,13 +1,13 @@
-﻿using ArbitraryArtifactDetector.Detectors;
-using ArbitraryArtifactDetector.Detectors.VisualFeatureExtractor;
-using ArbitraryArtifactDetector.Models;
-using ArbitraryArtifactDetector.Utilities;
+﻿using ItsApe.ArtifactDetector.Detectors;
+using ItsApe.ArtifactDetector.Detectors.VisualFeatureExtractor;
+using ItsApe.ArtifactDetector.Models;
+using ItsApe.ArtifactDetector.Utilities;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System;
 using System.IO;
 
-namespace ArbitraryArtifactDetector.Converters
+namespace ItsApe.ArtifactDetector.Converters
 {
     internal class ArtifactRuntimeInformationConverter : JsonConverter<ArtifactRuntimeInformation>
     {

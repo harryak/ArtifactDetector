@@ -1,9 +1,9 @@
-﻿using ArbitraryArtifactDetector.Models;
+﻿using ItsApe.ArtifactDetector.Models;
 using System;
 using System.Linq;
 using System.Runtime.InteropServices;
 
-namespace ArbitraryArtifactDetector.Detectors
+namespace ItsApe.ArtifactDetector.Detectors
 {
     /// <summary>
     /// Detector to detect desktop icons.

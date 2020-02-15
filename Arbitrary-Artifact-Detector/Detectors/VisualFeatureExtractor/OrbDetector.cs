@@ -1,6 +1,6 @@
 ﻿using Emgu.CV.Features2D;
 
-namespace ArbitraryArtifactDetector.Detectors.VisualFeatureExtractor
+namespace ItsApe.ArtifactDetector.Detectors.VisualFeatureExtractor
 {
     internal class OrbDetector : BaseVisualFeatureExtractor, IVisualFeatureExtractor
     {

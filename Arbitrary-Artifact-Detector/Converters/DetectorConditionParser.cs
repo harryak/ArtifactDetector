@@ -1,11 +1,11 @@
-﻿using ArbitraryArtifactDetector.DetectorConditions;
-using ArbitraryArtifactDetector.Helpers;
+﻿using ItsApe.ArtifactDetector.DetectorConditions;
+using ItsApe.ArtifactDetector.Helpers;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
 
-namespace ArbitraryArtifactDetector.Converters
+namespace ItsApe.ArtifactDetector.Converters
 {
     internal class DetectorConditionParser<ObjectType>
     {

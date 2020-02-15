@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 
-namespace ArbitraryArtifactDetector.DebugUtilities
+namespace ItsApe.ArtifactDetector.DebugUtilities
 {
     /// <summary>
     /// A simple extension to System.Diagnostics.Stopwatch:

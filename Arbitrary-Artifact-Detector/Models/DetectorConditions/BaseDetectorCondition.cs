@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Reflection;
 
-namespace ArbitraryArtifactDetector.DetectorConditions
+namespace ItsApe.ArtifactDetector.DetectorConditions
 {
     /// <summary>
     /// This is a callback wrapper: Check whether the given checking function yields true if given the aspect (property name) of a DetectorResponse object.

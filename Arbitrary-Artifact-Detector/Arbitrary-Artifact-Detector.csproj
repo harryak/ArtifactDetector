@@ -6,8 +6,8 @@
     <Platform Condition=" '$(Platform)' == '' ">x86</Platform>
     <ProjectGuid>{39FE248A-DF58-49B7-8716-4C4CF220C20D}</ProjectGuid>
     <OutputType>Exe</OutputType>
-    <RootNamespace>ArbitraryArtifactDetector</RootNamespace>
-    <AssemblyName>Arbitrary-Artifact-Detector</AssemblyName>
+    <RootNamespace>ItsApe.ArtifactDetector</RootNamespace>
+    <AssemblyName>ArtifactDetector</AssemblyName>
     <TargetFrameworkVersion>v4.8</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
@@ -52,7 +52,7 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <PropertyGroup>
-    <StartupObject>ArbitraryArtifactDetector.Program</StartupObject>
+    <StartupObject>ItsApe.ArtifactDetector.Program</StartupObject>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|x64'">
     <DebugSymbols>true</DebugSymbols>

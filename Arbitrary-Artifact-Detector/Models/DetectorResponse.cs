@@ -1,4 +1,4 @@
-﻿namespace ArbitraryArtifactDetector.Models
+﻿namespace ItsApe.ArtifactDetector.Models
 {
     class DetectorResponse
     {

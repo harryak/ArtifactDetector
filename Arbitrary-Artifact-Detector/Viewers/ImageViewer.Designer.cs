@@ -1,4 +1,4 @@
-﻿namespace ArbitraryArtifactDetector.Viewers
+﻿namespace ItsApe.ArtifactDetector.Viewers
 {
     partial class ImageViewer
     {

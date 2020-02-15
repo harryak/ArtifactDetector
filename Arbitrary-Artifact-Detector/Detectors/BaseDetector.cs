@@ -1,9 +1,9 @@
-﻿using ArbitraryArtifactDetector.DebugUtilities;
-using ArbitraryArtifactDetector.DetectorConditions;
-using ArbitraryArtifactDetector.Models;
-using ArbitraryArtifactDetector.Utilities;
+﻿using ItsApe.ArtifactDetector.DebugUtilities;
+using ItsApe.ArtifactDetector.DetectorConditions;
+using ItsApe.ArtifactDetector.Models;
+using ItsApe.ArtifactDetector.Utilities;
 
-namespace ArbitraryArtifactDetector.Detectors
+namespace ItsApe.ArtifactDetector.Detectors
 {
     /// <summary>
     /// A base class to provide common functions for all detectors.

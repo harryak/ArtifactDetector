@@ -1,7 +1,7 @@
-﻿using ArbitraryArtifactDetector.Models;
+﻿using ItsApe.ArtifactDetector.Models;
 using System.Collections.Generic;
 
-namespace ArbitraryArtifactDetector.Detectors
+namespace ItsApe.ArtifactDetector.Detectors
 {
     /// <summary>
     /// A detector made up from several detectors.

@@ -1,7 +1,7 @@
-﻿using ArbitraryArtifactDetector.Utilities;
+﻿using ItsApe.ArtifactDetector.Utilities;
 using Microsoft.Extensions.Logging;
 
-namespace ArbitraryArtifactDetector.DebugUtilities
+namespace ItsApe.ArtifactDetector.DebugUtilities
 {
     internal class Debuggable
     {

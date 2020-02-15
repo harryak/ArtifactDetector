@@ -1,7 +1,7 @@
 ﻿using System.Drawing;
 using System.Runtime.InteropServices;
 
-namespace ArbitraryArtifactDetector.Models
+namespace ItsApe.ArtifactDetector.Models
 {
     /// <summary>
     /// A two-dimensional point for window positions.

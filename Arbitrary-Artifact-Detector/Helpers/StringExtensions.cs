@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Linq;
 
-namespace ArbitraryArtifactDetector.Helpers
+namespace ItsApe.ArtifactDetector.Helpers
 {
     public static class StringExtensions
     {

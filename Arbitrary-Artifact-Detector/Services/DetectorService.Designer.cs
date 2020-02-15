@@ -1,4 +1,4 @@
-﻿namespace ArbitraryArtifactDetector.Services
+﻿namespace ItsApe.ArtifactDetector.Services
 {
     partial class DetectorService
     {

@@ -1,7 +1,7 @@
-﻿using ArbitraryArtifactDetector.DetectorConditions;
-using ArbitraryArtifactDetector.Models;
+﻿using ItsApe.ArtifactDetector.DetectorConditions;
+using ItsApe.ArtifactDetector.Models;
 
-namespace ArbitraryArtifactDetector.Detectors
+namespace ItsApe.ArtifactDetector.Detectors
 {
     /// <summary>
     /// Detector to detect if an email is opened.

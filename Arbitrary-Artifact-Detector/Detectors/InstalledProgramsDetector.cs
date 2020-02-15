@@ -1,9 +1,9 @@
-﻿using ArbitraryArtifactDetector.Models;
+﻿using ItsApe.ArtifactDetector.Models;
 using Microsoft.Win32;
 using System;
 using System.Collections.Generic;
 
-namespace ArbitraryArtifactDetector.Detectors
+namespace ItsApe.ArtifactDetector.Detectors
 {
     internal class InstalledProgramsDetector : BaseDetector, IDetector
     {

@@ -1,7 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 
-namespace ArbitraryArtifactDetector.DetectorConditions
+namespace ItsApe.ArtifactDetector.DetectorConditions
 {
     /// <summary>
     /// Representation of the logical connector for a DetectorConditionSet.

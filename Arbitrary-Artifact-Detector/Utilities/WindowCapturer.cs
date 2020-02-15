@@ -4,7 +4,7 @@ using System;
 using System.Drawing;
 using System.Runtime.InteropServices;
 
-namespace ArbitraryArtifactDetector.Utilities
+namespace ItsApe.ArtifactDetector.Utilities
 {
     internal class WindowCapturer
     {

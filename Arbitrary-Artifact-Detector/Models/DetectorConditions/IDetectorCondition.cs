@@ -1,4 +1,4 @@
-﻿namespace ArbitraryArtifactDetector.DetectorConditions
+﻿namespace ItsApe.ArtifactDetector.DetectorConditions
 {
     /// <summary>
     /// General interface of any detector condition.

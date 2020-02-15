@@ -1,11 +1,11 @@
-﻿using ArbitraryArtifactDetector.Models;
+﻿using ItsApe.ArtifactDetector.Models;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text;
 
-namespace ArbitraryArtifactDetector.Detectors
+namespace ItsApe.ArtifactDetector.Detectors
 {
     /// <summary>
     /// Detector to detect if a window is opened and visible.

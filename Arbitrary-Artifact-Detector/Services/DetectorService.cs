@@ -1,6 +1,6 @@
-﻿using ArbitraryArtifactDetector.DebugUtilities;
-using ArbitraryArtifactDetector.Models;
-using ArbitraryArtifactDetector.Utilities;
+﻿using ItsApe.ArtifactDetector.DebugUtilities;
+using ItsApe.ArtifactDetector.Models;
+using ItsApe.ArtifactDetector.Utilities;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using System;
@@ -14,7 +14,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Timers;
 
-namespace ArbitraryArtifactDetector.Services
+namespace ItsApe.ArtifactDetector.Services
 {
     /// <summary>
     /// Detector service class that waits for another process to call "StartWatch", then tries to detect

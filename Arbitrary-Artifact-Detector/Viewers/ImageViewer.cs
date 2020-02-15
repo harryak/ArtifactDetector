@@ -2,7 +2,7 @@
 using System.Drawing;
 using System.Windows.Forms;
 
-namespace ArbitraryArtifactDetector.Viewers
+namespace ItsApe.ArtifactDetector.Viewers
 {
     public partial class ImageViewer : Form
     {

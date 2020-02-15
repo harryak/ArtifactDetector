@@ -1,8 +1,8 @@
-﻿using ArbitraryArtifactDetector.Converters;
-using ArbitraryArtifactDetector.Detectors;
+﻿using ItsApe.ArtifactDetector.Converters;
+using ItsApe.ArtifactDetector.Detectors;
 using Newtonsoft.Json;
 
-namespace ArbitraryArtifactDetector.Models
+namespace ItsApe.ArtifactDetector.Models
 {
     internal class ArtifactConfiguration
     {

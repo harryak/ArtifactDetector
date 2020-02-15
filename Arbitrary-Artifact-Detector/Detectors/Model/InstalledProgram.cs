@@ -1,6 +1,6 @@
 ﻿using Microsoft.Win32;
 
-namespace ArbitraryArtifactDetector.Models
+namespace ItsApe.ArtifactDetector.Models
 {
     class InstalledProgram
     {

@@ -1,7 +1,7 @@
 ﻿using Emgu.CV.Features2D;
 using Emgu.CV.Flann;
 
-namespace ArbitraryArtifactDetector.Detectors.VisualFeatureExtractor
+namespace ItsApe.ArtifactDetector.Detectors.VisualFeatureExtractor
 {
     class BriskDetector : BaseVisualFeatureExtractor, IVisualFeatureExtractor
     {

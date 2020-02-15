@@ -1,8 +1,8 @@
-﻿using ArbitraryArtifactDetector.Models;
+﻿using ItsApe.ArtifactDetector.Models;
 using Emgu.CV;
 using System.Collections.Generic;
 
-namespace ArbitraryArtifactDetector.Detectors.VisualFeatureExtractor
+namespace ItsApe.ArtifactDetector.Detectors.VisualFeatureExtractor
 {
     internal interface IVisualFeatureExtractor
     {

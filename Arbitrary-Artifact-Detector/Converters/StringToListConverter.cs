@@ -3,7 +3,7 @@ using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 
-namespace ArbitraryArtifactDetector.Converters
+namespace ItsApe.ArtifactDetector.Converters
 {
     internal class StringToListConverter : JsonConverter<List<string>>
     {

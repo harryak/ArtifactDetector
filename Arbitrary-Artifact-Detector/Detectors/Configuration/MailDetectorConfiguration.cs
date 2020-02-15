@@ -1,7 +1,7 @@
-﻿using ArbitraryArtifactDetector.Utilities;
+﻿using ItsApe.ArtifactDetector.Utilities;
 using System.IO;
 
-namespace ArbitraryArtifactDetector.Detectors.Configuration
+namespace ItsApe.ArtifactDetector.Detectors.Configuration
 {
     /// <summary>
     /// Configuration for the MailDetector to detect an opened mail.

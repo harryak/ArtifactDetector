@@ -1,6 +1,6 @@
 ﻿using Newtonsoft.Json;
 
-namespace ArbitraryArtifactDetector.Models
+namespace ItsApe.ArtifactDetector.Models
 {
     internal class StopWatchParameters
     {

@@ -1,10 +1,10 @@
-﻿using ArbitraryArtifactDetector.Services;
+﻿using ItsApe.ArtifactDetector.Services;
 using Microsoft.Extensions.Logging;
 using System;
 using System.ServiceProcess;
 using System.Windows.Forms;
 
-namespace ArbitraryArtifactDetector
+namespace ItsApe.ArtifactDetector
 {
     internal class Program
     {
@@ -16,11 +16,7 @@ namespace ArbitraryArtifactDetector
         [STAThread]
         private static int Main(string[] args)
         {
-            Detectors.TrayIconDetector detector = new Detectors.TrayIconDetector();
-            Models.ArtifactRuntimeInformation runtimeInformation = new Models.ArtifactRuntimeInformation();
-            detector.FindArtifact(ref runtimeInformation);
-
-            /*ServiceBase[] ServicesToRun;
+            ServiceBase[] ServicesToRun;
             ServicesToRun = new ServiceBase[]
             {
                 new DetectorService()
@@ -30,7 +26,7 @@ namespace ArbitraryArtifactDetector
             };
 
             // Start service.
-            ServiceBase.Run(ServicesToRun);*/
+            ServiceBase.Run(ServicesToRun);
 
 #if DEBUG
             // Prepare debug window output.

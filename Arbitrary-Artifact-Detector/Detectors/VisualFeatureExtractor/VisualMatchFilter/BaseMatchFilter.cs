@@ -1,11 +1,11 @@
-﻿using ArbitraryArtifactDetector.DebugUtilities;
+﻿using ItsApe.ArtifactDetector.DebugUtilities;
 using Emgu.CV;
 using Emgu.CV.Structure;
 using Emgu.CV.Util;
 using System.Collections.Generic;
 using System.Drawing;
 
-namespace ArbitraryArtifactDetector.Detectors.VisualFeatureExtractor.VisualMatchFilter
+namespace ItsApe.ArtifactDetector.Detectors.VisualFeatureExtractor.VisualMatchFilter
 {
     abstract class BaseMatchFilter : Debuggable, IMatchFilter
     {

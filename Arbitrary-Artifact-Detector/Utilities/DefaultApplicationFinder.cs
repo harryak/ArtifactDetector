@@ -2,7 +2,7 @@
 using System;
 using System.IO;
 
-namespace ArbitraryArtifactDetector.Utilities
+namespace ItsApe.ArtifactDetector.Utilities
 {
     /// <summary>
     /// Helper to find default application executables.

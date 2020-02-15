@@ -1,6 +1,6 @@
 ﻿using System.ServiceModel;
 
-namespace ArbitraryArtifactDetector.Services
+namespace ItsApe.ArtifactDetector.Services
 {
     [ServiceContract(
         Name = "DetectorService",

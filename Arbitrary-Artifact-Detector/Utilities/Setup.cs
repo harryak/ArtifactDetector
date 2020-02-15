@@ -1,4 +1,4 @@
-﻿using ArbitraryArtifactDetector.DebugUtilities;
+﻿using ItsApe.ArtifactDetector.DebugUtilities;
 using Microsoft.Extensions.Logging;
 using NLog.Extensions.Logging;
 using System;
@@ -6,7 +6,7 @@ using System.IO;
 using System.Reflection;
 using System.Windows.Forms;
 
-namespace ArbitraryArtifactDetector.Utilities
+namespace ItsApe.ArtifactDetector.Utilities
 {
     internal class Setup
     {

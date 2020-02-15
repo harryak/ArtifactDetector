@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Runtime.Serialization;
 
-namespace ArbitraryArtifactDetector.Utilities
+namespace ItsApe.ArtifactDetector.Utilities
 {
     [Serializable]
     internal class SetupError : Exception

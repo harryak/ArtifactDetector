@@ -1,7 +1,7 @@
 ﻿using System;
 using System.IO;
 
-namespace ArbitraryArtifactDetector.Helpers
+namespace ItsApe.ArtifactDetector.Helpers
 {
     class FileHelper
     {
