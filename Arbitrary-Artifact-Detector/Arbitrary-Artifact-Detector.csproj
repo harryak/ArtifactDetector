@@ -232,16 +232,12 @@
     <Compile Include="Detectors\ICompoundDetector.cs" />
     <Compile Include="Detectors\InstalledProgramsDetector.cs" />
     <Compile Include="Detectors\Model\InstalledProgram.cs" />
-    <Compile Include="Detectors\Model\WindowVisualInformation.cs" />
     <Compile Include="Detectors\OpenWindowDetector.cs" />
     <Compile Include="Detectors\Model\DesktopIcon.cs" />
-    <Compile Include="Detectors\Model\WindowPosition.cs" />
-    <Compile Include="Detectors\Model\Rectangle.cs" />
-    <Compile Include="Detectors\Model\ShowWindowCommand.cs" />
     <Compile Include="Detectors\Model\WindowToplevelInformation.cs" />
-    <Compile Include="Detectors\Model\WindowPlacement.cs" />
     <Compile Include="Detectors\IDetector.cs" />
     <Compile Include="Utilities\DefaultApplicationFinder.cs" />
+    <Compile Include="Utilities\NativeMethods.cs" />
     <Compile Include="Utilities\WindowCapturer.cs" />
     <Compile Include="Models\DetectorConditions\DetectorConditionSet.cs" />
     <Compile Include="Models\DetectorResponse.cs" />

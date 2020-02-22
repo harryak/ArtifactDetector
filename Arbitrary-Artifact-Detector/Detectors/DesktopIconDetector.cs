@@ -1,4 +1,6 @@
-﻿using ItsApe.ArtifactDetector.Models;
+﻿using ItsApe.ArtifactDetector.Helpers;
+using ItsApe.ArtifactDetector.Models;
+using ItsApe.ArtifactDetector.Utilities;
 using System;
 using System.Linq;
 using System.Runtime.InteropServices;
@@ -11,6 +13,8 @@ namespace ItsApe.ArtifactDetector.Detectors
     /// </summary>
     internal class DesktopIconDetector : BaseDetector, IDetector
     {
+        private const int BUFFER_SIZE = 0x110;
+
         /// <summary>
         /// Find the artifact provided by the runtime information.
         /// </summary>
@@ -19,51 +23,79 @@ namespace ItsApe.ArtifactDetector.Detectors
         /// <returns>Response based on whether the artifact was found.</returns>
         public override DetectorResponse FindArtifact(ref ArtifactRuntimeInformation runtimeInformation, DetectorResponse previousResponse = null)
         {
-            // Get desktop window via program manager.
-            IntPtr desktopHandle = NativeMethods.FindWindow("Progman", "Program Manager");
-            desktopHandle = NativeMethods.FindWindowEx(desktopHandle, IntPtr.Zero, "SHELLDLL_DefView", null);
-            desktopHandle = NativeMethods.FindWindowEx(desktopHandle, IntPtr.Zero, "SysListView32", "FolderView");
+            // Find window handles via process names.
+            IntPtr desktopWindowHandle = GetDesktopHandle();
+
+            // This error is really unlikely.
+            if (desktopWindowHandle == IntPtr.Zero)
+            {
+                throw new Exception("Desktop is not available.");
+            }
 
             // Count subwindows of desktop => count of icons.
-            int iconCount = NativeMethods.SendMessage(desktopHandle, NativeMethods.LVM.GETITEMCOUNT, IntPtr.Zero, IntPtr.Zero);
-            string currentIconName;
+            int iconCount = (int) NativeMethods.SendMessage(desktopWindowHandle, NativeMethods.LVM.GETITEMCOUNT, IntPtr.Zero, IntPtr.Zero);
+            string currentIconTitle;
 
             // Get the desktop window's process to enumerate child windows.
-            NativeMethods.GetWindowThreadProcessId(desktopHandle, out uint vProcessId);
-            IntPtr vProcess = NativeMethods.OpenProcess(NativeMethods.PROCESS_VM.OPERATION | NativeMethods.PROCESS_VM.READ | NativeMethods.PROCESS_VM.WRITE, false, vProcessId);
-            IntPtr vPointer = NativeMethods.VirtualAllocEx(vProcess, IntPtr.Zero, 4096, NativeMethods.MEM.RESERVE | NativeMethods.MEM.COMMIT, NativeMethods.PAGE.READWRITE);
+            NativeMethods.GetWindowThreadProcessId(desktopWindowHandle, out uint vProcessId);
+            IntPtr desktopProcessHandle = NativeMethods.OpenProcess(NativeMethods.PROCESS_VM.OPERATION | NativeMethods.PROCESS_VM.READ | NativeMethods.PROCESS_VM.WRITE, false, vProcessId);
+
+            // Allocate memory in the desktop process.
+            IntPtr bufferPointer = NativeMethods.VirtualAllocEx(desktopProcessHandle, IntPtr.Zero, new UIntPtr(BUFFER_SIZE), NativeMethods.MEM.RESERVE | NativeMethods.MEM.COMMIT, NativeMethods.PAGE.READWRITE);
+
+            // Initialize loop variables.
+            NativeMethods.LVITEMA currentDesktopIcon = new NativeMethods.LVITEMA();
+            byte[] vBuffer = new byte[BUFFER_SIZE];
+            uint bytesRead = 0;
+
+            // Instantiate an item to get to the remote buffer and be filled there.
+            NativeMethods.LVITEMA[] remoteBufferDesktopIcon = new NativeMethods.LVITEMA[1];
+
+            // Initialize basic structure.
+            // We want to get the icon's text, so set the mask accordingly.
+            remoteBufferDesktopIcon[0].mask = NativeMethods.LVIF.TEXT;
+            remoteBufferDesktopIcon[0].iSubItem = 0;
+
+            // Set maximum text length to buffer length minus offset used in pszText.
+            remoteBufferDesktopIcon[0].cchTextMax = vBuffer.Length - Marshal.SizeOf(typeof(NativeMethods.LVITEMA));
+
+            // Set pszText at point in the remote process's buffer.
+            remoteBufferDesktopIcon[0].pszText = (IntPtr) ((int) bufferPointer + Marshal.SizeOf(typeof(NativeMethods.LVITEMA)));
 
             try
             {
                 // Loop through available desktop icons.
                 for (int i = 0; i < iconCount; i++)
                 {
-                    byte[] vBuffer = new byte[256];
+                    remoteBufferDesktopIcon[0].iItem = i;
 
-                    NativeMethods.LVITEM[] vItem = new NativeMethods.LVITEM[1];
-                    vItem[0].mask = NativeMethods.LVIF.TEXT;
-                    vItem[0].iItem = i;
-                    vItem[0].iSubItem = 0;
-                    vItem[0].cchTextMax = vBuffer.Length;
-                    vItem[0].pszText = vPointer + Marshal.SizeOf(typeof(NativeMethods.LVITEM));
+                    // Write to desktop process the structure we want to get.
+                    NativeMethods.WriteProcessMemory(desktopProcessHandle, bufferPointer, Marshal.UnsafeAddrOfPinnedArrayElement(remoteBufferDesktopIcon, 0), new UIntPtr((uint) Marshal.SizeOf(typeof(NativeMethods.LVITEMA))), ref bytesRead);
 
-                    uint vNumberOfBytesRead = 0;
+                    // Get i-th item of desktop and read its memory.
+                    NativeMethods.SendMessage(desktopWindowHandle, NativeMethods.LVM.GETITEMW, new IntPtr(i), bufferPointer);
+                    NativeMethods.ReadProcessMemory(desktopProcessHandle, bufferPointer, Marshal.UnsafeAddrOfPinnedArrayElement(vBuffer, 0), new UIntPtr((uint) Marshal.SizeOf(currentDesktopIcon)), ref bytesRead);
 
-                    NativeMethods.WriteProcessMemory(vProcess, vPointer, Marshal.UnsafeAddrOfPinnedArrayElement(vItem, 0), Marshal.SizeOf(typeof(NativeMethods.LVITEM)), ref vNumberOfBytesRead);
-                    NativeMethods.SendMessage(desktopHandle, NativeMethods.LVM.GETITEMW, new IntPtr(i), vPointer);
-                    NativeMethods.ReadProcessMemory(vProcess, vPointer + Marshal.SizeOf(typeof(NativeMethods.LVITEM)), Marshal.UnsafeAddrOfPinnedArrayElement(vBuffer, 0), vBuffer.Length, ref vNumberOfBytesRead);
+                    // This error is really unlikely.
+                    if (bytesRead != Marshal.SizeOf(currentDesktopIcon))
+                    {
+                        throw new Exception("Read false amount of bytes.");
+                    }
 
-                    // Read icon title in unicode until end of string.
-                    currentIconName = Encoding.Unicode.GetString(vBuffer, 0, (int)vNumberOfBytesRead);
-                    currentIconName = currentIconName.Substring(0, currentIconName.IndexOf('\0'));
+                    // Get actual struct filled from buffer.
+                    currentDesktopIcon = Marshal.PtrToStructure<NativeMethods.LVITEMA>(Marshal.UnsafeAddrOfPinnedArrayElement(vBuffer, 0));
+
+                    // Use the now set pszText pointer to read the icon text into the buffer. Maximum length is 260, more characters won't be displayed.
+                    NativeMethods.ReadProcessMemory(desktopProcessHandle, currentDesktopIcon.pszText, Marshal.UnsafeAddrOfPinnedArrayElement(vBuffer, 0), new UIntPtr(260), ref bytesRead);
+
+                    // Read from buffer into string with unicode encoding, then trim string.
+                    currentIconTitle = Encoding.Unicode.GetString(vBuffer, 0, (int) bytesRead);
+                    currentIconTitle = currentIconTitle.Substring(0, currentIconTitle.IndexOf('\0'));
 
                     // Check if the current title has a substring in the possible titles.
-                    if (runtimeInformation.PossibleIconTitles.FirstOrDefault(s => currentIconName.Contains(s)) != default(string))
+                    if (runtimeInformation.PossibleIconTitles.FirstOrDefault(s => currentIconTitle.Contains(s, StringComparison.InvariantCultureIgnoreCase)) != default(string))
                     {
-                        // Clean up unmanaged memory.
-                        NativeMethods.VirtualFreeEx(vProcess, vPointer, 0, NativeMethods.MEM.RELEASE);
-                        NativeMethods.CloseHandle(vProcess);
-
+                        // Memory cleanup in finally clause is always executed.
                         return new DetectorResponse { ArtifactPresent = DetectorResponse.ArtifactPresence.Certain };
                     }
                 }
@@ -71,115 +103,27 @@ namespace ItsApe.ArtifactDetector.Detectors
             finally
             {
                 // Clean up unmanaged memory.
-                NativeMethods.VirtualFreeEx(vProcess, vPointer, 0, NativeMethods.MEM.RELEASE);
-                NativeMethods.CloseHandle(vProcess);
+                NativeMethods.VirtualFreeEx(desktopProcessHandle, bufferPointer, UIntPtr.Zero, NativeMethods.MEM.RELEASE);
+                NativeMethods.CloseHandle(desktopProcessHandle);
             }
 
             return new DetectorResponse { ArtifactPresent = DetectorResponse.ArtifactPresence.Impossible };
         }
 
-        #region DLL imports
-
-        internal class NativeMethods
+        private IntPtr GetDesktopHandle()
         {
-            [DllImport("kernel32.dll")]
-            internal static extern bool CloseHandle(IntPtr handle);
-
-            [DllImport("user32.dll", CharSet = CharSet.Unicode)]
-            internal static extern IntPtr FindWindow(string lpszClass, string lpszWindow);
-
-            [DllImport("user32.dll", CharSet = CharSet.Unicode)]
-            internal static extern IntPtr FindWindowEx(IntPtr hwndParent, IntPtr hwndChildAfter, string lpszClass, string lpszWindow);
-
-            [DllImport("user32.dll")]
-            internal static extern uint GetWindowThreadProcessId(IntPtr hWnd, out uint dwProcessId);
-
-            [DllImport("kernel32.dll")]
-            internal static extern IntPtr OpenProcess(uint dwDesiredAccess, bool bInheritHandle, uint dwProcessId);
-
-            [DllImport("kernel32.dll")]
-            internal static extern bool ReadProcessMemory(IntPtr hProcess, IntPtr lpBaseAddress, IntPtr lpBuffer, [MarshalAs(UnmanagedType.SysInt)] int nSize, ref uint vNumberOfBytesRead);
-
-            [DllImport("user32.dll")]
-            [return: MarshalAs(UnmanagedType.SysInt)]
-            internal static extern int SendMessage(IntPtr hWnd, uint Msg, IntPtr wParam, IntPtr lParam);
-
-            [DllImport("kernel32.dll")]
-            internal static extern IntPtr VirtualAllocEx(IntPtr hProcess, IntPtr lpAddress, [MarshalAs(UnmanagedType.SysUInt)] uint dwSize, uint flAllocationType, uint flProtect);
-
-            [DllImport("kernel32.dll")]
-            internal static extern bool VirtualFreeEx(IntPtr hProcess, IntPtr lpAddress, [MarshalAs(UnmanagedType.SysUInt)] uint dwSize, uint dwFreeType);
-
-            [DllImport("kernel32.dll")]
-            internal static extern bool WriteProcessMemory(IntPtr hProcess, IntPtr lpBaseAddress, IntPtr lpBuffer, [MarshalAs(UnmanagedType.SysInt)] int nSize, ref uint vNumberOfBytesRead);
-
-#pragma warning disable CS0649
-            internal struct LVITEM
+            // Get desktop window via program manager.
+            IntPtr hWndPDesktop = NativeMethods.FindWindow("Progman", "Program Manager");
+            if (hWndPDesktop != IntPtr.Zero)
             {
-                public int cchTextMax;
-                public int cColumns;
-                public int iGroupId;
-                public int iImage;
-                public int iIndent;
-                public int iItem;
-                public int iSubItem;
-                public IntPtr lParam;
-                public int mask;
-                public IntPtr pszText;
-
-                // string
-                public IntPtr puColumns;
-
-                public int state;
-                public int stateMask;
+                hWndPDesktop = NativeMethods.FindWindowEx(hWndPDesktop, IntPtr.Zero, "SHELLDLL_DefView", null);
+                if (hWndPDesktop != IntPtr.Zero)
+                {
+                    hWndPDesktop = NativeMethods.FindWindowEx(hWndPDesktop, IntPtr.Zero, "SysListView32", "FolderView");
+                    return hWndPDesktop;
+                }
             }
-#pragma warning restore CS0649
-
-            #region Windows Messages
-
-            internal class LVIF
-            {
-                public const int TEXT = 0x0001;
-            }
-
-            internal class LVM
-            {
-                public const uint FIRST = 0x1000;
-                public const uint GETITEMCOUNT    = FIRST + 4;
-                public const uint GETITEMPOSITION = FIRST + 16;
-                public const uint GETITEMW        = FIRST + 75;
-                public const uint SETITEMPOSITION = FIRST + 15;
-            }
-
-            internal class MEM
-            {
-                public const uint COMMIT  = 0x1000;
-                public const uint FREE    = 0x10000;
-                public const uint RELEASE = 0x8000;
-                public const uint RESERVE = 0x2000;
-            }
-
-            internal class PAGE
-            {
-                public const uint READWRITE = 4;
-            }
-
-            internal class PROCESS_VM
-            {
-                public const uint OPERATION = 0x0008;
-                public const uint READ      = 0x0010;
-                public const uint WRITE     = 0x0020;
-            }
-
-            internal class WM
-            {
-                public const uint USER = 0x0400;
-            }
-
-            #endregion Windows Messages
+            return IntPtr.Zero;
         }
-
-        #endregion DLL imports
     }
 }
- 

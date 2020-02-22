@@ -19,5 +19,17 @@ namespace ItsApe.ArtifactDetector.Helpers
                 default: return input.First().ToString().ToUpper() + input.Substring(1);
             }
         }
+
+        /// <summary>
+        /// Checks the source string for substring value
+        /// </summary>
+        /// <param name="source">Haystack string.</param>
+        /// <param name="value">Possible substring, needle.</param>
+        /// <param name="comparisonType">E.g. InvariantCultureIgnoreCase.</param>
+        /// <returns>True if the needle was found in the haystack.</returns>
+        public static bool Contains(this string source, string value, StringComparison comparisonType)
+        {
+            return source?.IndexOf(value, comparisonType) >= 0;
+        }
     }
 }

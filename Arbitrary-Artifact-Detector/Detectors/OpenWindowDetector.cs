@@ -1,9 +1,10 @@
 ﻿using ItsApe.ArtifactDetector.Models;
+using ItsApe.ArtifactDetector.Utilities;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Runtime.InteropServices;
 using System.Text;
+using static ItsApe.ArtifactDetector.Utilities.NativeMethods;
 
 namespace ItsApe.ArtifactDetector.Detectors
 {
@@ -15,14 +16,6 @@ namespace ItsApe.ArtifactDetector.Detectors
     /// </summary>
     internal class OpenWindowDetector : BaseDetector, IDetector
     {
-        /// <summary>
-        /// Delegate function to loop over windows.
-        /// </summary>
-        /// <param name="hWnd">Input window handle.</param>
-        /// <param name="lParam">Parameters for the current window.</param>
-        /// <returns>Can be disregarded.</returns>
-        private delegate bool EnumWindowsProc(IntPtr hWnd, int lParam);
-
         /// <summary>
         /// Find the artifact defined in the artifactConfiguration given some runtime information and a previous detector's response.
         /// </summary>
@@ -56,31 +49,31 @@ namespace ItsApe.ArtifactDetector.Detectors
 
             bool enoughWindowsFound = false;
 
-            NativeMethods.EnumWindows(
+            EnumWindows(
                 new EnumWindowsProc(delegate (IntPtr hWnd, int lParam)
                 {
                     // If the window is invisible, skip.
-                    if (enoughWindowsFound || !NativeMethods.IsWindowVisible(hWnd))
+                    if (enoughWindowsFound || !IsWindowVisible(hWnd))
                     {
                         return true;
                     }
 
                     // Some windows have no title, so make sure we don't access the title if it is not there.
                     currentWindowTitle = "";
-                    int titleLength = NativeMethods.GetWindowTextLength(hWnd);
+                    int titleLength = GetWindowTextLength(hWnd);
                     if (titleLength != 0)
                     {
                         // Get window title into string builder.
                         titleStringBuilder = new StringBuilder(titleLength);
-                        NativeMethods.GetWindowText(hWnd, titleStringBuilder, titleLength + 1);
+                        GetWindowText(hWnd, titleStringBuilder, titleLength + 1);
                         currentWindowTitle = titleStringBuilder.ToString();
                     }
 
                     // Get all placement information we can get from user32.dll
                     WindowPlacement Placement = new WindowPlacement();
-                    NativeMethods.GetWindowPlacement(hWnd, ref Placement);
+                    GetWindowPlacement(hWnd, ref Placement);
                     WindowVisualInformation visualInformation = new WindowVisualInformation();
-                    NativeMethods.GetWindowInfo(hWnd, ref visualInformation);
+                    GetWindowInfo(hWnd, ref visualInformation);
 
                     // Get the current window's information.
                     currentWindow = new WindowToplevelInformation
@@ -133,7 +126,7 @@ namespace ItsApe.ArtifactDetector.Detectors
             }
 
             runtimeInformation.MatchingWindowsInformation = matchingWindows;
-            
+
             StopStopwatch("Got all opened windows in {0}ms.");
             return new DetectorResponse() { ArtifactPresent = DetectorResponse.ArtifactPresence.Possible };
         }
@@ -188,114 +181,5 @@ namespace ItsApe.ArtifactDetector.Detectors
 
             return ((queriedWindow.VisualInformation.rcClient.Area - subtractArea) / queriedWindow.VisualInformation.rcClient.Area) * 100f;
         }
-
-        /// <summary>
-        /// Returns a dictionary that contains information of all the open windows.
-        /// </summary>
-        /// <returns>A dictionary that contains the handle and title of all the open windows.</returns>
-        private IList<WindowToplevelInformation> GetOpenedWindows()
-        {
-            // Stopwatch for evaluation.
-            StartStopwatch();
-
-            // Initialize list of windows for later use.
-            IList<WindowToplevelInformation> windows = new List<WindowToplevelInformation>();
-
-            // Use simple counting index as the windows' z-index, as EnumWindows sorts them by it.
-            int i = 0;
-            WindowToplevelInformation currentWindow;
-            StringBuilder titleStringBuilder;
-            string windowTitle;
-
-            NativeMethods.EnumWindows(
-                new EnumWindowsProc(delegate (IntPtr hWnd, int lParam)
-                {
-                    // If the window is invisible, skip.
-                    if (!NativeMethods.IsWindowVisible(hWnd))
-                    {
-                        return true;
-                    }
-
-                    // Some windows have no title, so make sure we don't access one if it is not there.
-                    windowTitle = "";
-                    int length = NativeMethods.GetWindowTextLength(hWnd);
-                    if (length != 0)
-                    {
-                        // Get window title into string builder.
-                        titleStringBuilder = new StringBuilder(length);
-                        NativeMethods.GetWindowText(hWnd, titleStringBuilder, length + 1);
-                        windowTitle = titleStringBuilder.ToString();
-                    }
-
-                    // Get all placement information we can get from user32.dll
-                    WindowPlacement Placement = new WindowPlacement();
-                    NativeMethods.GetWindowPlacement(hWnd, ref Placement);
-                    WindowVisualInformation visualInformation = new WindowVisualInformation();
-                    NativeMethods.GetWindowInfo(hWnd, ref visualInformation);
-
-                    // Get the current window's information.
-                    currentWindow = new WindowToplevelInformation
-                    {
-                        Handle = hWnd,
-                        Placement = Placement,
-                        Title = windowTitle,
-                        Visibility = 100f,
-                        VisualInformation = visualInformation,
-                        ZIndex = i
-                    };
-
-                    // If it is not the first/topmost (visible) window...
-                    if (i > 0)
-                    {
-                        // ...get the current's window visibility percentage.
-                        currentWindow.Visibility = CalculateWindowVisibility(windows, currentWindow);
-                    }
-
-                    // Add the current window to all windows.
-                    windows.Add(currentWindow);
-
-                    // Increase the z-index if we got here.
-                    i++;
-
-                    return true;
-                }),
-                0
-            );
-
-            StopStopwatch("Got all opened windows in {0}ms.");
-
-            return windows;
-        }
-
-        #region DLL imports
-
-        private class NativeMethods
-        {
-            [DllImport("user32.dll", SetLastError = true)]
-            [return: MarshalAs(UnmanagedType.Bool)]
-            public static extern bool EnumWindows(EnumWindowsProc enumFunc, [MarshalAs(UnmanagedType.SysInt)] int lParam);
-
-            [DllImport("user32.dll", SetLastError = true)]
-            [return: MarshalAs(UnmanagedType.Bool)]
-            public static extern bool GetWindowInfo(IntPtr hwnd, ref WindowVisualInformation pwi);
-
-            [DllImport("user32.dll", SetLastError = true)]
-            [return: MarshalAs(UnmanagedType.Bool)]
-            public static extern bool GetWindowPlacement(IntPtr hWnd, ref WindowPlacement lpwndpl);
-
-            [DllImport("user32.dll", CharSet = CharSet.Unicode)]
-            [return: MarshalAs(UnmanagedType.U4)]
-            public static extern int GetWindowText(IntPtr hWnd, StringBuilder lpString, [MarshalAs(UnmanagedType.U4)] int nMaxCount);
-
-            [DllImport("user32.dll", SetLastError = true)]
-            [return: MarshalAs(UnmanagedType.U4)]
-            public static extern int GetWindowTextLength(IntPtr hWnd);
-
-            [DllImport("user32.dll")]
-            [return: MarshalAs(UnmanagedType.Bool)]
-            public static extern bool IsWindowVisible(IntPtr hWnd);
-        }
-
-        #endregion DLL imports
     }
 }

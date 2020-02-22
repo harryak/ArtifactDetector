@@ -16,6 +16,7 @@ namespace ItsApe.ArtifactDetector
         [STAThread]
         private static int Main(string[] args)
         {
+
             ServiceBase[] ServicesToRun;
             ServicesToRun = new ServiceBase[]
             {

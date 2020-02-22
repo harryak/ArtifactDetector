@@ -1,23 +1,18 @@
 ﻿using System;
-using System.IO;
 using System.Windows.Forms;
+using static ItsApe.ArtifactDetector.Utilities.NativeMethods;
 
 namespace ItsApe.ArtifactDetector.Models
 {
     /// <summary>
     /// Data class to contain a Windows windows' information.
     /// </summary>
-    class WindowToplevelInformation
+    internal class WindowToplevelInformation
     {
         /// <summary>
         /// Window handle from user32.dll.
         /// </summary>
         public IntPtr Handle = IntPtr.Zero;
-
-        /// <summary>
-        /// Placement information returned from user32.dll.
-        /// </summary>
-        internal WindowPlacement Placement = new WindowPlacement();
 
         /// <summary>
         /// Title of the window.
@@ -35,6 +30,11 @@ namespace ItsApe.ArtifactDetector.Models
         /// Z-index of this window, positive integer. Higher means more in the background.
         /// </summary>
         public int ZIndex = 0;
+
+        /// <summary>
+        /// Placement information returned from user32.dll.
+        /// </summary>
+        internal WindowPlacement Placement = new WindowPlacement();
 
         /// <summary>
         /// For debugging purposes.
