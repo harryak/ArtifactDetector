@@ -37,8 +37,8 @@ namespace ItsApe.ArtifactDetector.Detectors
             string currentIconTitle;
 
             // Get the desktop window's process to enumerate child windows.
-            NativeMethods.GetWindowThreadProcessId(desktopWindowHandle, out uint vProcessId);
-            IntPtr desktopProcessHandle = NativeMethods.OpenProcess(NativeMethods.PROCESS_VM.OPERATION | NativeMethods.PROCESS_VM.READ | NativeMethods.PROCESS_VM.WRITE, false, vProcessId);
+            NativeMethods.GetWindowThreadProcessId(desktopWindowHandle, out uint desktopProcessId);
+            IntPtr desktopProcessHandle = NativeMethods.OpenProcess(NativeMethods.PROCESS_VM.OPERATION | NativeMethods.PROCESS_VM.READ | NativeMethods.PROCESS_VM.WRITE, false, desktopProcessId);
 
             // Allocate memory in the desktop process.
             IntPtr bufferPointer = NativeMethods.VirtualAllocEx(desktopProcessHandle, IntPtr.Zero, new UIntPtr(BUFFER_SIZE), NativeMethods.MEM.RESERVE | NativeMethods.MEM.COMMIT, NativeMethods.PAGE.READWRITE);
@@ -54,7 +54,6 @@ namespace ItsApe.ArtifactDetector.Detectors
             // Initialize basic structure.
             // We want to get the icon's text, so set the mask accordingly.
             remoteBufferDesktopIcon[0].mask = NativeMethods.LVIF.TEXT;
-            remoteBufferDesktopIcon[0].iSubItem = 0;
 
             // Set maximum text length to buffer length minus offset used in pszText.
             remoteBufferDesktopIcon[0].cchTextMax = vBuffer.Length - Marshal.SizeOf(typeof(NativeMethods.LVITEMA));

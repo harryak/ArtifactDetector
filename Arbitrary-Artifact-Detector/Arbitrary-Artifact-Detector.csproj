@@ -200,6 +200,7 @@
     <Compile Include="Detectors\VisualFeatureExtractor\VisualFeatureExtractorFactory.cs" />
     <Compile Include="Models\ArtifactConfiguration.cs" />
     <Compile Include="Converters\DetectorConverter.cs" />
+    <Compile Include="Models\SegmentTree.cs" />
     <Compile Include="Models\ServiceState.cs" />
     <Compile Include="Models\StopWatchParameters.cs" />
     <Compile Include="ProjectInstaller.cs">
@@ -238,6 +239,7 @@
     <Compile Include="Detectors\IDetector.cs" />
     <Compile Include="Utilities\DefaultApplicationFinder.cs" />
     <Compile Include="Utilities\NativeMethods.cs" />
+    <Compile Include="Utilities\Rectangle.cs" />
     <Compile Include="Utilities\WindowCapturer.cs" />
     <Compile Include="Models\DetectorConditions\DetectorConditionSet.cs" />
     <Compile Include="Models\DetectorResponse.cs" />

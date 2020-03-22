@@ -4,7 +4,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using static ItsApe.ArtifactDetector.Utilities.NativeMethods;
 
 namespace ItsApe.ArtifactDetector.Detectors
 {
@@ -38,7 +37,7 @@ namespace ItsApe.ArtifactDetector.Detectors
             IList<string> possibleWindowTitles = runtimeInformation.PossibleWindowTitles;
 
             // Initialize list of windows for later use.
-            IList<WindowToplevelInformation> windows = new List<WindowToplevelInformation>();
+            IList<Rectangle> windows = new List<Rectangle>();
             IDictionary<IntPtr, WindowToplevelInformation> matchingWindows = new Dictionary<IntPtr, WindowToplevelInformation>();
 
             // Use simple counting index as the windows' z-index, as EnumWindows sorts them by it.
@@ -49,31 +48,31 @@ namespace ItsApe.ArtifactDetector.Detectors
 
             bool enoughWindowsFound = false;
 
-            EnumWindows(
-                new EnumWindowsProc(delegate (IntPtr hWnd, int lParam)
+            NativeMethods.EnumWindows(
+                new NativeMethods.EnumWindowsProc(delegate (IntPtr hWnd, int lParam)
                 {
                     // If the window is invisible, skip.
-                    if (enoughWindowsFound || !IsWindowVisible(hWnd))
+                    if (enoughWindowsFound || !NativeMethods.IsWindowVisible(hWnd))
                     {
                         return true;
                     }
 
                     // Some windows have no title, so make sure we don't access the title if it is not there.
                     currentWindowTitle = "";
-                    int titleLength = GetWindowTextLength(hWnd);
+                    int titleLength = NativeMethods.GetWindowTextLength(hWnd);
                     if (titleLength != 0)
                     {
                         // Get window title into string builder.
                         titleStringBuilder = new StringBuilder(titleLength);
-                        GetWindowText(hWnd, titleStringBuilder, titleLength + 1);
+                        NativeMethods.GetWindowText(hWnd, titleStringBuilder, titleLength + 1);
                         currentWindowTitle = titleStringBuilder.ToString();
                     }
 
                     // Get all placement information we can get from user32.dll
-                    WindowPlacement Placement = new WindowPlacement();
-                    GetWindowPlacement(hWnd, ref Placement);
-                    WindowVisualInformation visualInformation = new WindowVisualInformation();
-                    GetWindowInfo(hWnd, ref visualInformation);
+                    NativeMethods.WindowPlacement Placement = new NativeMethods.WindowPlacement();
+                    NativeMethods.GetWindowPlacement(hWnd, ref Placement);
+                    NativeMethods.WindowVisualInformation visualInformation = new NativeMethods.WindowVisualInformation();
+                    NativeMethods.GetWindowInfo(hWnd, ref visualInformation);
 
                     // Get the current window's information.
                     currentWindow = new WindowToplevelInformation
@@ -92,11 +91,11 @@ namespace ItsApe.ArtifactDetector.Detectors
                     if (i > 0 && windowMatches)
                     {
                         // ...get the current's window visibility percentage.
-                        currentWindow.Visibility = CalculateWindowVisibility(windows, currentWindow);
+                        currentWindow.Visibility = CalculateWindowVisibility(windows, visualInformation.rcClient);
                     }
 
                     // Add the current window to all windows.
-                    windows.Add(currentWindow);
+                    windows.Add(visualInformation.rcClient);
 
                     // If it is one of the windows we want to find: Add to that list.
                     if (windowMatches)
@@ -134,20 +133,86 @@ namespace ItsApe.ArtifactDetector.Detectors
         /// <summary>
         /// Calculate the area of intersection of two window rectangles.
         /// </summary>
-        /// <param name="window">The window below.</param>
-        /// <param name="overlappingWindow">The window above.</param>
+        /// <param name="firstRectangle">The overlapped rectangle.</param>
+        /// <param name="secondRectangle">The new rectangle above.</param>
+        /// <param name="overlappingRectangles">Other areas within first rectangle that are overlapping.</param>
         /// <returns>The area of the intersection.</returns>
-        private int CalculateOverlappingArea(WindowToplevelInformation window, WindowToplevelInformation overlappingWindow)
+        private int CalculateOverlappingArea(Rectangle boundingRectangle, IList<Rectangle> overlayingRectangles)
         {
-            return Math.Max(
-                0,
-                Math.Min(window.VisualInformation.rcClient.Right, overlappingWindow.VisualInformation.rcClient.Right)
-                    - Math.Max(window.VisualInformation.rcClient.Left, overlappingWindow.VisualInformation.rcClient.Left)
-            ) * Math.Max(
-                0,
-                Math.Min(window.VisualInformation.rcClient.Bottom, overlappingWindow.VisualInformation.rcClient.Bottom)
-                    - Math.Max(window.VisualInformation.rcClient.Top, overlappingWindow.VisualInformation.rcClient.Top)
-            );
+            // Perform sweep line algorithm on union of rectangles.
+            // Ordered list of X-coordinates and a list of tuples which are "activated" there.
+            SortedList<int, List<Tuple<int,int>>> availableAbscissae = new SortedList<int, List<Tuple<int,int>>>();
+            // All available Y-coordinates.
+            SortedSet<int> availableOrdinates = new SortedSet<int>();
+
+            Rectangle intersectionRectangle;
+            foreach (Rectangle currentRectangle in overlayingRectangles)
+            {
+                // Try to find intersection, throws ArgumentException if there is none.
+                try
+                {
+                    // Get rectangle intersection between overlapping rectangle and bounding box.
+                    intersectionRectangle = Intersection(boundingRectangle, currentRectangle);
+
+                    // Add left X-coordinate entry to events list, if necessary.
+                    if (!availableAbscissae.ContainsKey(intersectionRectangle.Left))
+                    {
+                        availableAbscissae.Add(
+                            intersectionRectangle.Left,
+                            new List<Tuple<int,int>>());
+                    }
+                    availableAbscissae[intersectionRectangle.Left].Add(
+                        new Tuple<int, int>(intersectionRectangle.Top, intersectionRectangle.Bottom));
+
+                    // Add right X-coordinate entry to events list, if necessary.
+                    if (!availableAbscissae.ContainsKey(intersectionRectangle.Right))
+                    {
+                        availableAbscissae.Add(
+                            intersectionRectangle.Right,
+                            new List<Tuple<int, int>>());
+                    }
+                    availableAbscissae[intersectionRectangle.Right].Add(
+                        new Tuple<int, int>(intersectionRectangle.Top, intersectionRectangle.Bottom));
+
+                    // Add Y-coordinates, if necessary.
+                    if (!availableOrdinates.Contains(intersectionRectangle.Top))
+                    {
+                        availableOrdinates.Add(intersectionRectangle.Top);
+                    }
+                    if (!availableOrdinates.Contains(intersectionRectangle.Bottom))
+                    {
+                        availableOrdinates.Add(intersectionRectangle.Bottom);
+                    }
+                }
+                catch (ArgumentException)
+                { }
+            }
+
+            // Construct segment tree for sweep line algorithm.
+            SegmentTree segmentTree = new SegmentTree(availableOrdinates.ToArray());
+
+            // Sweep line over ordered events on X-axis.
+            int unionArea = 0;
+            int previousAbscissa = -1;
+            foreach (var abscissaEvent in availableAbscissae)
+            {
+                // For all intervals in list of this event: Activate in segment tree.
+                foreach (Tuple<int, int> interval in abscissaEvent.Value)
+                {
+                    segmentTree.ActivateInterval(interval.Item1, interval.Item2);
+                }
+
+                // If we are not at the first abscissa:
+                if (previousAbscissa > 0)
+                {
+                    // Add rectangle to total.
+                    unionArea += (abscissaEvent.Key - previousAbscissa) * segmentTree.GetActiveLength();
+                }
+
+                previousAbscissa = abscissaEvent.Key;
+            }
+
+            return boundingRectangle.Area;
         }
 
         /// <summary>
@@ -156,30 +221,38 @@ namespace ItsApe.ArtifactDetector.Detectors
         /// <param name="windowsAbove">The windows above (z-index) the queried window.</param>
         /// <param name="queriedWindow">Queried window.</param>
         /// <returns>The percentage of how much of the window is visible.</returns>
-        private float CalculateWindowVisibility(IList<WindowToplevelInformation> windowsAbove, WindowToplevelInformation queriedWindow)
+        private float CalculateWindowVisibility(IList<Rectangle> windowsAbove, Rectangle queriedWindow)
         {
             // If there is no area of the window, return "no visibility".
-            if (queriedWindow.VisualInformation.rcClient.Area < 1)
-                return 0f;
-
-            // Accumulator for total not viewable area that gets subtracted later.
-            float subtractArea = 0f;
-
-            // Loop through all windows "above" to look if one window overlaps the queried window.
-            foreach (WindowToplevelInformation windowAboveEntry in windowsAbove)
+            if (queriedWindow.Area < 1)
             {
-                subtractArea += CalculateOverlappingArea(queriedWindow, windowAboveEntry);
-
-                if (subtractArea >= queriedWindow.VisualInformation.rcClient.Area)
-                {
-                    return 0f;
-                }
+                return 0f;
             }
 
-            if (subtractArea == 0)
-                return 100f;
+            int subtractArea = CalculateOverlappingArea(queriedWindow, windowsAbove);
 
-            return ((queriedWindow.VisualInformation.rcClient.Area - subtractArea) / queriedWindow.VisualInformation.rcClient.Area) * 100f;
+            return ((queriedWindow.Area - subtractArea) / queriedWindow.Area) * 100f;
+        }
+
+        private Rectangle Intersection(Rectangle firstRectangle, Rectangle secondRectangle)
+        {
+            int left = Math.Max(firstRectangle.Left, secondRectangle.Left);
+            int right = Math.Min(firstRectangle.Right, secondRectangle.Right);
+
+            if (left >= right)
+            {
+                throw new ArgumentException("No intersection possible.");
+            }
+
+            int top = Math.Max(firstRectangle.Top, secondRectangle.Top);
+            int bottom = Math.Min(firstRectangle.Bottom, secondRectangle.Bottom);
+
+            if (top >= bottom)
+            {
+                throw new ArgumentException("No intersection possible.");
+            }
+
+            return new Rectangle(left, top, right, bottom);
         }
     }
 }
