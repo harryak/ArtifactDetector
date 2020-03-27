@@ -1,13 +1,12 @@
-﻿using ItsApe.ArtifactDetector.DebugUtilities;
-using ItsApe.ArtifactDetector.Detectors.VisualFeatureExtractor;
-using ItsApe.ArtifactDetector.Helpers;
-using ItsApe.ArtifactDetector.Models;
-using ItsApe.ArtifactDetector.Utilities;
-using Microsoft.Extensions.Logging;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Runtime.Serialization.Formatters.Binary;
+using ItsApe.ArtifactDetector.DebugUtilities;
+using ItsApe.ArtifactDetector.Detectors.VisualFeatureExtractor;
+using ItsApe.ArtifactDetector.Helpers;
+using ItsApe.ArtifactDetector.Models;
+using Microsoft.Extensions.Logging;
 
 namespace ItsApe.ArtifactDetector.Detectors
 {
@@ -46,7 +45,7 @@ namespace ItsApe.ArtifactDetector.Detectors
         /// Stopwatch for evaluation, might be null.
         /// </summary>
         [NonSerialized]
-        private AADStopwatch _stopwatch;
+        private DetectorStopwatch _stopwatch;
 
         /// <summary>
         /// Instance of a feature extractor to process the raw images.
@@ -62,7 +61,7 @@ namespace ItsApe.ArtifactDetector.Detectors
         /// <param name="visualFeatureExtrator">A visual feature extractor instance to get features from images.</param>
         /// <param name="logger">Logger to use for logging.</param>
         /// <param name="stopwatch">Optional, stopwatch for evaluation.</param>
-        private ArtifactReferenceImageCache(string artifactType, Setup setup, IVisualFeatureExtractor visualFeatureExtrator, ILogger logger, AADStopwatch stopwatch = null)
+        private ArtifactReferenceImageCache(string artifactType, ApplicationSetup setup, IVisualFeatureExtractor visualFeatureExtrator, ILogger logger, DetectorStopwatch stopwatch = null)
         {
             _artifactType = artifactType;
 
@@ -93,7 +92,7 @@ namespace ItsApe.ArtifactDetector.Detectors
         /// <summary>
         /// Accessors for the stopwatch. Need to be explicit to omit property from serialization.
         /// </summary>
-        public AADStopwatch Stopwatch { get => _stopwatch; private set => _stopwatch = value; }
+        public DetectorStopwatch Stopwatch { get => _stopwatch; private set => _stopwatch = value; }
 
         /// <summary>
         /// Accessors for artifact detector. Need to be explicit to omit property from serialization.
@@ -124,10 +123,10 @@ namespace ItsApe.ArtifactDetector.Detectors
         /// <param name="logger">Logger to use for logging.</param>
         /// <param name="stopwatch">Optional, stopwatch for evaluation.</param>
         /// <returns>A cached or new instance of the cache.</returns>
-        public static ArtifactReferenceImageCache GetInstance(string artifactType, Setup setup, IVisualFeatureExtractor artifactDetector)
+        public static ArtifactReferenceImageCache GetInstance(string artifactType, ApplicationSetup setup, IVisualFeatureExtractor artifactDetector)
         {
-            AADStopwatch stopwatch = setup.Stopwatch;
-            ILogger logger = setup.GetLogger("ReferenceImageCache");
+            DetectorStopwatch stopwatch = setup.Stopwatch;
+            var logger = setup.GetLogger("ReferenceImageCache");
 
             // Start stopwatch if there is one.
             if (stopwatch != null)
@@ -146,7 +145,7 @@ namespace ItsApe.ArtifactDetector.Detectors
                 {
                     var binaryFormatter = new BinaryFormatter();
 
-                    artifactLibrary = (ArtifactReferenceImageCache) binaryFormatter.Deserialize(stream);
+                    artifactLibrary = (ArtifactReferenceImageCache)binaryFormatter.Deserialize(stream);
                     artifactLibrary.PersistentFilePath = new FileInfo(fileName);
                     artifactLibrary.VisualFeatureExtractor = artifactDetector;
                     artifactLibrary.Logger = logger;
@@ -222,7 +221,7 @@ namespace ItsApe.ArtifactDetector.Detectors
             if (!ProcessedImages.ContainsKey(filePath))
             {
                 // Generate artifact object freshly.
-                ProcessedImage image = VisualFeatureExtractor.ExtractFeatures(filePath);
+                var image = VisualFeatureExtractor.ExtractFeatures(filePath);
 
                 if (image != null)
                 {
@@ -251,7 +250,7 @@ namespace ItsApe.ArtifactDetector.Detectors
         public void ProcessImagesInPath(DirectoryInfo path)
         {
             // Go through all .png files in given path and subdirectories.
-            foreach (FileInfo imageFile in path.GetFiles("*.png", SearchOption.AllDirectories))
+            foreach (var imageFile in path.GetFiles("*.png", SearchOption.AllDirectories))
             {
                 // Process image for the current path. Don't save object to cache, we will do that later.
                 ProcessImage(imageFile.FullName, false);

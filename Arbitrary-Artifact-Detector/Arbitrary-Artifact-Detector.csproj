@@ -189,13 +189,11 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="AADConfig.cs" />
+    <Compile Include="ApplicationConfiguration.cs" />
     <Compile Include="Converters\StringToListConverter.cs" />
     <Compile Include="Detectors\ArtifactReferenceImageCache.cs" />
     <Compile Include="DebugUtilities\Debuggable.cs" />
-    <Compile Include="Detectors\Configuration\MailDetectorConfiguration.cs" />
     <Compile Include="Detectors\TrayIconDetector.cs" />
-    <Compile Include="Detectors\OpenMailDetector.cs" />
     <Compile Include="Detectors\RunningProcessDetector.cs" />
     <Compile Include="Detectors\VisualFeatureExtractor\VisualFeatureExtractorFactory.cs" />
     <Compile Include="Models\ArtifactConfiguration.cs" />
@@ -234,12 +232,11 @@
     <Compile Include="Detectors\InstalledProgramsDetector.cs" />
     <Compile Include="Detectors\Model\InstalledProgram.cs" />
     <Compile Include="Detectors\OpenWindowDetector.cs" />
-    <Compile Include="Detectors\Model\DesktopIcon.cs" />
     <Compile Include="Detectors\Model\WindowToplevelInformation.cs" />
     <Compile Include="Detectors\IDetector.cs" />
     <Compile Include="Utilities\DefaultApplicationFinder.cs" />
     <Compile Include="Utilities\NativeMethods.cs" />
-    <Compile Include="Utilities\Rectangle.cs" />
+    <Compile Include="Models\Rectangle.cs" />
     <Compile Include="Utilities\WindowCapturer.cs" />
     <Compile Include="Models\DetectorConditions\DetectorConditionSet.cs" />
     <Compile Include="Models\DetectorResponse.cs" />
@@ -251,14 +248,14 @@
     <Compile Include="Detectors\VisualFeatureExtractor\OrbDetector.cs" />
     <Compile Include="Detectors\VisualFeatureExtractor\KazeDetector.cs" />
     <Compile Include="Helpers\FileHelper.cs" />
-    <Compile Include="DebugUtilities\AADStopwatch.cs" />
+    <Compile Include="DebugUtilities\DetectorStopwatch.cs" />
     <Compile Include="Models\ProcessedImage.cs" />
     <Compile Include="Detectors\VisualFeatureExtractor\IVisualFeatureExtractor.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="Converters\ReferenceImageConverter.cs" />
+    <Compile Include="Converters\ArtifactRuntimeInformationConverter.cs" />
     <Compile Include="Services\IDetectorService.cs" />
-    <Compile Include="Utilities\Setup.cs" />
+    <Compile Include="ApplicationSetup.cs" />
     <Compile Include="Utilities\SetupError.cs" />
     <Compile Include="Viewers\ImageViewer.cs">
       <SubType>Form</SubType>
@@ -270,6 +267,7 @@
     <Compile Include="Detectors\VisualFeatureExtractor\VisualMatchFilter\IMatchFilter.cs" />
   </ItemGroup>
   <ItemGroup>
+    <None Include=".editorconfig" />
     <None Include="App.config">
       <SubType>Designer</SubType>
     </None>

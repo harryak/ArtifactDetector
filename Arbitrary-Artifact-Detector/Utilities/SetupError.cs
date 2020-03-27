@@ -3,22 +3,25 @@ using System.Runtime.Serialization;
 
 namespace ItsApe.ArtifactDetector.Utilities
 {
+    /// <summary>
+    /// Error/Exception class to throw when the ApplicationSetup is faulty.
+    /// </summary>
     [Serializable]
-    internal class SetupError : Exception
+    internal class ApplicationSetupError : Exception
     {
-        public SetupError()
+        public ApplicationSetupError()
         {
         }
 
-        public SetupError(string message) : base(message)
+        public ApplicationSetupError(string message) : base(message)
         {
         }
 
-        public SetupError(string message, Exception innerException) : base(message, innerException)
+        public ApplicationSetupError(string message, Exception innerException) : base(message, innerException)
         {
         }
 
-        protected SetupError(SerializationInfo info, StreamingContext context) : base(info, context)
+        protected ApplicationSetupError(SerializationInfo info, StreamingContext context) : base(info, context)
         {
         }
     }

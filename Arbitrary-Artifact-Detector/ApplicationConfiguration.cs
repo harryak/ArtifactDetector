@@ -1,13 +1,12 @@
 ﻿using System;
 using System.Configuration;
-using System.IO;
 
 namespace ItsApe.ArtifactDetector
 {
     /// <summary>
     /// Class for configuration of the AAD.
     /// </summary>
-    internal class AADConfig
+    internal class ApplicationConfiguration
     {
         /// <summary>
         /// Flag to tell whether the processed images should be cached for the next run.
@@ -63,7 +62,7 @@ namespace ItsApe.ArtifactDetector
                 return ConfigurationManager.AppSettings.Get("MatchFilter");
             }
         }
-        
+
         /// <summary>
         /// Feature extraction setting: Uniqueness threshold to sort out possible matches.
         /// </summary>

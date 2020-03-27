@@ -1,19 +1,32 @@
-﻿using Emgu.CV;
+﻿using System;
+using System.Drawing;
+using Emgu.CV;
 using Emgu.CV.Structure;
 using Emgu.CV.Util;
-using System;
-using System.Collections.Generic;
-using System.Drawing;
 
 namespace ItsApe.ArtifactDetector.Detectors.VisualFeatureExtractor.VisualMatchFilter
 {
     /// <summary>
-    /// Filter for matching VectorOfKeyPoints.
+    /// Filter for matching VectorOfKeyPoints using affine transformations.
     /// </summary>
-    class AffineMatchFilter : BaseMatchFilter, IMatchFilter
+    internal class AffineMatchFilter : BaseMatchFilter, IMatchFilter
     {
-        public AffineMatchFilter() { }
+        public AffineMatchFilter()
+        {
+        }
 
+        /// <summary>
+        /// Core function: Tries to get a transformation matrix via RanSaC from modelKeyPoints to queryKeyPoints
+        /// matching the inlierRatio while allowing errors of patchSize.
+        /// </summary>
+        /// <param name="modelKeyPoints">Starting set of key points.</param>
+        /// <param name="queryKeyPoints">Goal set of key points.</param>
+        /// <param name="matches">Previously found matches between modelKeyPoints and queryKeyPoints masked by mask.</param>
+        /// <param name="mask">Mask for previously found matches.</param>
+        /// <param name="iterations">RanSaC maximum iterations.</param>
+        /// <param name="inlierRatio">How many previously found matches should support the hypothesis.</param>
+        /// <param name="patchSize">Error threshold for applying the hypothesis on the starting set to get to the goal set.</param>
+        /// <returns>A transformation matrix from model to query or null.</returns>
         public override Matrix<float> GetRanSaCTransformationMatrix(VectorOfKeyPoint modelKeyPoints, VectorOfKeyPoint queryKeyPoints, VectorOfVectorOfDMatch matches, ref Mat mask, int iterations, double inlierRatio, int patchSize)
         {
             // Get arrays of key points for easier access.
@@ -21,30 +34,30 @@ namespace ItsApe.ArtifactDetector.Detectors.VisualFeatureExtractor.VisualMatchFi
             MKeyPoint[] queryKeyPointsArray  = queryKeyPoints.ToArray();
 
             // Get list of masked matches for easier access.
-            List<IndexedMDMatch> maskedMatchesList = FilterMDMatchArrayOfArray(matches.ToArrayOfArray(), new Matrix<byte>(mask.GetRawData()));
+            var maskedMatchesList = FilterMDMatchArrayOfArray(matches.ToArrayOfArray(), new Matrix<byte>(mask.GetRawData()));
 
             // Setup test variables for return value.
             int bestMatchCount = 0;
-            Matrix<float> bestTransformationMatrix = new Matrix<float>(3, 3);
+            var bestTransformationMatrix = new Matrix<float>(3, 3);
             bestTransformationMatrix.SetIdentity();
 
             // Get random for Ran(SaC).
-            Random random = new Random();
+            var random = new Random();
 
             // Define variables needed for RanSaC runs.
-            Matrix<float> modelTriangle = new Matrix<float>(3, 3);
-            Matrix<float> invertedModelTriangle = new Matrix<float>(3, 3);
-            Matrix<float> adjunctModelTriangle = new Matrix<float>(3, 3);
-            Matrix<float> queryTriangle = new Matrix<float>(3, 3);
+            var modelTriangle = new Matrix<float>(3, 3);
+            var invertedModelTriangle = new Matrix<float>(3, 3);
+            var adjunctModelTriangle = new Matrix<float>(3, 3);
+            var queryTriangle = new Matrix<float>(3, 3);
             int matchIndex1, matchIndex2, matchIndex3, matchCount;
 
-            Matrix<float> transformationMatrix = new Matrix<float>(3, 3);
+            var transformationMatrix = new Matrix<float>(3, 3);
             transformationMatrix.SetIdentity();
 
             // Prepare handling of the matches' mask.
-            Matrix<byte> maskInitial = new Matrix<byte>(mask.GetRawData());
-            Matrix<byte> maskCurrent = new Matrix<byte>(maskInitial.Size);
-            Matrix<byte> bestMask    = new Matrix<byte>(maskInitial.Size);
+            var maskInitial = new Matrix<byte>(mask.GetRawData());
+            var maskCurrent = new Matrix<byte>(maskInitial.Size);
+            var bestMask    = new Matrix<byte>(maskInitial.Size);
 
             // The core loop for RanSaC.
             for (int i = 0; i < iterations; i++)
@@ -98,7 +111,7 @@ namespace ItsApe.ArtifactDetector.Detectors.VisualFeatureExtractor.VisualMatchFi
                 transformationMatrix = queryTriangle * invertedModelTriangle;
 
                 // Count how many matches fit to this model. This also counts the current points.
-                foreach (IndexedMDMatch indexedMatch in maskedMatchesList)
+                foreach (var indexedMatch in maskedMatchesList)
                 {
                     if (PointFitsModel(modelKeyPointsArray[indexedMatch.match[0].TrainIdx].Point, queryKeyPointsArray[indexedMatch.match[0].QueryIdx].Point, transformationMatrix, patchSize))
                     {
@@ -122,10 +135,10 @@ namespace ItsApe.ArtifactDetector.Detectors.VisualFeatureExtractor.VisualMatchFi
                     maskCurrent.CopyTo(bestMask);
 
                     // If we matched all input matches we don't have to iterate.
-                    /*if (matchCount == maskedMatchesList.Count)
+                    if (matchCount == maskedMatchesList.Count)
                     {
                         break;
-                    }*/
+                    }
                 }
             }
 
@@ -137,48 +150,6 @@ namespace ItsApe.ArtifactDetector.Detectors.VisualFeatureExtractor.VisualMatchFi
 
             mask = bestMask.Mat;
             return bestTransformationMatrix;
-        }
-
-        /// <summary>
-        /// Tell if the given srcPoint fits to the desPoint with respect to an error patch size.
-        /// </summary>
-        /// <param name="srcPoint">The point to transform.</param>
-        /// <param name="desPoint">Goal point.</param>
-        /// <param name="transformationMatrix">Speaks for itself.</param>
-        /// <param name="patchSize">Half length of error square around desPoint.</param>
-        /// <returns>True or false.</returns>
-        private bool PointFitsModel(PointF srcPoint, PointF desPoint, Matrix<float> transformationMatrix, int patchSize)
-        {
-            Matrix<float> srcPointMat = new Matrix<float>(3, 1);
-            srcPointMat.SetValue(1f);
-            srcPointMat[0, 0] = srcPoint.X;
-            srcPointMat[1, 0] = srcPoint.Y;
-
-            Matrix<float> calculatedDesPoint = new Matrix<float>(3, 1);
-            calculatedDesPoint = transformationMatrix * srcPointMat;
-
-            return IsInTargetPatch(calculatedDesPoint[0, 0], calculatedDesPoint[1, 0], desPoint, patchSize);
-        }
-
-        /// <summary>
-        /// Check to determine whether three points form a triangle with an area > 0.
-        /// </summary>
-        /// <param name="matrix">3 x 2 matrix with coordinates of points.</param>
-        /// <returns>Whether the area is larger than zero.</returns>
-        private bool IsNonemptyTriangle(Matrix<float> matrix)
-        {
-            // Try skipping rest of calculation as soon as possible.
-            if (matrix[0, 0] * (matrix[1, 1] - matrix[1, 2]) > 0)
-            {
-                return true;
-            }
-
-            if (matrix[0, 1] * (matrix[1, 2] - matrix[1, 0]) > 0)
-            {
-                return true;
-            }
-
-            return matrix[0, 2] * (matrix[1, 0] - matrix[1, 1]) > 0;
         }
 
         /// <summary>
@@ -232,6 +203,48 @@ namespace ItsApe.ArtifactDetector.Detectors.VisualFeatureExtractor.VisualMatchFi
             invertedMatrix = adjunctMatrix / determinant;
 
             return true;
+        }
+
+        /// <summary>
+        /// Check to determine whether three points form a triangle with an area > 0.
+        /// </summary>
+        /// <param name="matrix">3 x 2 matrix with coordinates of points.</param>
+        /// <returns>Whether the area is larger than zero.</returns>
+        private bool IsNonemptyTriangle(Matrix<float> matrix)
+        {
+            // Try skipping rest of calculation as soon as possible.
+            if (matrix[0, 0] * (matrix[1, 1] - matrix[1, 2]) > 0)
+            {
+                return true;
+            }
+
+            if (matrix[0, 1] * (matrix[1, 2] - matrix[1, 0]) > 0)
+            {
+                return true;
+            }
+
+            return matrix[0, 2] * (matrix[1, 0] - matrix[1, 1]) > 0;
+        }
+
+        /// <summary>
+        /// Tell if the given srcPoint fits to the desPoint with respect to an error patch size.
+        /// </summary>
+        /// <param name="srcPoint">The point to transform.</param>
+        /// <param name="desPoint">Goal point.</param>
+        /// <param name="transformationMatrix">Speaks for itself.</param>
+        /// <param name="patchSize">Half length of error square around desPoint.</param>
+        /// <returns>True or false.</returns>
+        private bool PointFitsModel(PointF srcPoint, PointF desPoint, Matrix<float> transformationMatrix, int patchSize)
+        {
+            var srcPointMat = new Matrix<float>(3, 1);
+            srcPointMat.SetValue(1f);
+            srcPointMat[0, 0] = srcPoint.X;
+            srcPointMat[1, 0] = srcPoint.Y;
+
+            var calculatedDesPoint = new Matrix<float>(3, 1);
+            calculatedDesPoint = transformationMatrix * srcPointMat;
+
+            return IsInTargetPatch(calculatedDesPoint[0, 0], calculatedDesPoint[1, 0], desPoint, patchSize);
         }
     }
 }

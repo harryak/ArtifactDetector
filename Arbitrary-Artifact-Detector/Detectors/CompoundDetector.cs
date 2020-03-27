@@ -1,5 +1,5 @@
-﻿using ItsApe.ArtifactDetector.Models;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
+using ItsApe.ArtifactDetector.Models;
 
 namespace ItsApe.ArtifactDetector.Detectors
 {

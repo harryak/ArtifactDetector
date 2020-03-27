@@ -118,14 +118,14 @@
             public int IntervalLength { get; set; }
 
             /// <summary>
-            /// Starting value of this interval.
-            /// </summary>
-            public int ValueStart { get; set; }
-
-            /// <summary>
             /// Ending value of this interval
             /// </summary>
             public int ValueEnd { get; set; }
+
+            /// <summary>
+            /// Starting value of this interval.
+            /// </summary>
+            public int ValueStart { get; set; }
 
             /// <summary>
             /// Update the interval by incrementing the counters.

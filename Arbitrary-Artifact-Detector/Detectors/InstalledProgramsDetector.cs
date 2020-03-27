@@ -1,16 +1,17 @@
-﻿using ItsApe.ArtifactDetector.Models;
-using Microsoft.Win32;
-using System;
+﻿using System;
 using System.Collections.Generic;
+using ItsApe.ArtifactDetector.Models;
+using Microsoft.Win32;
 
 namespace ItsApe.ArtifactDetector.Detectors
 {
     internal class InstalledProgramsDetector : BaseDetector, IDetector
     {
-        private const string registry_key = @"SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall";
+        private const string Registry_key = @"SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall";
 
         public override DetectorResponse FindArtifact(ref ArtifactRuntimeInformation runtimeInformation, DetectorResponse previousResponse = null)
         {
+            //TODO: Implement properly.
             throw new NotImplementedException();
         }
 
@@ -32,11 +33,11 @@ namespace ItsApe.ArtifactDetector.Detectors
         {
             int count = 0;
 
-            using (RegistryKey key = RegistryKey.OpenBaseKey(RegistryHive.LocalMachine, registryView).OpenSubKey(registry_key))
+            using (var key = RegistryKey.OpenBaseKey(RegistryHive.LocalMachine, registryView).OpenSubKey(Registry_key))
             {
                 foreach (string subkey_name in key.GetSubKeyNames())
                 {
-                    using (RegistryKey subkey = key.OpenSubKey(subkey_name))
+                    using (var subkey = key.OpenSubKey(subkey_name))
                     {
                         if (IsProgramVisible(subkey))
                         {
@@ -60,7 +61,7 @@ namespace ItsApe.ArtifactDetector.Detectors
                 !string.IsNullOrEmpty(name)
                 && string.IsNullOrEmpty(releaseType)
                 && string.IsNullOrEmpty(parentName)
-                && (systemComponent == null || (int) systemComponent == 0);
+                && (systemComponent == null || (int)systemComponent == 0);
         }
     }
 }

@@ -1,9 +1,11 @@
-﻿using ItsApe.ArtifactDetector.Utilities;
-using Microsoft.Extensions.Logging;
+﻿using Microsoft.Extensions.Logging;
 
 namespace ItsApe.ArtifactDetector.DebugUtilities
 {
-    internal class Debuggable
+    /// <summary>
+    /// Parent class to all debuggable classes of the ArtifactDetector.
+    /// </summary>
+    internal abstract class Debuggable
     {
         /// <summary>
         /// Debuggable classes have a logger and a stopwatch.
@@ -11,12 +13,19 @@ namespace ItsApe.ArtifactDetector.DebugUtilities
         /// <param name="setup">The current execution's setup.</param>
         internal Debuggable()
         {
-            Logger = Setup.GetInstance().GetLogger(GetType().Name);
-            Stopwatch = Setup.GetInstance().Stopwatch;
+            Logger = ApplicationSetup.GetInstance().GetLogger(GetType().Name);
+            Stopwatch = ApplicationSetup.GetInstance().Stopwatch;
         }
 
+        /// <summary>
+        /// Instance of an ILogger to write to.
+        /// </summary>
         protected ILogger Logger { get; set; }
-        protected AADStopwatch Stopwatch { get; set; }
+
+        /// <summary>
+        /// Instance of an AADStopwatch to stop the time with.
+        /// </summary>
+        protected DetectorStopwatch Stopwatch { get; set; }
 
         /// <summary>
         /// Wrapper to start the stopwatch after checking it actually exists.

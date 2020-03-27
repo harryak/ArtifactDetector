@@ -3,6 +3,9 @@ using System.Linq;
 
 namespace ItsApe.ArtifactDetector.Helpers
 {
+    /// <summary>
+    /// Class to extend the String class by helper methods.
+    /// </summary>
     public static class StringExtensions
     {
         /// <summary>

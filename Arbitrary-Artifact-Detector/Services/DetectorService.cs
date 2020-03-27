@@ -1,9 +1,4 @@
-﻿using ItsApe.ArtifactDetector.DebugUtilities;
-using ItsApe.ArtifactDetector.Models;
-using ItsApe.ArtifactDetector.Utilities;
-using Microsoft.Extensions.Logging;
-using Newtonsoft.Json;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
@@ -13,6 +8,11 @@ using System.ServiceProcess;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Timers;
+using ItsApe.ArtifactDetector.DebugUtilities;
+using ItsApe.ArtifactDetector.Models;
+using ItsApe.ArtifactDetector.Utilities;
+using Microsoft.Extensions.Logging;
+using Newtonsoft.Json;
 
 namespace ItsApe.ArtifactDetector.Services
 {
@@ -25,12 +25,7 @@ namespace ItsApe.ArtifactDetector.Services
         /// <summary>
         /// File name of the configuration file.
         /// </summary>
-        private const string configurationFile = "config.json";
-
-        /// <summary>
-        /// Variables describing the current state of the service, to be serialized and saved in the configuration file.
-        /// </summary>
-        private ServiceState serviceState;
+        private const string ConfigurationFile = "config.json";
 
         /// <summary>
         /// Timer to call detection in interval.
@@ -53,9 +48,14 @@ namespace ItsApe.ArtifactDetector.Services
         private ServiceHost serviceHost = null;
 
         /// <summary>
+        /// Variables describing the current state of the service, to be serialized and saved in the configuration file.
+        /// </summary>
+        private ServiceState serviceState;
+
+        /// <summary>
         /// Either null or instance of a stopwatch to evaluate this service.
         /// </summary>
-        private AADStopwatch stopwatch = null;
+        private DetectorStopwatch stopwatch = null;
 
         /// <summary>
         /// Instantiate service with setup.
@@ -68,9 +68,9 @@ namespace ItsApe.ArtifactDetector.Services
             // Get setup of service for the first time.
             try
             {
-                Setup = Setup.GetInstance();
+                Setup = ApplicationSetup.GetInstance();
             }
-            catch (SetupError)
+            catch (ApplicationSetupError)
             {
                 return;
             }
@@ -94,7 +94,7 @@ namespace ItsApe.ArtifactDetector.Services
         /// <summary>
         /// Setup for this run, holding arguments and other necessary objects.
         /// </summary>
-        private Setup Setup { get; }
+        private ApplicationSetup Setup { get; }
 
         /// <summary>
         /// Start watching an artifact in an interval of configured length.
@@ -187,7 +187,7 @@ namespace ItsApe.ArtifactDetector.Services
                 detectorResponsesAccess.Dispose();
             }
 
-            StopWatchParameters parameters = JsonConvert.DeserializeObject<StopWatchParameters>(jsonEncodedParameters);
+            var parameters = JsonConvert.DeserializeObject<StopWatchParameters>(jsonEncodedParameters);
 
             CompileResponses(parameters.ErrorWindowSize);
 
@@ -218,14 +218,15 @@ namespace ItsApe.ArtifactDetector.Services
             serviceHost.Open();
 
             // Restore configuration from file, if present.
-            FileInfo configurationFileInfo = new FileInfo(configurationFile);
+            FileInfo configurationFileInfo = new FileInfo(ConfigurationFile);
             if (configurationFileInfo.Exists)
             {
-                using (StreamReader reader = new StreamReader(configurationFileInfo.FullName))
+                using (var reader = new StreamReader(configurationFileInfo.FullName))
                 {
                     serviceState = JsonConvert.DeserializeObject<ServiceState>(reader.ReadToEnd());
                 }
-            } else
+            }
+            else
             {
                 serviceState = new ServiceState();
             }
@@ -251,7 +252,7 @@ namespace ItsApe.ArtifactDetector.Services
 
             // Save configuration to file.
             string jsonEncodedConfig = JsonConvert.SerializeObject(serviceState);
-            using (StreamWriter writer = new StreamWriter(configurationFile))
+            using (var writer = new StreamWriter(ConfigurationFile))
             {
                 writer.Write(jsonEncodedConfig);
             }
@@ -266,15 +267,15 @@ namespace ItsApe.ArtifactDetector.Services
         private void CompileResponses(int errorWindowSize)
         {
             // Buffer the values inside the current error window.
-            Dictionary<long, int> errorWindowValues = new Dictionary<long, int>();
+            var errorWindowValues = new Dictionary<long, int>();
 
             // Integer division always floors value, so add one.
             int thresholdSum = errorWindowSize + 1 / 2;
             int currentSum;
             bool artifactCurrentlyFound = false;
 
-            using (StreamReader reader = new StreamReader(serviceState.ResponsesPath))
-            using (StreamWriter writer = new StreamWriter(serviceState.CompiledResponsesPath))
+            using (var reader = new StreamReader(serviceState.ResponsesPath))
+            using (var writer = new StreamWriter(serviceState.CompiledResponsesPath))
             {
                 string[] currentValues;
 
@@ -323,7 +324,7 @@ namespace ItsApe.ArtifactDetector.Services
             {
                 // Write response prepended with time to responses file and flush.
                 // Use sortable and millisecond-precise timestamp for entry.
-                DetectorResponse.ArtifactPresence artifactPresent = response.ArtifactPresent;
+                var artifactPresent = response.ArtifactPresent;
                 detectorResponses.WriteLine("{0:yyMMddHHmmss},{1}", responseTime, artifactPresent);
                 detectorResponses.Flush();
 

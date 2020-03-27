@@ -1,7 +1,6 @@
 ﻿using ItsApe.ArtifactDetector.DebugUtilities;
 using ItsApe.ArtifactDetector.DetectorConditions;
 using ItsApe.ArtifactDetector.Models;
-using ItsApe.ArtifactDetector.Utilities;
 
 namespace ItsApe.ArtifactDetector.Detectors
 {
@@ -15,7 +14,7 @@ namespace ItsApe.ArtifactDetector.Detectors
         /// </summary>
         protected BaseDetector()
         {
-            Setup = Setup.GetInstance();
+            Setup = ApplicationSetup.GetInstance();
         }
 
         /// <summary>
@@ -31,7 +30,7 @@ namespace ItsApe.ArtifactDetector.Detectors
         /// <summary>
         /// Setup of this application.
         /// </summary>
-        protected Setup Setup { get; }
+        protected ApplicationSetup Setup { get; }
 
         /// <summary>
         /// Conditions that have to be fulfilled to yield "match" after calling FindArtifact.
@@ -54,7 +53,7 @@ namespace ItsApe.ArtifactDetector.Detectors
         {
             // Either the variable is "just not null" or if it is a set it is not empty.
             return PreConditions != null
-                && (PreConditions.GetType() != typeof(DetectorConditionSet<ArtifactRuntimeInformation>) || ((DetectorConditionSet<ArtifactRuntimeInformation>) PreConditions).NotEmpty());
+                && (PreConditions.GetType() != typeof(DetectorConditionSet<ArtifactRuntimeInformation>) || ((DetectorConditionSet<ArtifactRuntimeInformation>)PreConditions).NotEmpty());
         }
 
         /// <summary>
@@ -65,7 +64,7 @@ namespace ItsApe.ArtifactDetector.Detectors
         {
             // Either the variable is "just not null" or if it is a set it is not empty.
             return TargetConditions != null
-                && (TargetConditions.GetType() != typeof(DetectorConditionSet<DetectorResponse>) || ((DetectorConditionSet<DetectorResponse>) TargetConditions).NotEmpty());
+                && (TargetConditions.GetType() != typeof(DetectorConditionSet<DetectorResponse>) || ((DetectorConditionSet<DetectorResponse>)TargetConditions).NotEmpty());
         }
 
         /// <summary>

@@ -1,9 +1,12 @@
-﻿using ItsApe.ArtifactDetector.Models;
-using Emgu.CV;
+﻿using Emgu.CV;
+using ItsApe.ArtifactDetector.Models;
 using System.Collections.Generic;
 
 namespace ItsApe.ArtifactDetector.Detectors.VisualFeatureExtractor
 {
+    /// <summary>
+    /// Interface for visual featrue extraction from images.
+    /// </summary>
     internal interface IVisualFeatureExtractor
     {
         /// <summary>

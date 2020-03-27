@@ -1,14 +1,14 @@
-﻿using ItsApe.ArtifactDetector.Helpers;
-using ItsApe.ArtifactDetector.Models;
-using ItsApe.ArtifactDetector.Utilities;
-using System;
+﻿using System;
 using System.Linq;
 using System.Runtime.InteropServices;
+using ItsApe.ArtifactDetector.Helpers;
+using ItsApe.ArtifactDetector.Models;
+using ItsApe.ArtifactDetector.Utilities;
 
 namespace ItsApe.ArtifactDetector.Detectors
 {
     /// <summary>
-    /// Detector to detect desktop icons.
+    /// Detector to detect tray icons.
     /// </summary>
     internal class TrayIconDetector : BaseDetector, IDetector
     {
@@ -23,7 +23,7 @@ namespace ItsApe.ArtifactDetector.Detectors
         public override DetectorResponse FindArtifact(ref ArtifactRuntimeInformation runtimeInformation, DetectorResponse previousResponse = null)
         {
             // Get tray window.
-            IntPtr trayWindowHandle = GetSystemTrayHandle();
+            var trayWindowHandle = GetSystemTrayHandle();
 
             // This error is really unlikely.
             if (trayWindowHandle == IntPtr.Zero)
@@ -37,9 +37,9 @@ namespace ItsApe.ArtifactDetector.Detectors
 
             // Get the desktop window's process to enumerate child windows.
             NativeMethods.GetWindowThreadProcessId(trayWindowHandle, out uint ProcessId);
-            IntPtr trayProcessHandle = NativeMethods.OpenProcess(NativeMethods.PROCESS_VM.OPERATION | NativeMethods.PROCESS_VM.READ | NativeMethods.PROCESS_VM.WRITE, false, ProcessId);
-            IntPtr bufferPointer = NativeMethods.VirtualAllocEx(trayProcessHandle, IntPtr.Zero, new UIntPtr(BUFFER_SIZE), NativeMethods.MEM.RESERVE | NativeMethods.MEM.COMMIT, NativeMethods.PAGE.READWRITE);
-            NativeMethods.TBBUTTON currentTrayIcon = new NativeMethods.TBBUTTON();
+            var trayProcessHandle = NativeMethods.OpenProcess(NativeMethods.PROCESS_VM.OPERATION | NativeMethods.PROCESS_VM.READ | NativeMethods.PROCESS_VM.WRITE, false, ProcessId);
+            var bufferPointer = NativeMethods.VirtualAllocEx(trayProcessHandle, IntPtr.Zero, new UIntPtr(BUFFER_SIZE), NativeMethods.MEM.RESERVE | NativeMethods.MEM.COMMIT, NativeMethods.PAGE.READWRITE);
+            var currentTrayIcon = new NativeMethods.TBBUTTON();
 
             try
             {
@@ -52,7 +52,7 @@ namespace ItsApe.ArtifactDetector.Detectors
 
                     // Get TBBUTTON struct filled.
                     NativeMethods.SendMessage(trayWindowHandle, NativeMethods.TB.GETBUTTON, new IntPtr(i), bufferPointer);
-                    NativeMethods.ReadProcessMemory(trayProcessHandle, bufferPointer, Marshal.UnsafeAddrOfPinnedArrayElement(vBuffer, 0), new UIntPtr((uint) Marshal.SizeOf(currentTrayIcon)), ref bytesRead);
+                    NativeMethods.ReadProcessMemory(trayProcessHandle, bufferPointer, Marshal.UnsafeAddrOfPinnedArrayElement(vBuffer, 0), new UIntPtr((uint)Marshal.SizeOf(currentTrayIcon)), ref bytesRead);
 
                     // This error is really unlikely.
                     if (bytesRead != Marshal.SizeOf(currentTrayIcon))
@@ -84,9 +84,13 @@ namespace ItsApe.ArtifactDetector.Detectors
             return new DetectorResponse { ArtifactPresent = DetectorResponse.ArtifactPresence.Impossible };
         }
 
+        /// <summary>
+        /// Get the system tray window's handle.
+        /// </summary>
+        /// <returns>The handle if found or IntPtr.Zero if not.</returns>
         private IntPtr GetSystemTrayHandle()
         {
-            IntPtr hWndTray = NativeMethods.FindWindow("Shell_TrayWnd", null);
+            var hWndTray = NativeMethods.FindWindow("Shell_TrayWnd", null);
             if (hWndTray != IntPtr.Zero)
             {
                 hWndTray = NativeMethods.FindWindowEx(hWndTray, IntPtr.Zero, "TrayNotifyWnd", null);

@@ -3,6 +3,9 @@ using ItsApe.ArtifactDetector.Models;
 
 namespace ItsApe.ArtifactDetector.Detectors
 {
+    /// <summary>
+    /// Interface for various detectors.
+    /// </summary>
     internal interface IDetector
     {
         /// <summary>

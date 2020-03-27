@@ -1,11 +1,11 @@
-﻿using ItsApe.ArtifactDetector.DebugUtilities;
-using ItsApe.ArtifactDetector.Detectors.VisualFeatureExtractor.VisualMatchFilter;
-using ItsApe.ArtifactDetector.Models;
-using Emgu.CV;
+﻿using Emgu.CV;
 using Emgu.CV.CvEnum;
 using Emgu.CV.Features2D;
 using Emgu.CV.Structure;
 using Emgu.CV.Util;
+using ItsApe.ArtifactDetector.DebugUtilities;
+using ItsApe.ArtifactDetector.Detectors.VisualFeatureExtractor.VisualMatchFilter;
+using ItsApe.ArtifactDetector.Models;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
@@ -14,6 +14,9 @@ using System.IO;
 
 namespace ItsApe.ArtifactDetector.Detectors.VisualFeatureExtractor
 {
+    /// <summary>
+    /// Feature extraction base class doing most of the work but missing the EmguCV.Feature2D feature detector instantiation.
+    /// </summary>
     internal abstract class BaseVisualFeatureExtractor : Debuggable, IVisualFeatureExtractor
     {
         /// <summary>
@@ -59,8 +62,8 @@ namespace ItsApe.ArtifactDetector.Detectors.VisualFeatureExtractor
         {
             StartStopwatch();
 
-            VectorOfKeyPoint keyPoints = new VectorOfKeyPoint();
-            Mat descriptors = new Mat();
+            var keyPoints = new VectorOfKeyPoint();
+            var descriptors = new Mat();
 
             // Get the descriptors from the EmguCV feature detector.
             FeatureDetector.DetectAndCompute(image.GetUMat(AccessType.Read), null, keyPoints, descriptors, false);
@@ -112,12 +115,12 @@ namespace ItsApe.ArtifactDetector.Detectors.VisualFeatureExtractor
             drawingResult = null;
 
             // Same for this.
-            VectorOfVectorOfDMatch matches = new VectorOfVectorOfDMatch();
-            Mat matchesMask = new Mat();
-            Matrix<float> homography = new Matrix<float>(3, 3);
+            var matches = new VectorOfVectorOfDMatch();
+            var matchesMask = new Mat();
+            var homography = new Matrix<float>(3, 3);
 
             // Get a matched artifact image or null.
-            ProcessedImage matchedArtifact = FindMatch(
+            var matchedArtifact = FindMatch(
                 observedImage,
                 referenceImages,
                 out matches,
@@ -134,6 +137,7 @@ namespace ItsApe.ArtifactDetector.Detectors.VisualFeatureExtractor
         }
 
 #if DEBUG
+
         /// <summary>
         /// Helper function for debug purposes.
         /// </summary>
@@ -175,7 +179,7 @@ namespace ItsApe.ArtifactDetector.Detectors.VisualFeatureExtractor
                 pointFs = Transform(pointFs, homography);
 
                 // Draw the outlines using rounded coordinates of previously calculated points.
-                using (VectorOfPoint pointVector = new VectorOfPoint(Array.ConvertAll(pointFs, Point.Round)))
+                using (var pointVector = new VectorOfPoint(Array.ConvertAll(pointFs, Point.Round)))
                 {
                     CvInvoke.Polylines(resultingImage, pointVector, true, new MCvScalar(0, 0, 255, 255), 8);
                 }
@@ -183,6 +187,7 @@ namespace ItsApe.ArtifactDetector.Detectors.VisualFeatureExtractor
 
             return resultingImage;
         }
+
 #endif
 
         /// <summary>
@@ -196,9 +201,9 @@ namespace ItsApe.ArtifactDetector.Detectors.VisualFeatureExtractor
         /// <returns>A matched artifact image, if available.</returns>
         private ProcessedImage FindMatch(ProcessedImage observedImage, ICollection<ProcessedImage> referenceImages, out VectorOfVectorOfDMatch goodMatches, out Mat matchesMask, out Matrix<float> homography, out int matchCount)
         {
-            int minMatches = AADConfig.MinimumMatchesRequired;
-            double uniquenessThreshold = AADConfig.MatchUniquenessThreshold;
-            double distanceThreshold = AADConfig.MatchDistanceThreshold;
+            int minMatches = ApplicationConfiguration.MinimumMatchesRequired;
+            double uniquenessThreshold = ApplicationConfiguration.MatchUniquenessThreshold;
+            double distanceThreshold = ApplicationConfiguration.MatchDistanceThreshold;
 
             ProcessedImage matchingArtifact = null;
 
@@ -358,13 +363,13 @@ namespace ItsApe.ArtifactDetector.Detectors.VisualFeatureExtractor
         /// <param name="setup">The current excecution's setup.</param>
         private void SetupMatchFilter()
         {
-            if (!visualFilterSelectionMap.ContainsKey(AADConfig.MatchFilterSelection))
+            if (!visualFilterSelectionMap.ContainsKey(ApplicationConfiguration.MatchFilterSelection))
             {
-                throw new ArgumentNullException("Could not get match filter type: { 0 }", AADConfig.MatchFilterSelection);
+                throw new ArgumentNullException("Could not get match filter type: { 0 }", ApplicationConfiguration.MatchFilterSelection);
             }
 
-            Logger.LogInformation("Using match filter {filterSelection}.", AADConfig.MatchFilterSelection);
-            MatchFilter = visualFilterSelectionMap[AADConfig.MatchFilterSelection]();
+            Logger.LogInformation("Using match filter {filterSelection}.", ApplicationConfiguration.MatchFilterSelection);
+            MatchFilter = visualFilterSelectionMap[ApplicationConfiguration.MatchFilterSelection]();
         }
 
         /// <summary>

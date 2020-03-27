@@ -1,19 +1,32 @@
-﻿using Emgu.CV;
+﻿using System;
+using System.Drawing;
+using Emgu.CV;
 using Emgu.CV.Structure;
 using Emgu.CV.Util;
-using System;
-using System.Collections.Generic;
-using System.Drawing;
 
 namespace ItsApe.ArtifactDetector.Detectors.VisualFeatureExtractor.VisualMatchFilter
 {
     /// <summary>
-    /// Filter for matching VectorOfKeyPoints.
+    /// Filter for matching VectorOfKeyPoints using a simpler approach.
     /// </summary>
-    class SimpleMatchFilter : BaseMatchFilter, IMatchFilter
+    internal class SimpleMatchFilter : BaseMatchFilter, IMatchFilter
     {
-        public SimpleMatchFilter() { }
+        public SimpleMatchFilter()
+        {
+        }
 
+        /// <summary>
+        /// Core function: Tries to get a transformation matrix via RanSaC from modelKeyPoints to queryKeyPoints
+        /// matching the inlierRatio while allowing errors of patchSize.
+        /// </summary>
+        /// <param name="modelKeyPoints">Starting set of key points.</param>
+        /// <param name="queryKeyPoints">Goal set of key points.</param>
+        /// <param name="matches">Previously found matches between modelKeyPoints and queryKeyPoints masked by mask.</param>
+        /// <param name="mask">Mask for previously found matches.</param>
+        /// <param name="iterations">RanSaC maximum iterations.</param>
+        /// <param name="inlierRatio">How many previously found matches should support the hypothesis.</param>
+        /// <param name="patchSize">Error threshold for applying the hypothesis on the starting set to get to the goal set.</param>
+        /// <returns>A transformation matrix from model to query or null.</returns>
         public override Matrix<float> GetRanSaCTransformationMatrix(VectorOfKeyPoint modelKeyPoints, VectorOfKeyPoint queryKeyPoints, VectorOfVectorOfDMatch matches, ref Mat mask, int iterations, double inlierRatio, int patchSize)
         {
             // Get arrays of key points for easier access.
@@ -24,28 +37,28 @@ namespace ItsApe.ArtifactDetector.Detectors.VisualFeatureExtractor.VisualMatchFi
             int bestMatchCount = 0;
 
             // Get random for Ran(SaC).
-            Random random = new Random();
+            var random = new Random();
 
             // Define variables needed for RanSaC runs.
             int matchIndex1, matchIndex2, matchCount;
-            PointF translationVector = new PointF();
-            SizeF scaleFactors = new SizeF();
+            var translationVector = new PointF();
+            var scaleFactors = new SizeF();
             PointF modelPoint1, modelPoint2, queryPoint1, queryPoint2;
 
-            SizeF modelPointsDistance = new SizeF();
-            SizeF queryPointsDistance = new SizeF();
+            var modelPointsDistance = new SizeF();
+            var queryPointsDistance = new SizeF();
 
             // Setup transformation matrix return.
-            Matrix<float> transformationMatrix = new Matrix<float>(3, 3);
+            var transformationMatrix = new Matrix<float>(3, 3);
             transformationMatrix.SetIdentity();
 
             // Prepare handling of the matches' mask.
-            Matrix<byte> maskInitial = new Matrix<byte>(mask.GetRawData());
-            Matrix<byte> maskCurrent = new Matrix<byte>(maskInitial.Size);
-            Matrix<byte> bestMask    = new Matrix<byte>(maskInitial.Size);
+            var maskInitial = new Matrix<byte>(mask.GetRawData());
+            var maskCurrent = new Matrix<byte>(maskInitial.Size);
+            var bestMask    = new Matrix<byte>(maskInitial.Size);
 
             // Get list of masked matches for easier access.
-            List<IndexedMDMatch> maskedMatchesList = FilterMDMatchArrayOfArray(matches.ToArrayOfArray(), maskInitial);
+            var maskedMatchesList = FilterMDMatchArrayOfArray(matches.ToArrayOfArray(), maskInitial);
 
             // The core loop for RanSaC.
             for (int i = 0; i < iterations; i++)
@@ -83,7 +96,7 @@ namespace ItsApe.ArtifactDetector.Detectors.VisualFeatureExtractor.VisualMatchFi
                 GetTranslationVector(modelPoint1, queryPoint1, scaleFactors, ref translationVector);
 
                 // Count how many matches fit to this model. This also counts the current points.
-                foreach (IndexedMDMatch indexedMatch in maskedMatchesList)
+                foreach (var indexedMatch in maskedMatchesList)
                 {
                     if (PointFitsModel(modelKeyPointsArray[indexedMatch.match[0].TrainIdx].Point, queryKeyPointsArray[indexedMatch.match[0].QueryIdx].Point, translationVector, scaleFactors, patchSize))
                     {
@@ -108,10 +121,10 @@ namespace ItsApe.ArtifactDetector.Detectors.VisualFeatureExtractor.VisualMatchFi
                     transformationMatrix[2, 1] = scaleFactors.Height * translationVector.Y;
 
                     // If we matched all input matches we don't have to iterate.
-                    /*if (matchCount == maskedMatchesList.Count)
+                    if (matchCount == maskedMatchesList.Count)
                     {
                         break;
-                    }*/
+                    }
                 }
             }
 
@@ -127,19 +140,11 @@ namespace ItsApe.ArtifactDetector.Detectors.VisualFeatureExtractor.VisualMatchFi
         }
 
         /// <summary>
-        /// Tell if the given srcPoint fits to the desPoint with respect to an error patch size.
+        /// Calculate scale factors based on the given distances.
         /// </summary>
-        /// <param name="srcPoint">The point to transform.</param>
-        /// <param name="desPoint">Goal point.</param>
-        /// <param name="translationVector"></param>
+        /// <param name="modelDistance"></param>
+        /// <param name="queryDistance"></param>
         /// <param name="scaleFactors"></param>
-        /// <param name="patchSize">Half length of error square around desPoint.</param>
-        /// <returns>True or false.</returns>
-        private bool PointFitsModel(PointF srcPoint, PointF desPoint, PointF translationVector, SizeF scaleFactors, int patchSize)
-        {
-            return IsInTargetPatch(srcPoint.X * scaleFactors.Width + translationVector.X, srcPoint.Y * scaleFactors.Height + translationVector.Y, desPoint, patchSize);
-        }
-
         private void GetScaleFactors(SizeF modelDistance, SizeF queryDistance, ref SizeF scaleFactors)
         {
             // Default is a scale factor of "1" if any of the distances are zero.
@@ -152,10 +157,31 @@ namespace ItsApe.ArtifactDetector.Detectors.VisualFeatureExtractor.VisualMatchFi
                 scaleFactors.Height = queryDistance.Height / modelDistance.Height;
         }
 
+        /// <summary>
+        /// Calculate the translation vector between the two points.
+        /// </summary>
+        /// <param name="modelPoint1"></param>
+        /// <param name="queryPoint1"></param>
+        /// <param name="scaleFactors"></param>
+        /// <param name="translationVector"></param>
         private void GetTranslationVector(PointF modelPoint1, PointF queryPoint1, SizeF scaleFactors, ref PointF translationVector)
         {
             translationVector.X = queryPoint1.X - scaleFactors.Width * modelPoint1.X;
             translationVector.Y = queryPoint1.Y - scaleFactors.Height * modelPoint1.Y;
+        }
+
+        /// <summary>
+        /// Tell if the given srcPoint fits to the desPoint with respect to an error patch size.
+        /// </summary>
+        /// <param name="srcPoint">The point to transform.</param>
+        /// <param name="desPoint">Goal point.</param>
+        /// <param name="translationVector"></param>
+        /// <param name="scaleFactors"></param>
+        /// <param name="patchSize">Half length of error square around desPoint.</param>
+        /// <returns>True or false.</returns>
+        private bool PointFitsModel(PointF srcPoint, PointF desPoint, PointF translationVector, SizeF scaleFactors, int patchSize)
+        {
+            return IsInTargetPatch(srcPoint.X * scaleFactors.Width + translationVector.X, srcPoint.Y * scaleFactors.Height + translationVector.Y, desPoint, patchSize);
         }
     }
 }

@@ -2,6 +2,9 @@
 
 namespace ItsApe.ArtifactDetector.Models
 {
+    /// <summary>
+    /// Rectangle mainly used for Windows' windows boundaries and DLL calls.
+    /// </summary>
     [StructLayout(LayoutKind.Sequential)]
     internal struct Rectangle
     {
@@ -88,15 +91,15 @@ namespace ItsApe.ArtifactDetector.Models
         public override bool Equals(object obj)
         {
             if (obj is Rectangle)
-                return Equals((Rectangle) obj);
+                return Equals((Rectangle)obj);
             else if (obj is System.Drawing.Rectangle)
-                return Equals(new Rectangle((System.Drawing.Rectangle) obj));
+                return Equals(new Rectangle((System.Drawing.Rectangle)obj));
             return false;
         }
 
         public override int GetHashCode()
         {
-            return ((System.Drawing.Rectangle) this).GetHashCode();
+            return ((System.Drawing.Rectangle)this).GetHashCode();
         }
 
         public override string ToString()

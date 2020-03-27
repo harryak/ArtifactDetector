@@ -6,7 +6,7 @@ namespace ItsApe.ArtifactDetector.Detectors.VisualFeatureExtractor.VisualMatchFi
     /// <summary>
     /// Interface of all match filters using RanSaC for abstraction from different implementations.
     /// </summary>
-    interface IMatchFilter
+    internal interface IMatchFilter
     {
         /// <summary>
         /// Tries to get a transformation matrix via RanSaC from modelKeyPoints to queryKeyPoints matching the inlierRatio while allowing errors of patchSize.

@@ -1,9 +1,9 @@
-﻿using ItsApe.ArtifactDetector.Models;
-using ItsApe.ArtifactDetector.Utilities;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using ItsApe.ArtifactDetector.Models;
+using ItsApe.ArtifactDetector.Utilities;
 
 namespace ItsApe.ArtifactDetector.Detectors
 {
@@ -33,8 +33,8 @@ namespace ItsApe.ArtifactDetector.Detectors
             }
 
             // Copy to local variables for EnumWindowsProc.
-            ICollection<IntPtr> windowHandles = runtimeInformation.MatchingWindowsInformation.Keys;
-            IList<string> possibleWindowTitles = runtimeInformation.PossibleWindowTitles;
+            var windowHandles = runtimeInformation.MatchingWindowsInformation.Keys;
+            var possibleWindowTitles = runtimeInformation.PossibleWindowTitles;
 
             // Initialize list of windows for later use.
             IList<Rectangle> windows = new List<Rectangle>();
@@ -69,9 +69,10 @@ namespace ItsApe.ArtifactDetector.Detectors
                     }
 
                     // Get all placement information we can get from user32.dll
-                    NativeMethods.WindowPlacement Placement = new NativeMethods.WindowPlacement();
+                    var Placement = new NativeMethods.WindowPlacement();
                     NativeMethods.GetWindowPlacement(hWnd, ref Placement);
-                    NativeMethods.WindowVisualInformation visualInformation = new NativeMethods.WindowVisualInformation();
+
+                    var visualInformation = new NativeMethods.WindowVisualInformation();
                     NativeMethods.GetWindowInfo(hWnd, ref visualInformation);
 
                     // Get the current window's information.
@@ -141,12 +142,12 @@ namespace ItsApe.ArtifactDetector.Detectors
         {
             // Perform sweep line algorithm on union of rectangles.
             // Ordered list of X-coordinates and a list of tuples which are "activated" there.
-            SortedList<int, List<Tuple<int,int>>> availableAbscissae = new SortedList<int, List<Tuple<int,int>>>();
+            var availableAbscissae = new SortedList<int, List<Tuple<int,int>>>();
             // All available Y-coordinates.
-            SortedSet<int> availableOrdinates = new SortedSet<int>();
+            var availableOrdinates = new SortedSet<int>();
 
             Rectangle intersectionRectangle;
-            foreach (Rectangle currentRectangle in overlayingRectangles)
+            foreach (var currentRectangle in overlayingRectangles)
             {
                 // Try to find intersection, throws ArgumentException if there is none.
                 try
@@ -159,7 +160,7 @@ namespace ItsApe.ArtifactDetector.Detectors
                     {
                         availableAbscissae.Add(
                             intersectionRectangle.Left,
-                            new List<Tuple<int,int>>());
+                            new List<Tuple<int, int>>());
                     }
                     availableAbscissae[intersectionRectangle.Left].Add(
                         new Tuple<int, int>(intersectionRectangle.Top, intersectionRectangle.Bottom));
@@ -189,7 +190,7 @@ namespace ItsApe.ArtifactDetector.Detectors
             }
 
             // Construct segment tree for sweep line algorithm.
-            SegmentTree segmentTree = new SegmentTree(availableOrdinates.ToArray());
+            var segmentTree = new SegmentTree(availableOrdinates.ToArray());
 
             // Sweep line over ordered events on X-axis.
             int unionArea = 0;
@@ -197,7 +198,7 @@ namespace ItsApe.ArtifactDetector.Detectors
             foreach (var abscissaEvent in availableAbscissae)
             {
                 // For all intervals in list of this event: Activate in segment tree.
-                foreach (Tuple<int, int> interval in abscissaEvent.Value)
+                foreach (var interval in abscissaEvent.Value)
                 {
                     segmentTree.ActivateInterval(interval.Item1, interval.Item2);
                 }
@@ -234,6 +235,14 @@ namespace ItsApe.ArtifactDetector.Detectors
             return ((queriedWindow.Area - subtractArea) / queriedWindow.Area) * 100f;
         }
 
+        /// <summary>
+        /// Get intersection rectangle of the two rectangles.
+        /// 
+        /// Throws an ArgumentException if there is none.
+        /// </summary>
+        /// <param name="firstRectangle">Order does not matter.</param>
+        /// <param name="secondRectangle">Order does not matter.</param>
+        /// <returns>The intersection rectangle.</returns>
         private Rectangle Intersection(Rectangle firstRectangle, Rectangle secondRectangle)
         {
             int left = Math.Max(firstRectangle.Left, secondRectangle.Left);

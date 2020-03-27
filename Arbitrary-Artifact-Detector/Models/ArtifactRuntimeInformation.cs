@@ -1,9 +1,9 @@
-﻿using ItsApe.ArtifactDetector.Converters;
-using ItsApe.ArtifactDetector.Detectors;
-using Emgu.CV;
-using Newtonsoft.Json;
-using System;
+﻿using System;
 using System.Collections.Generic;
+using Emgu.CV;
+using ItsApe.ArtifactDetector.Converters;
+using ItsApe.ArtifactDetector.Detectors;
+using Newtonsoft.Json;
 
 namespace ItsApe.ArtifactDetector.Models
 {
@@ -12,9 +12,11 @@ namespace ItsApe.ArtifactDetector.Models
     /// </summary>
     internal class ArtifactRuntimeInformation : ICloneable
     {
+        /// <summary>
+        /// Empty constructor for setting the properties later on.
+        /// </summary>
         public ArtifactRuntimeInformation()
-        {
-        }
+        { }
 
         /// <summary>
         /// Constructor taking the arguments that can be known on first instantiation.
@@ -44,6 +46,13 @@ namespace ItsApe.ArtifactDetector.Models
         public IDictionary<IntPtr, WindowToplevelInformation> MatchingWindowsInformation { get; set; } = new Dictionary<IntPtr, WindowToplevelInformation>();
 
         /// <summary>
+        /// Possible (fragments of the) titles of the windows to get.
+        /// </summary>
+        [JsonProperty("icon_titles")]
+        [JsonConverter(typeof(StringToListConverter))]
+        public IList<string> PossibleIconTitles { get; internal set; } = new List<string>();
+
+        /// <summary>
         /// Possible names of the processes.
         /// </summary>
         [JsonProperty("process_names")]
@@ -56,13 +65,6 @@ namespace ItsApe.ArtifactDetector.Models
         [JsonProperty("window_titles")]
         [JsonConverter(typeof(StringToListConverter))]
         public IList<string> PossibleWindowTitles { get; internal set; } = new List<string>();
-
-        /// <summary>
-        /// Possible (fragments of the) titles of the windows to get.
-        /// </summary>
-        [JsonProperty("icon_titles")]
-        [JsonConverter(typeof(StringToListConverter))]
-        public IList<string> PossibleIconTitles { get; internal set; } = new List<string>();
 
         /// <summary>
         /// Image cache for reference image.

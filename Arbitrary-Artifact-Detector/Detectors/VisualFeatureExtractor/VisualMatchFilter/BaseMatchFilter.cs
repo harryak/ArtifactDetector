@@ -1,31 +1,30 @@
-﻿using ItsApe.ArtifactDetector.DebugUtilities;
+﻿using System.Collections.Generic;
+using System.Drawing;
 using Emgu.CV;
 using Emgu.CV.Structure;
 using Emgu.CV.Util;
-using System.Collections.Generic;
-using System.Drawing;
+using ItsApe.ArtifactDetector.DebugUtilities;
 
 namespace ItsApe.ArtifactDetector.Detectors.VisualFeatureExtractor.VisualMatchFilter
 {
-    abstract class BaseMatchFilter : Debuggable, IMatchFilter
+    /// <summary>
+    /// Base class for match filters implementing most of the ground features.
+    /// </summary>
+    internal abstract class BaseMatchFilter : Debuggable, IMatchFilter
     {
+        /// <summary>
+        /// Core function: Has to be implemented by the deriving classes.
+        /// </summary>
+        /// <param name="modelKeyPoints">Starting set of key points.</param>
+        /// <param name="queryKeyPoints">Goal set of key points.</param>
+        /// <param name="matches">Previously found matches between modelKeyPoints and queryKeyPoints masked by mask.</param>
+        /// <param name="mask">Mask for previously found matches.</param>
+        /// <param name="iterations">RanSaC maximum iterations.</param>
+        /// <param name="inlierRatio">How many previously found matches should support the hypothesis.</param>
+        /// <param name="patchSize">Error threshold for applying the hypothesis on the starting set to get to the goal set.</param>
+        /// <returns>A transformation matrix from model to query or null.</returns>
         public abstract Matrix<float> GetRanSaCTransformationMatrix(VectorOfKeyPoint modelKeyPoints, VectorOfKeyPoint queryKeyPoints, VectorOfVectorOfDMatch matches, ref Mat mask, int iterations, double inlierRatio, int patchSize);
 
-        /// <summary>
-        /// Adds an index to a list of MDMatches.
-        /// </summary>
-        public struct IndexedMDMatch
-        {
-            public int index;
-            public MDMatch[] match;
-
-            public IndexedMDMatch(int i, MDMatch[] mDMatch) : this()
-            {
-                index = i;
-                match = mDMatch;
-            }
-        }
-        
         /// <summary>
         /// Extract list of indexed matches from inputArray using the given mask.
         /// </summary>
@@ -34,7 +33,7 @@ namespace ItsApe.ArtifactDetector.Detectors.VisualFeatureExtractor.VisualMatchFi
         /// <returns>List of indexed matches where mask is 1.</returns>
         protected List<IndexedMDMatch> FilterMDMatchArrayOfArray(MDMatch[][] inputArray, Matrix<byte> mask)
         {
-            List<IndexedMDMatch> filteredMatches = new List<IndexedMDMatch>();
+            var filteredMatches = new List<IndexedMDMatch>();
 
             for (int i = 0; i < inputArray.Length && i < mask.Size.Height; i++)
             {
@@ -43,7 +42,7 @@ namespace ItsApe.ArtifactDetector.Detectors.VisualFeatureExtractor.VisualMatchFi
 
             return filteredMatches;
         }
-        
+
         /// <summary>
         /// Test if point is equal to patchCenter with respect to error patch size patchSize.
         /// </summary>
@@ -66,5 +65,20 @@ namespace ItsApe.ArtifactDetector.Detectors.VisualFeatureExtractor.VisualMatchFi
         protected bool IsInTargetPatch(float pointX, float pointY, PointF patchCenter, float patchSize)
             => IsInRange(pointX, patchCenter.X, patchSize)
             && IsInRange(pointY, patchCenter.Y, patchSize);
+
+        /// <summary>
+        /// Adds an index to a list of MDMatches.
+        /// </summary>
+        public struct IndexedMDMatch
+        {
+            public int index;
+            public MDMatch[] match;
+
+            public IndexedMDMatch(int i, MDMatch[] mDMatch) : this()
+            {
+                index = i;
+                match = mDMatch;
+            }
+        }
     }
 }

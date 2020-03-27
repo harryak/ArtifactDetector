@@ -1,11 +1,14 @@
-﻿using ItsApe.ArtifactDetector.Services;
-using Microsoft.Extensions.Logging;
-using System;
+﻿using System;
 using System.ServiceProcess;
 using System.Windows.Forms;
+using ItsApe.ArtifactDetector.Services;
+using Microsoft.Extensions.Logging;
 
 namespace ItsApe.ArtifactDetector
 {
+    /// <summary>
+    /// Starting point of this program.
+    /// </summary>
     internal class Program
     {
         /// <summary>
@@ -13,10 +16,14 @@ namespace ItsApe.ArtifactDetector
         /// </summary>
         private static ILogger Logger { get; set; }
 
+        /// <summary>
+        /// Starting point of the execution, just instantiates and runs the
+        /// detector service.
+        /// </summary>
+        /// <param name="args">Command line arguments, not parsed atm.</param>
         [STAThread]
-        private static int Main(string[] args)
+        private static void Main(string[] args)
         {
-
             ServiceBase[] ServicesToRun;
             ServicesToRun = new ServiceBase[]
             {
@@ -34,8 +41,6 @@ namespace ItsApe.ArtifactDetector
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
 #endif
-
-            return 0;
         }
     }
 }

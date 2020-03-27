@@ -1,6 +1,6 @@
-﻿using Microsoft.Win32;
-using System;
+﻿using System;
 using System.IO;
+using Microsoft.Win32;
 
 namespace ItsApe.ArtifactDetector.Utilities
 {
@@ -12,17 +12,17 @@ namespace ItsApe.ArtifactDetector.Utilities
         /// <summary>
         /// Static string containing the file suffix for executables.
         /// </summary>
-        private const string exeSuffix = ".exe";
+        private const string ExeSuffix = ".exe";
 
         /// <summary>
         /// Registry key containing browser user choice.
         /// </summary>
-        private const string keyBrowserUserChoice = @"Software\Microsoft\Windows\Shell\Associations\UrlAssociations\http\UserChoice";
+        private const string KeyBrowserUserChoice = @"Software\Microsoft\Windows\Shell\Associations\UrlAssociations\http\UserChoice";
 
         /// <summary>
         /// Registry key containing mailto user choice.
         /// </summary>
-        private const string keyMailtoUserChoice = @"Software\Microsoft\Windows\Shell\Associations\UrlAssociations\mailto\UserChoice";
+        private const string KeyMailtoUserChoice = @"Software\Microsoft\Windows\Shell\Associations\UrlAssociations\mailto\UserChoice";
 
         /// <summary>
         /// Returns the information on the executable file of the default browser for the current user.
@@ -51,7 +51,7 @@ namespace ItsApe.ArtifactDetector.Utilities
         {
             string path = applicationName + @"\shell\open\command";
             FileInfo applicationPath = null;
-            using (RegistryKey pathKey = Registry.ClassesRoot.OpenSubKey(path))
+            using (var pathKey = Registry.ClassesRoot.OpenSubKey(path))
             {
                 if (pathKey == null)
                 {
@@ -62,9 +62,9 @@ namespace ItsApe.ArtifactDetector.Utilities
                 try
                 {
                     path = pathKey.GetValue(null).ToString().ToLower().Replace("\"", "");
-                    if (!path.EndsWith(exeSuffix))
+                    if (!path.EndsWith(ExeSuffix))
                     {
-                        path = path.Substring(0, path.LastIndexOf(exeSuffix, StringComparison.Ordinal) + exeSuffix.Length);
+                        path = path.Substring(0, path.LastIndexOf(ExeSuffix, StringComparison.Ordinal) + ExeSuffix.Length);
                         applicationPath = new FileInfo(path);
                     }
                 }
@@ -85,7 +85,7 @@ namespace ItsApe.ArtifactDetector.Utilities
         private static string GetDefaultApplicationName(string userChoice)
         {
             string applicationName = "";
-            using (RegistryKey userChoiceKey = Registry.CurrentUser.OpenSubKey(userChoice))
+            using (var userChoiceKey = Registry.CurrentUser.OpenSubKey(userChoice))
             {
                 if (userChoiceKey == null)
                 {
@@ -109,7 +109,7 @@ namespace ItsApe.ArtifactDetector.Utilities
         /// <returns>Name of the application in the registry.</returns>
         private static string GetDefaultBrowserName()
         {
-            return GetDefaultApplicationName(keyBrowserUserChoice);
+            return GetDefaultApplicationName(KeyBrowserUserChoice);
         }
 
         /// <summary>
@@ -118,7 +118,7 @@ namespace ItsApe.ArtifactDetector.Utilities
         /// <returns>Name of the application in the registry.</returns>
         private static string GetDefaultMailReaderName()
         {
-            return GetDefaultApplicationName(keyMailtoUserChoice);
+            return GetDefaultApplicationName(KeyMailtoUserChoice);
         }
     }
 }

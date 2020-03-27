@@ -1,37 +1,40 @@
-﻿using ItsApe.ArtifactDetector.DebugUtilities;
-using Microsoft.Extensions.Logging;
-using NLog.Extensions.Logging;
-using System;
+﻿using System;
 using System.IO;
 using System.Reflection;
 using System.Windows.Forms;
+using ItsApe.ArtifactDetector.DebugUtilities;
+using Microsoft.Extensions.Logging;
+using NLog.Extensions.Logging;
 
-namespace ItsApe.ArtifactDetector.Utilities
+namespace ItsApe.ArtifactDetector
 {
-    internal class Setup
+    /// <summary>
+    /// Singleton class holding global information about the application.
+    /// </summary>
+    internal class ApplicationSetup
     {
-        private static Setup _instance;
+        private static ApplicationSetup _instance;
 
         /// <summary>
         /// This class handles the parsing of the configuration files, plus the setup of the working environment.
         /// </summary>
-        private Setup()
+        private ApplicationSetup()
         {
             Logger = GetLogger("Setup");
 
             // Parse the command line.
             Logger.LogDebug("Getting the configuration.");
 
-            ShouldCache = AADConfig.Cache;
-            ShouldEvaluate = AADConfig.Evaluate;
+            ShouldCache = ApplicationConfiguration.Cache;
+            ShouldEvaluate = ApplicationConfiguration.Evaluate;
 
             WorkingDirectory = GetExecutingDirectory();
 
             // Determine if we use a stopwatch in this run.
-            if (AADConfig.Evaluate)
+            if (ApplicationConfiguration.Evaluate)
             {
                 // Get stopwatch for evaluation.
-                Stopwatch = AADStopwatch.GetInstance();
+                Stopwatch = DetectorStopwatch.GetInstance();
             }
 
 # if DEBUG
@@ -39,16 +42,6 @@ namespace ItsApe.ArtifactDetector.Utilities
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
 #endif
-        }
-
-        public static Setup GetInstance()
-        {
-            if (_instance == null)
-            {
-                _instance = new Setup();
-            }
-
-            return _instance;
         }
 
         /// <summary>
@@ -69,7 +62,7 @@ namespace ItsApe.ArtifactDetector.Utilities
         /// <summary>
         /// Stopwatch for evaluation.
         /// </summary>
-        public AADStopwatch Stopwatch { get; set; } = null;
+        public DetectorStopwatch Stopwatch { get; set; } = null;
 
         /// <summary>
         /// The working directory.
@@ -80,6 +73,16 @@ namespace ItsApe.ArtifactDetector.Utilities
         /// Logger instance for this setup.
         /// </summary>
         private ILogger Logger { get; set; }
+
+        public static ApplicationSetup GetInstance()
+        {
+            if (_instance == null)
+            {
+                _instance = new ApplicationSetup();
+            }
+
+            return _instance;
+        }
 
         /// <summary>
         /// Get the directory this app is executed in.

@@ -1,10 +1,10 @@
-﻿using ItsApe.ArtifactDetector.Helpers;
-using ItsApe.ArtifactDetector.Models;
-using ItsApe.ArtifactDetector.Utilities;
-using System;
+﻿using System;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text;
+using ItsApe.ArtifactDetector.Helpers;
+using ItsApe.ArtifactDetector.Models;
+using ItsApe.ArtifactDetector.Utilities;
 
 namespace ItsApe.ArtifactDetector.Detectors
 {
@@ -24,7 +24,7 @@ namespace ItsApe.ArtifactDetector.Detectors
         public override DetectorResponse FindArtifact(ref ArtifactRuntimeInformation runtimeInformation, DetectorResponse previousResponse = null)
         {
             // Find window handles via process names.
-            IntPtr desktopWindowHandle = GetDesktopHandle();
+            var desktopWindowHandle = GetDesktopHandle();
 
             // This error is really unlikely.
             if (desktopWindowHandle == IntPtr.Zero)
@@ -38,13 +38,13 @@ namespace ItsApe.ArtifactDetector.Detectors
 
             // Get the desktop window's process to enumerate child windows.
             NativeMethods.GetWindowThreadProcessId(desktopWindowHandle, out uint desktopProcessId);
-            IntPtr desktopProcessHandle = NativeMethods.OpenProcess(NativeMethods.PROCESS_VM.OPERATION | NativeMethods.PROCESS_VM.READ | NativeMethods.PROCESS_VM.WRITE, false, desktopProcessId);
+            var desktopProcessHandle = NativeMethods.OpenProcess(NativeMethods.PROCESS_VM.OPERATION | NativeMethods.PROCESS_VM.READ | NativeMethods.PROCESS_VM.WRITE, false, desktopProcessId);
 
             // Allocate memory in the desktop process.
-            IntPtr bufferPointer = NativeMethods.VirtualAllocEx(desktopProcessHandle, IntPtr.Zero, new UIntPtr(BUFFER_SIZE), NativeMethods.MEM.RESERVE | NativeMethods.MEM.COMMIT, NativeMethods.PAGE.READWRITE);
+            var bufferPointer = NativeMethods.VirtualAllocEx(desktopProcessHandle, IntPtr.Zero, new UIntPtr(BUFFER_SIZE), NativeMethods.MEM.RESERVE | NativeMethods.MEM.COMMIT, NativeMethods.PAGE.READWRITE);
 
             // Initialize loop variables.
-            NativeMethods.LVITEMA currentDesktopIcon = new NativeMethods.LVITEMA();
+            var currentDesktopIcon = new NativeMethods.LVITEMA();
             byte[] vBuffer = new byte[BUFFER_SIZE];
             uint bytesRead = 0;
 
@@ -59,7 +59,7 @@ namespace ItsApe.ArtifactDetector.Detectors
             remoteBufferDesktopIcon[0].cchTextMax = vBuffer.Length - Marshal.SizeOf(typeof(NativeMethods.LVITEMA));
 
             // Set pszText at point in the remote process's buffer.
-            remoteBufferDesktopIcon[0].pszText = (IntPtr) ((int) bufferPointer + Marshal.SizeOf(typeof(NativeMethods.LVITEMA)));
+            remoteBufferDesktopIcon[0].pszText = (IntPtr)((int)bufferPointer + Marshal.SizeOf(typeof(NativeMethods.LVITEMA)));
 
             try
             {
@@ -69,11 +69,11 @@ namespace ItsApe.ArtifactDetector.Detectors
                     remoteBufferDesktopIcon[0].iItem = i;
 
                     // Write to desktop process the structure we want to get.
-                    NativeMethods.WriteProcessMemory(desktopProcessHandle, bufferPointer, Marshal.UnsafeAddrOfPinnedArrayElement(remoteBufferDesktopIcon, 0), new UIntPtr((uint) Marshal.SizeOf(typeof(NativeMethods.LVITEMA))), ref bytesRead);
+                    NativeMethods.WriteProcessMemory(desktopProcessHandle, bufferPointer, Marshal.UnsafeAddrOfPinnedArrayElement(remoteBufferDesktopIcon, 0), new UIntPtr((uint)Marshal.SizeOf(typeof(NativeMethods.LVITEMA))), ref bytesRead);
 
                     // Get i-th item of desktop and read its memory.
                     NativeMethods.SendMessage(desktopWindowHandle, NativeMethods.LVM.GETITEMW, new IntPtr(i), bufferPointer);
-                    NativeMethods.ReadProcessMemory(desktopProcessHandle, bufferPointer, Marshal.UnsafeAddrOfPinnedArrayElement(vBuffer, 0), new UIntPtr((uint) Marshal.SizeOf(currentDesktopIcon)), ref bytesRead);
+                    NativeMethods.ReadProcessMemory(desktopProcessHandle, bufferPointer, Marshal.UnsafeAddrOfPinnedArrayElement(vBuffer, 0), new UIntPtr((uint)Marshal.SizeOf(currentDesktopIcon)), ref bytesRead);
 
                     // This error is really unlikely.
                     if (bytesRead != Marshal.SizeOf(currentDesktopIcon))
@@ -88,7 +88,7 @@ namespace ItsApe.ArtifactDetector.Detectors
                     NativeMethods.ReadProcessMemory(desktopProcessHandle, currentDesktopIcon.pszText, Marshal.UnsafeAddrOfPinnedArrayElement(vBuffer, 0), new UIntPtr(260), ref bytesRead);
 
                     // Read from buffer into string with unicode encoding, then trim string.
-                    currentIconTitle = Encoding.Unicode.GetString(vBuffer, 0, (int) bytesRead);
+                    currentIconTitle = Encoding.Unicode.GetString(vBuffer, 0, (int)bytesRead);
                     currentIconTitle = currentIconTitle.Substring(0, currentIconTitle.IndexOf('\0'));
 
                     // Check if the current title has a substring in the possible titles.
@@ -109,10 +109,14 @@ namespace ItsApe.ArtifactDetector.Detectors
             return new DetectorResponse { ArtifactPresent = DetectorResponse.ArtifactPresence.Impossible };
         }
 
+        /// <summary>
+        /// Get the desktop window's handle.
+        /// </summary>
+        /// <returns>The handle if found or IntPtr.Zero if not.</returns>
         private IntPtr GetDesktopHandle()
         {
             // Get desktop window via program manager.
-            IntPtr hWndPDesktop = NativeMethods.FindWindow("Progman", "Program Manager");
+            var hWndPDesktop = NativeMethods.FindWindow("Progman", "Program Manager");
             if (hWndPDesktop != IntPtr.Zero)
             {
                 hWndPDesktop = NativeMethods.FindWindowEx(hWndPDesktop, IntPtr.Zero, "SHELLDLL_DefView", null);

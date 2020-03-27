@@ -1,5 +1,8 @@
 ﻿namespace ItsApe.ArtifactDetector.Models
 {
+    /// <summary>
+    /// Data class to hold information used for and in the detector service.
+    /// </summary>
     internal class ServiceState
     {
         /// <summary>

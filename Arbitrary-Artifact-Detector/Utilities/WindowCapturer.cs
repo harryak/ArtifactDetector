@@ -1,11 +1,14 @@
-﻿using Emgu.CV;
-using Emgu.CV.Structure;
-using System;
+﻿using System;
 using System.Drawing;
 using System.Runtime.InteropServices;
+using Emgu.CV;
+using Emgu.CV.Structure;
 
 namespace ItsApe.ArtifactDetector.Utilities
 {
+    /// <summary>
+    /// Screenshot utility capturing windows or sub-windows.
+    /// </summary>
     internal class WindowCapturer
     {
         /// <summary>
@@ -47,6 +50,7 @@ namespace ItsApe.ArtifactDetector.Utilities
 
         #region DLL imports
 
+        //TODO: Move to global NativeMethods.
         private class NativeMethods
         {
             public const int SRCCOPY = 0x00CC0020; // BitBlt dwRop parameter

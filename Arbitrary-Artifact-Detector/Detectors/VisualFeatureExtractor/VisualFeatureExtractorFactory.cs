@@ -3,6 +3,9 @@ using System.Collections.Generic;
 
 namespace ItsApe.ArtifactDetector.Detectors.VisualFeatureExtractor
 {
+    /// <summary>
+    /// Factory class to get the currently configured feature matcher.
+    /// </summary>
     internal class VisualFeatureExtractorFactory
     {
         /// <summary>
@@ -25,12 +28,12 @@ namespace ItsApe.ArtifactDetector.Detectors.VisualFeatureExtractor
         public static IVisualFeatureExtractor GetFeatureExtractor()
         {
             // If the value in the configuration is invalid throw error.
-            if (!visualFeatureExtractorSelectionMap.ContainsKey(AADConfig.FeatureExtractorSelection))
+            if (!visualFeatureExtractorSelectionMap.ContainsKey(ApplicationConfiguration.FeatureExtractorSelection))
             {
                 throw new ArgumentException("Could not instantiate feature extractor, wrong name given.");
             }
 
-            return visualFeatureExtractorSelectionMap[AADConfig.FeatureExtractorSelection]();
+            return visualFeatureExtractorSelectionMap[ApplicationConfiguration.FeatureExtractorSelection]();
         }
     }
 }

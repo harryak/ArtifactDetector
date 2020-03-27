@@ -1,12 +1,12 @@
-﻿using ItsApe.ArtifactDetector.Models;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using ItsApe.ArtifactDetector.Models;
 
 namespace ItsApe.ArtifactDetector.Detectors
 {
     /// <summary>
-    /// Detector to detect runnign processes.
+    /// Detector to detect running processes.
     ///
     /// Needs:  ProcessName
     /// Yields: WindowHandle
@@ -15,7 +15,7 @@ namespace ItsApe.ArtifactDetector.Detectors
     {
         public override DetectorResponse FindArtifact(ref ArtifactRuntimeInformation runtimeInformation, DetectorResponse previousResponse = null)
         {
-            List<Process> processes = new List<Process>();
+            var processes = new List<Process>();
 
             StartStopwatch();
             foreach (string possibleProcessName in runtimeInformation.PossibleProcessNames)
@@ -29,7 +29,7 @@ namespace ItsApe.ArtifactDetector.Detectors
                 return new DetectorResponse() { ArtifactPresent = DetectorResponse.ArtifactPresence.Impossible };
             }
 
-            foreach (Process currentProcess in processes)
+            foreach (var currentProcess in processes)
             {
                 if (currentProcess.MainWindowHandle != IntPtr.Zero)
                 {
@@ -38,7 +38,7 @@ namespace ItsApe.ArtifactDetector.Detectors
             }
 
             StopStopwatch("FindArtifact finished in {0}ms.");
-            
+
             return new DetectorResponse() { ArtifactPresent = DetectorResponse.ArtifactPresence.Possible };
         }
     }

@@ -1,11 +1,9 @@
-﻿using ItsApe.ArtifactDetector.Detectors.VisualFeatureExtractor;
+﻿using System;
+using System.Windows.Forms;
+using ItsApe.ArtifactDetector.Detectors.VisualFeatureExtractor;
 using ItsApe.ArtifactDetector.Models;
 using ItsApe.ArtifactDetector.Utilities;
 using ItsApe.ArtifactDetector.Viewers;
-using Emgu.CV;
-using System;
-using System.Collections.Generic;
-using System.Windows.Forms;
 
 namespace ItsApe.ArtifactDetector.Detectors
 {
@@ -15,14 +13,17 @@ namespace ItsApe.ArtifactDetector.Detectors
     internal class VisualFeatureDetector : BaseDetector, IDetector
     {
         /// <summary>
-        /// Feature extractor used in this run.
+        /// Instantiate via setting the feature extractor from the configurations.
         /// </summary>
-        protected IVisualFeatureExtractor FeatureExtractor { get; set; }
-
         public VisualFeatureDetector()
         {
             FeatureExtractor = VisualFeatureExtractorFactory.GetFeatureExtractor();
         }
+
+        /// <summary>
+        /// Feature extractor used in this run.
+        /// </summary>
+        protected IVisualFeatureExtractor FeatureExtractor { get; set; }
 
         /// <summary>
         /// Main function of this detector: Find the artifact provided by the configuration.
@@ -34,7 +35,7 @@ namespace ItsApe.ArtifactDetector.Detectors
         public override DetectorResponse FindArtifact(ref ArtifactRuntimeInformation runtimeInformation, DetectorResponse previousResponse = null)
         {
             // Shorthand for reference images.
-            ICollection<ProcessedImage> referenceImages = runtimeInformation.ReferenceImages.GetProcessedImages();
+            var referenceImages = runtimeInformation.ReferenceImages.GetProcessedImages();
 
             // Do we have reference images?
             if (referenceImages.Count < 1)
@@ -44,11 +45,11 @@ namespace ItsApe.ArtifactDetector.Detectors
 
             // For all matching windows:
             bool artifactFound = false;
-            foreach (KeyValuePair<IntPtr, WindowToplevelInformation> matchingWindowEntry in runtimeInformation.MatchingWindowsInformation)
+            foreach (var matchingWindowEntry in runtimeInformation.MatchingWindowsInformation)
             {
                 // Make screenshot of artifact window and extract the features.
-                ProcessedImage observedImage = FeatureExtractor.ExtractFeatures(WindowCapturer.CaptureWindow(matchingWindowEntry.Key));
-                artifactFound = FeatureExtractor.ImageContainsArtifactType(observedImage, referenceImages, out Mat drawingResult, out int matchCount);
+                var observedImage = FeatureExtractor.ExtractFeatures(WindowCapturer.CaptureWindow(matchingWindowEntry.Key));
+                artifactFound = FeatureExtractor.ImageContainsArtifactType(observedImage, referenceImages, out var drawingResult, out int matchCount);
 
 #if DEBUG
                 // Show the results in a window.

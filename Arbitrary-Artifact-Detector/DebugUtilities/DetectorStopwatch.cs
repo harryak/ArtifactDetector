@@ -8,41 +8,55 @@ namespace ItsApe.ArtifactDetector.DebugUtilities
     /// A simple extension to System.Diagnostics.Stopwatch:
     /// Singleton for measuring multiple times, storing their elapsed ticks and
     /// outputting the resulting list as CSV strings.
-    /// 
+    ///
     /// This is not thread safe!
     /// </summary>
-    internal sealed class AADStopwatch : Stopwatch
+    internal sealed class DetectorStopwatch : Stopwatch
     {
         /// <summary>
         /// Singleton instance
         /// </summary>
-        private static AADStopwatch instance = null;
+        private static DetectorStopwatch instance = null;
+
+        private int ExtraValue = -1;
+
+        private List<string> Labels;
 
         // List of the elapsed times.
         private List<TimeSpan> MeasuredTimes;
-        private List<string>   Labels;
-        private int            ExtraValue = -1;
 
         /// <summary>
         /// Do not allow direct instantiations.
         /// </summary>
-        private AADStopwatch()
+        private DetectorStopwatch()
         {
             MeasuredTimes = new List<TimeSpan>();
-            Labels        = new List<string>();
+            Labels = new List<string>();
         }
 
         /// <summary>
         /// Get the singleton instance.
         /// </summary>
         /// <returns>The instance.</returns>
-        public static AADStopwatch GetInstance()
+        public static DetectorStopwatch GetInstance()
         {
             if (instance == null)
             {
-                instance = new AADStopwatch();
+                instance = new DetectorStopwatch();
             }
             return instance;
+        }
+
+        /// <summary>
+        /// Return all labels as a CSV string.
+        /// </summary>
+        /// <returns>CSV-string.</returns>
+        public string LabelsToCSV()
+        {
+            string output = "";
+            Labels.ForEach(Label => output += Label + ";");
+
+            return output + "total";
         }
 
         /// <summary>
@@ -97,14 +111,6 @@ namespace ItsApe.ArtifactDetector.DebugUtilities
             if (ExtraValue > 0) output += ";" + ExtraValue;
 
             return output;
-        }
-
-        public string LabelsToCSV()
-        {
-            string output = "";
-            Labels.ForEach(Label => output += Label + ";");
-
-            return output + "total";
         }
     }
 }
