@@ -60,6 +60,13 @@ namespace ItsApe.ArtifactDetector.Models
         public IList<string> PossibleProcessNames { get; set; } = new List<string>();
 
         /// <summary>
+        /// Possible names of the processes.
+        /// </summary>
+        [JsonProperty("program_names")]
+        [JsonConverter(typeof(StringToListConverter))]
+        public IList<string> PossibleProgramNames { get; set; } = new List<string>();
+
+        /// <summary>
         /// Possible (fragments of the) titles of the windows to get.
         /// </summary>
         [JsonProperty("window_titles")]

@@ -7,6 +7,8 @@ namespace ItsApe.ArtifactDetector.Utilities
 {
     internal static partial class NativeMethods
     {
+        public const int SRCCOPY = 0x00CC0020; // BitBlt dwRop parameter
+
         /// <summary>
         /// Delegate function to loop over windows.
         /// </summary>
@@ -15,9 +17,30 @@ namespace ItsApe.ArtifactDetector.Utilities
         /// <returns>Can be disregarded.</returns>
         public delegate bool EnumWindowsProc(IntPtr hWnd, int lParam);
 
+        [DllImport("gdi32.dll", EntryPoint = "BitBlt", SetLastError = true)]
+        [return: MarshalAs(UnmanagedType.Bool)]
+        public static extern bool BitBlt(IntPtr hObject, int nXDest, int nYDest, int nWidth, int nHeight, IntPtr hObjectSource, int nXSrc, int nYSrc, int dwRop);
+
+        [DllImport("gdi32.dll", EntryPoint = "CreateCompatibleBitmap")]
+        public static extern IntPtr CreateCompatibleBitmap(IntPtr hDC, int nWidth, int nHeight);
+
+        [DllImport("gdi32.dll", EntryPoint = "CreateCompatibleDC", SetLastError = true)]
+        public static extern IntPtr CreateCompatibleDC(IntPtr hDC);
+
+        [DllImport("gdi32.dll", EntryPoint = "DeleteDC")]
+        [return: MarshalAs(UnmanagedType.Bool)]
+        public static extern bool DeleteDC(IntPtr hDC);
+
+        [DllImport("gdi32.dll", EntryPoint = "DeleteObject")]
+        [return: MarshalAs(UnmanagedType.Bool)]
+        public static extern bool DeleteObject(IntPtr hObject);
+
         [DllImport("user32.dll", SetLastError = true)]
         [return: MarshalAs(UnmanagedType.Bool)]
         public static extern bool EnumWindows(EnumWindowsProc enumFunc, [MarshalAs(UnmanagedType.SysInt)] int lParam);
+
+        [DllImport("user32.dll")]
+        public static extern IntPtr GetWindowDC(IntPtr hWnd);
 
         [DllImport("user32.dll", SetLastError = true)]
         [return: MarshalAs(UnmanagedType.Bool)]
@@ -26,6 +49,10 @@ namespace ItsApe.ArtifactDetector.Utilities
         [DllImport("user32.dll", SetLastError = true)]
         [return: MarshalAs(UnmanagedType.Bool)]
         public static extern bool GetWindowPlacement(IntPtr hWnd, ref WindowPlacement lpwndpl);
+
+        [DllImport("user32.dll", SetLastError = true)]
+        [return: MarshalAs(UnmanagedType.Bool)]
+        public static extern bool GetWindowRect(IntPtr hWnd, ref RECT rect);
 
         [DllImport("user32.dll", CharSet = CharSet.Unicode)]
         [return: MarshalAs(UnmanagedType.U4)]
@@ -38,6 +65,13 @@ namespace ItsApe.ArtifactDetector.Utilities
         [DllImport("user32.dll")]
         [return: MarshalAs(UnmanagedType.Bool)]
         public static extern bool IsWindowVisible(IntPtr hWnd);
+
+        [DllImport("user32.dll")]
+        [return: MarshalAs(UnmanagedType.Bool)]
+        public static extern bool ReleaseDC(IntPtr hWnd, IntPtr hDC);
+
+        [DllImport("gdi32.dll", EntryPoint = "SelectObject")]
+        public static extern IntPtr SelectObject(IntPtr hDC, IntPtr hObject);
 
         [DllImport("kernel32.dll")]
         internal static extern bool CloseHandle(IntPtr handle);
@@ -73,31 +107,6 @@ namespace ItsApe.ArtifactDetector.Utilities
         internal static extern bool WriteProcessMemory(IntPtr hProcess, IntPtr lpBaseAddress, IntPtr lpBuffer, UIntPtr nSize, ref uint vNumberOfBytesRead);
 
         #region structs
-
-#pragma warning disable IDE1006
-
-        [StructLayout(LayoutKind.Sequential)]
-        internal struct TBBUTTON
-        {
-            public int iBitmap;
-            public int idCommand;
-
-            [StructLayout(LayoutKind.Explicit)]
-            private struct TBBUTTON_U
-            {
-                [FieldOffset(0)] public byte fsState;
-                [FieldOffset(1)] public byte fsStyle;
-                [FieldOffset(0)] private readonly IntPtr bReserved;
-            }
-
-            private TBBUTTON_U union;
-            public byte fsState { get { return union.fsState; } set { union.fsState = value; } }
-            public byte fsStyle { get { return union.fsStyle; } set { union.fsStyle = value; } }
-            public UIntPtr dwData;
-            public IntPtr iString;
-        }
-
-#pragma warning restore IDE1006
 
 #pragma warning disable CS0649
 
@@ -216,6 +225,40 @@ namespace ItsApe.ArtifactDetector.Utilities
         }
 
 #pragma warning restore CS0649
+
+        [StructLayout(LayoutKind.Sequential)]
+        public struct RECT
+        {
+            public int left;
+            public int top;
+            public int right;
+            public int bottom;
+        }
+
+#pragma warning disable IDE1006
+
+        [StructLayout(LayoutKind.Sequential)]
+        internal struct TBBUTTON
+        {
+            public int iBitmap;
+            public int idCommand;
+
+            [StructLayout(LayoutKind.Explicit)]
+            private struct TBBUTTON_U
+            {
+                [FieldOffset(0)] public byte fsState;
+                [FieldOffset(1)] public byte fsStyle;
+                [FieldOffset(0)] private readonly IntPtr bReserved;
+            }
+
+            private TBBUTTON_U union;
+            public byte fsState { get { return union.fsState; } set { union.fsState = value; } }
+            public byte fsStyle { get { return union.fsStyle; } set { union.fsStyle = value; } }
+            public UIntPtr dwData;
+            public IntPtr iString;
+        }
+
+#pragma warning restore IDE1006
 
         /// <summary>
         /// Contains information about the placement of a window on the screen.
