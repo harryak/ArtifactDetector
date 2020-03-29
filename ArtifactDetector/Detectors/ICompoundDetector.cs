@@ -1,7 +1,7 @@
 ﻿namespace ItsApe.ArtifactDetector.Detectors
 {
     /// <summary>
-    /// A detector made up from several detectors.
+    /// A detector composed from several detectors in a prioritized list.
     /// </summary>
     internal interface ICompoundDetector : IDetector
     {
@@ -12,18 +12,6 @@
         /// <param name="priority">Optional. Prioritize this detector.</param>
         /// <returns>The set priority.</returns>
         int AddDetector(IDetector detector, int priority = -1);
-
-        /// <summary>
-        /// Simple debug output to list all detectors in the current chain.
-        /// </summary>
-        /// <returns>Human readable list of detectors.</returns>
-        string DetectorChain();
-
-        /// <summary>
-        /// Counts the currently chained detectors.
-        /// </summary>
-        /// <returns>Detector count.</returns>
-        int DetectorCount();
 
         /// <summary>
         /// Set a new priority for the given detector instance.

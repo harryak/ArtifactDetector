@@ -10,27 +10,9 @@ namespace ItsApe.ArtifactDetector.Detectors
     internal abstract class BaseDetector : Debuggable, IDetector
     {
         /// <summary>
-        /// Provide the setup, please
-        /// </summary>
-        protected BaseDetector()
-        {
-            Setup = ApplicationSetup.GetInstance();
-        }
-
-        /// <summary>
-        /// Information about the artifact instance currently detecting.
-        /// </summary>
-        protected ArtifactRuntimeInformation PersistentRuntimeInformation { get; set; }
-
-        /// <summary>
         /// Conditions that have to be fulfilled before this detector should be run.
         /// </summary>
         protected IDetectorCondition<ArtifactRuntimeInformation> PreConditions { get; set; }
-
-        /// <summary>
-        /// Setup of this application.
-        /// </summary>
-        protected ApplicationSetup Setup { get; }
 
         /// <summary>
         /// Conditions that have to be fulfilled to yield "match" after calling FindArtifact.

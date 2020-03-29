@@ -11,7 +11,7 @@ namespace ItsApe.ArtifactDetector.Detectors
         /// <summary>
         /// List of detector configurations.
         /// </summary>
-        private IDictionary<int, IDetector> DetectorList { get; set; } = new SortedDictionary<int, IDetector>();
+        private SortedDictionary<int, IDetector> DetectorList { get; set; } = new SortedDictionary<int, IDetector>();
 
         /// <summary>
         /// Add a new detector to the chain of detectors.
@@ -31,31 +31,6 @@ namespace ItsApe.ArtifactDetector.Detectors
             DetectorList.Add(priority, detector);
 
             return priority;
-        }
-
-        /// <summary>
-        /// Simple debug output to list all detectors in the current chain.
-        /// </summary>
-        /// <returns>Human readable list of detectors.</returns>
-        public string DetectorChain()
-        {
-            string output = "";
-
-            foreach (KeyValuePair<int, IDetector> entry in DetectorList)
-            {
-                output += "{entry.Key} : {entry.Value };";
-            }
-
-            return output;
-        }
-
-        /// <summary>
-        /// Counts the currently chained detectors.
-        /// </summary>
-        /// <returns>Detector count.</returns>
-        public int DetectorCount()
-        {
-            return DetectorList.Count;
         }
 
         /// <summary>

@@ -3,9 +3,9 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 15
 VisualStudioVersion = 15.0.28307.136
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Arbitrary-Artifact-Detector", "Arbitrary-Artifact-Detector\Arbitrary-Artifact-Detector.csproj", "{39FE248A-DF58-49B7-8716-4C4CF220C20D}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ArtifactDetector", "ArtifactDetector\ArtifactDetector.csproj", "{39FE248A-DF58-49B7-8716-4C4CF220C20D}"
 EndProject
-Project("{54435603-DBB4-11D2-8724-00A0C9A8B90C}") = "AADInstaller", "AADInstaller\AADInstaller.vdproj", "{8968E345-AE73-461D-BB6F-0F4F085B2421}"
+Project("{54435603-DBB4-11D2-8724-00A0C9A8B90C}") = "ArtifactDetectorInstaller", "ArtifactDetectorInstaller\ArtifactDetectorInstaller.vdproj", "{8968E345-AE73-461D-BB6F-0F4F085B2421}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
