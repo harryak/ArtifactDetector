@@ -29,7 +29,10 @@ namespace ItsApe.ArtifactDetector.Detectors.Compontents
         public int CalculateRectangleUnion(Rectangle boundingRectangle, IList<Rectangle> overlayingRectangles)
         {
             // Get events filled for sweep line algorithm.
-            FillAvailableEvents(boundingRectangle, overlayingRectangles);
+            if (FillAvailableEvents(boundingRectangle, overlayingRectangles))
+            {
+                return boundingRectangle.Area;
+            }
 
             // Rule out trivial case of no events.
             if (Events.XEvents.Count < 1 || Events.YEvents.Count < 1)
@@ -56,53 +59,48 @@ namespace ItsApe.ArtifactDetector.Detectors.Compontents
             Events.AddYEvent(intersectionRectangle.Bottom);
         }
 
-        private void FillAvailableEvents(Rectangle boundingRectangle, IList<Rectangle> overlayingRectangles)
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="boundingRectangle"></param>
+        /// <param name="overlayingRectangles"></param>
+        /// <returns>False if we already know the overlaying rectangles fill the whole area, true per default.</returns>
+        private bool FillAvailableEvents(Rectangle boundingRectangle, IList<Rectangle> overlayingRectangles)
         {
             Events = new SweepLineEvents();
 
             Rectangle intersectionRectangle;
             foreach (var currentRectangle in overlayingRectangles)
             {
-                // Try to find intersection, throws ArgumentException if there is none.
-                try
+                // Get rectangle intersection between overlapping rectangle and bounding box.
+                int intersectionLeft = Math.Max(currentRectangle.Left, boundingRectangle.Left);
+                int intersectionRight = Math.Min(currentRectangle.Right, boundingRectangle.Right);
+
+                if (intersectionLeft >= intersectionRight)
                 {
-                    // Get rectangle intersection between overlapping rectangle and bounding box.
-                    intersectionRectangle = Intersection(boundingRectangle, currentRectangle);
-
-                    AddIntersectionRectangleEvents(intersectionRectangle);
+                    continue;
                 }
-                catch (ArgumentException)
-                { }
-            }
-        }
 
-        /// <summary>
-        /// Get intersection rectangle of the two rectangles.
-        ///
-        /// Throws an ArgumentException if there is none.
-        /// </summary>
-        /// <param name="firstRectangle">Order does not matter.</param>
-        /// <param name="secondRectangle">Order does not matter.</param>
-        /// <returns>The intersection rectangle.</returns>
-        private Rectangle Intersection(Rectangle firstRectangle, Rectangle secondRectangle)
-        {
-            int left = Math.Max(firstRectangle.Left, secondRectangle.Left);
-            int right = Math.Min(firstRectangle.Right, secondRectangle.Right);
+                int intersectionTop = Math.Max(currentRectangle.Top, boundingRectangle.Top);
+                int intersectionBottom = Math.Min(currentRectangle.Bottom, boundingRectangle.Bottom);
 
-            if (left >= right)
-            {
-                throw new ArgumentException("No intersection possible.");
+                if (intersectionTop >= intersectionBottom)
+                {
+                    continue;
+                }
+
+                // If we arrive here there is a valid intersection.
+                intersectionRectangle = new Rectangle(intersectionLeft, intersectionTop, intersectionRight, intersectionBottom);
+
+                if (intersectionRectangle.Area >= boundingRectangle.Area)
+                {
+                    return false;
+                }
+
+                AddIntersectionRectangleEvents(intersectionRectangle);
             }
 
-            int top = Math.Max(firstRectangle.Top, secondRectangle.Top);
-            int bottom = Math.Min(firstRectangle.Bottom, secondRectangle.Bottom);
-
-            if (top >= bottom)
-            {
-                throw new ArgumentException("No intersection possible.");
-            }
-
-            return new Rectangle(left, top, right, bottom);
+            return true;
         }
 
         /// <summary>
