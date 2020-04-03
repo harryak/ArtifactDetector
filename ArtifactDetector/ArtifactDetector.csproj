@@ -237,6 +237,7 @@
     <Compile Include="Utilities\DefaultApplicationFinder.cs" />
     <Compile Include="Utilities\NativeMethods.cs" />
     <Compile Include="Models\Rectangle.cs" />
+    <Compile Include="Detectors\Components\SweepLineCalculator.cs" />
     <Compile Include="Utilities\WindowCapturer.cs" />
     <Compile Include="Models\DetectorConditions\DetectorConditionSet.cs" />
     <Compile Include="Models\DetectorResponse.cs" />
@@ -300,6 +301,7 @@
       <Install>false</Install>
     </BootstrapperPackage>
   </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <Import Project="..\packages\EMGU.CV.4.1.1.3497\build\EMGU.CV.targets" Condition="Exists('..\packages\EMGU.CV.4.1.1.3497\build\EMGU.CV.targets')" />
   <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">

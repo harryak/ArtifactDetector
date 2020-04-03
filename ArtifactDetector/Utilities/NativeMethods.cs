@@ -1,7 +1,7 @@
 ﻿using System;
-using System.Drawing;
 using System.Runtime.InteropServices;
 using System.Text;
+using ItsApe.ArtifactDetector.Models;
 
 namespace ItsApe.ArtifactDetector.Utilities
 {
@@ -37,7 +37,7 @@ namespace ItsApe.ArtifactDetector.Utilities
 
         [DllImport("user32.dll", SetLastError = true)]
         [return: MarshalAs(UnmanagedType.Bool)]
-        public static extern bool EnumWindows(EnumWindowsProc enumFunc, [MarshalAs(UnmanagedType.SysInt)] int lParam);
+        public static extern bool EnumWindows(EnumWindowsProc enumFunc, IntPtr lParam);
 
         [DllImport("user32.dll")]
         public static extern IntPtr GetWindowDC(IntPtr hWnd);
@@ -328,12 +328,12 @@ namespace ItsApe.ArtifactDetector.Utilities
                 Y = y;
             }
 
-            public static implicit operator Point(WindowPosition p)
+            public static implicit operator System.Drawing.Point(WindowPosition p)
             {
-                return new Point(p.X, p.Y);
+                return new System.Drawing.Point(p.X, p.Y);
             }
 
-            public static implicit operator WindowPosition(Point p)
+            public static implicit operator WindowPosition(System.Drawing.Point p)
             {
                 return new WindowPosition(p.X, p.Y);
             }

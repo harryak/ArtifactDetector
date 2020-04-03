@@ -63,7 +63,9 @@
         /// <returns></returns>
         private TreeNode BuildTree(int indexMin, int indexMax)
         {
-            if (indexMax - indexMin < 1)
+            int countItems = indexMax - indexMin + 1;
+
+            if (countItems <= 2)
             {
                 // Leaf node.
                 return new TreeNode()
@@ -75,14 +77,16 @@
             }
             else
             {
+                int split = (indexMin + indexMax) / 2;
+
                 // Common tree node.
                 return new TreeNode()
                 {
                     ValueStart = values[indexMin],
                     ValueEnd = values[indexMax],
                     IntervalLength = values[indexMax] - values[indexMin],
-                    ChildLeft = BuildTree(indexMin, indexMax / 2),
-                    ChildRight = BuildTree(indexMax / 2, indexMax)
+                    ChildLeft = BuildTree(indexMin, split),
+                    ChildRight = BuildTree(split, indexMax)
                 };
             }
         }

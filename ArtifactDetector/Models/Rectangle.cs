@@ -18,93 +18,60 @@ namespace ItsApe.ArtifactDetector.Models
             Bottom = bottom;
         }
 
-        public Rectangle(System.Drawing.Rectangle r) : this(r.Left, r.Top, r.Right, r.Bottom)
+        /// <summary>
+        /// Constructor using a System.Drawing.Rectangle.
+        /// </summary>
+        /// <param name="rectangleObject"></param>
+        public Rectangle(System.Drawing.Rectangle rectangleObject) : this(rectangleObject.Left, rectangleObject.Top, rectangleObject.Right, rectangleObject.Bottom)
         {
         }
 
-        public int X
-        {
-            get { return Left; }
-            set { Right -= (Left - value); Left = value; }
-        }
-
-        public int Y
-        {
-            get { return Top; }
-            set { Bottom -= (Top - value); Top = value; }
-        }
-
+        /// <summary>
+        /// Accessor for the height.
+        /// </summary>
         public int Height
         {
             get { return Bottom - Top; }
             set { Bottom = value + Top; }
         }
 
+        /// <summary>
+        /// Accessor for the width.
+        /// </summary>
         public int Width
         {
             get { return Right - Left; }
             set { Right = value + Left; }
         }
 
-        public System.Drawing.Point Location
-        {
-            get { return new System.Drawing.Point(Left, Top); }
-            set { X = value.X; Y = value.Y; }
-        }
-
-        public System.Drawing.Size Size
-        {
-            get { return new System.Drawing.Size(Width, Height); }
-            set { Width = value.Width; Height = value.Height; }
-        }
-
+        /// <summary>
+        /// Accessor for the total area.
+        /// </summary>
         public int Area
         {
-            get { return Size.Width * Size.Height; }
+            get { return Width * Height; }
         }
 
-        public static implicit operator System.Drawing.Rectangle(Rectangle r)
+        /// <summary>
+        /// Cast this structure to a System.Drawing.Rectangle.
+        /// </summary>
+        /// <param name="rectangleStruct">This.</param>
+        public static implicit operator System.Drawing.Rectangle(Rectangle rectangleStruct)
         {
-            return new System.Drawing.Rectangle(r.Left, r.Top, r.Width, r.Height);
+            return new System.Drawing.Rectangle(
+                rectangleStruct.Left,
+                rectangleStruct.Top,
+                rectangleStruct.Width,
+                rectangleStruct.Height);
         }
 
-        public static implicit operator Rectangle(System.Drawing.Rectangle r)
+        /// <summary>
+        /// Cast a System.Drawing.Rectangle to this structure.
+        /// </summary>
+        /// <param name="rectangleObject">System.Drawing.Rectangle to parse.</param>
+        public static implicit operator Rectangle(System.Drawing.Rectangle rectangleObject)
         {
-            return new Rectangle(r);
-        }
-
-        public static bool operator ==(Rectangle r1, Rectangle r2)
-        {
-            return r1.Equals(r2);
-        }
-
-        public static bool operator !=(Rectangle r1, Rectangle r2)
-        {
-            return !r1.Equals(r2);
-        }
-
-        public bool Equals(Rectangle r)
-        {
-            return r.Left == Left && r.Top == Top && r.Right == Right && r.Bottom == Bottom;
-        }
-
-        public override bool Equals(object obj)
-        {
-            if (obj is Rectangle)
-                return Equals((Rectangle)obj);
-            else if (obj is System.Drawing.Rectangle)
-                return Equals(new Rectangle((System.Drawing.Rectangle)obj));
-            return false;
-        }
-
-        public override int GetHashCode()
-        {
-            return ((System.Drawing.Rectangle)this).GetHashCode();
-        }
-
-        public override string ToString()
-        {
-            return string.Format(System.Globalization.CultureInfo.CurrentCulture, "{{Left={0},Top={1},Right={2},Bottom={3}}}", Left, Top, Right, Bottom);
+            return new Rectangle(rectangleObject);
         }
     }
 }

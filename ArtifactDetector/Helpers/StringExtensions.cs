@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 
 namespace ItsApe.ArtifactDetector.Helpers
@@ -24,7 +25,7 @@ namespace ItsApe.ArtifactDetector.Helpers
         }
 
         /// <summary>
-        /// Checks the source string for substring value
+        /// Checks the source string for substring value.
         /// </summary>
         /// <param name="source">Haystack string.</param>
         /// <param name="value">Possible substring, needle.</param>
@@ -33,6 +34,20 @@ namespace ItsApe.ArtifactDetector.Helpers
         public static bool Contains(this string source, string value, StringComparison comparisonType)
         {
             return source?.IndexOf(value, comparisonType) >= 0;
+        }
+
+        /// <summary>
+        /// Checks the source for any of the substrings in values.
+        /// </summary>
+        /// <param name="source">Haystack string.</param>
+        /// <param name="values">Possible substrings, needles.</param>
+        /// <param name="comparisonType">E.g. InvariantCultureIgnoreCase.</param>
+        /// <returns>Tue if any needle was found in the haystack.</returns>
+        public static bool ContainsAny(this string source, IList<string> values, StringComparison comparisonType)
+        {
+            return values.FirstOrDefault(
+                            s => Contains(source, s, comparisonType)
+                        ) != default(string);
         }
     }
 }

@@ -1,7 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Text;
+using ItsApe.ArtifactDetector.Detectors.Compontents;
+using ItsApe.ArtifactDetector.Helpers;
 using ItsApe.ArtifactDetector.Models;
 using ItsApe.ArtifactDetector.Utilities;
 
@@ -16,6 +17,26 @@ namespace ItsApe.ArtifactDetector.Detectors
     internal class OpenWindowDetector : BaseDetector, IDetector
     {
         /// <summary>
+        /// List of matching windows that have been found.
+        /// </summary>
+        private IDictionary<IntPtr, WindowToplevelInformation> MatchingWindowsFound { get; set; }
+
+        /// <summary>
+        /// Local copy of possible window titles for nested delegate function.
+        /// </summary>
+        private IList<string> PossibleWindowTitles { get; set; }
+
+        /// <summary>
+        /// Local copy of previously found window handles for nested delegate function.
+        /// </summary>
+        private ICollection<IntPtr> WindowHandles { get; set; }
+
+        /// <summary>
+        /// List of all (visible) windows that have been found.
+        /// </summary>
+        private IList<Rectangle> WindowsFound { get; set; }
+
+        /// <summary>
         /// Find the artifact defined in the artifactConfiguration given some runtime information and a previous detector's response.
         /// </summary>
         /// <param name="runtimeInformation">Information about the artifact.</param>
@@ -29,239 +50,157 @@ namespace ItsApe.ArtifactDetector.Detectors
             // Check whether we have enough data to detect the artifact.
             if (runtimeInformation.MatchingWindowsInformation.Count < 1 && runtimeInformation.PossibleWindowTitles.Count < 1)
             {
-                throw new ArgumentException("Neither window handle nor window title given.");
+                throw new ArgumentException("Neither window handles nor window titles given.");
             }
 
-            // Copy to local variables for EnumWindowsProc.
-            var windowHandles = runtimeInformation.MatchingWindowsInformation.Keys;
-            var possibleWindowTitles = runtimeInformation.PossibleWindowTitles;
+            InitializeDetection(ref runtimeInformation);
 
-            // Initialize list of windows for later use.
-            IList<Rectangle> windows = new List<Rectangle>();
-            IDictionary<IntPtr, WindowToplevelInformation> matchingWindows = new Dictionary<IntPtr, WindowToplevelInformation>();
-
-            // Use simple counting index as the windows' z-index, as EnumWindows sorts them by it.
-            int i = 0;
-            WindowToplevelInformation currentWindow;
-            StringBuilder titleStringBuilder;
-            string currentWindowTitle;
-
-            bool enoughWindowsFound = false;
-
+            // Access all open windows and analyze each of them.
             NativeMethods.EnumWindows(
-                new NativeMethods.EnumWindowsProc(delegate (IntPtr hWnd, int lParam)
-                {
-                    // If the window is invisible, skip.
-                    if (enoughWindowsFound || !NativeMethods.IsWindowVisible(hWnd))
-                    {
-                        return true;
-                    }
-
-                    // Some windows have no title, so make sure we don't access the title if it is not there.
-                    currentWindowTitle = "";
-                    int titleLength = NativeMethods.GetWindowTextLength(hWnd);
-                    if (titleLength != 0)
-                    {
-                        // Get window title into string builder.
-                        titleStringBuilder = new StringBuilder(titleLength);
-                        NativeMethods.GetWindowText(hWnd, titleStringBuilder, titleLength + 1);
-                        currentWindowTitle = titleStringBuilder.ToString();
-                    }
-
-                    // Get all placement information we can get from user32.dll
-                    var Placement = new NativeMethods.WindowPlacement();
-                    NativeMethods.GetWindowPlacement(hWnd, ref Placement);
-
-                    var visualInformation = new NativeMethods.WindowVisualInformation();
-                    NativeMethods.GetWindowInfo(hWnd, ref visualInformation);
-
-                    // Get the current window's information.
-                    currentWindow = new WindowToplevelInformation
-                    {
-                        Handle = hWnd,
-                        Placement = Placement,
-                        Title = currentWindowTitle,
-                        Visibility = 100f,
-                        VisualInformation = visualInformation,
-                        ZIndex = i
-                    };
-
-                    bool windowMatches = possibleWindowTitles.FirstOrDefault(s => currentWindowTitle.Contains(s)) != default(string) || windowHandles.Contains(hWnd);
-
-                    // If it is not the first/topmost (visible) window and one of the windows we want to find...
-                    if (i > 0 && windowMatches)
-                    {
-                        // ...get the current's window visibility percentage.
-                        currentWindow.Visibility = CalculateWindowVisibility(windows, visualInformation.rcClient);
-                    }
-
-                    // Add the current window to all windows.
-                    windows.Add(visualInformation.rcClient);
-
-                    // If it is one of the windows we want to find: Add to that list.
-                    if (windowMatches)
-                    {
-                        matchingWindows.Add(hWnd, currentWindow);
-
-                        // Check if we found enough of the windows.
-                        if (matchingWindows.Count >= windowHandles.Count)
-                        {
-                            enoughWindowsFound = true;
-                        }
-                    }
-
-                    // Increase the z-index if we got here.
-                    i++;
-
-                    return true;
-                }),
-                0
+                new NativeMethods.EnumWindowsProc(AnalyzeWindow),
+                IntPtr.Zero
             );
 
             // If we found not a single matching window the artifact can't be present.
-            if (matchingWindows.Count < 1)
+            if (MatchingWindowsFound.Count < 1)
             {
                 StopStopwatch("Got all opened windows in {0}ms.");
                 return new DetectorResponse() { ArtifactPresent = DetectorResponse.ArtifactPresence.Impossible };
             }
 
-            runtimeInformation.MatchingWindowsInformation = matchingWindows;
+            // Copy found information back to object reference.
+            runtimeInformation.MatchingWindowsInformation = MatchingWindowsFound;
 
             StopStopwatch("Got all opened windows in {0}ms.");
             return new DetectorResponse() { ArtifactPresent = DetectorResponse.ArtifactPresence.Possible };
         }
 
         /// <summary>
-        /// Calculate the area of intersection of two window rectangles.
+        /// Function used as delegate for NativeMethods.EnumWindows to analyze every open window.
         /// </summary>
-        /// <param name="firstRectangle">The overlapped rectangle.</param>
-        /// <param name="secondRectangle">The new rectangle above.</param>
-        /// <param name="overlappingRectangles">Other areas within first rectangle that are overlapping.</param>
-        /// <returns>The area of the intersection.</returns>
-        private int CalculateOverlappingArea(Rectangle boundingRectangle, IList<Rectangle> overlayingRectangles)
+        /// <param name="windowHandle">IntPtr for current window.</param>
+        /// <param name="parameters">Unused.</param>
+        /// <returns>True, always.</returns>
+        private bool AnalyzeWindow(IntPtr windowHandle, int parameters)
         {
-            // Perform sweep line algorithm on union of rectangles.
-            // Ordered list of X-coordinates and a list of tuples which are "activated" there.
-            var availableAbscissae = new SortedList<int, List<Tuple<int,int>>>();
-            // All available Y-coordinates.
-            var availableOrdinates = new SortedSet<int>();
-
-            Rectangle intersectionRectangle;
-            foreach (var currentRectangle in overlayingRectangles)
+            // If we already found enough windows or the window is invisible, skip.
+            // This includes windows which title can not be retrieved.
+            if (!NativeMethods.IsWindowVisible(windowHandle)
+                || !GetWindowTitle(windowHandle, out string windowTitle))
             {
-                // Try to find intersection, throws ArgumentException if there is none.
-                try
-                {
-                    // Get rectangle intersection between overlapping rectangle and bounding box.
-                    intersectionRectangle = Intersection(boundingRectangle, currentRectangle);
-
-                    // Add left X-coordinate entry to events list, if necessary.
-                    if (!availableAbscissae.ContainsKey(intersectionRectangle.Left))
-                    {
-                        availableAbscissae.Add(
-                            intersectionRectangle.Left,
-                            new List<Tuple<int, int>>());
-                    }
-                    availableAbscissae[intersectionRectangle.Left].Add(
-                        new Tuple<int, int>(intersectionRectangle.Top, intersectionRectangle.Bottom));
-
-                    // Add right X-coordinate entry to events list, if necessary.
-                    if (!availableAbscissae.ContainsKey(intersectionRectangle.Right))
-                    {
-                        availableAbscissae.Add(
-                            intersectionRectangle.Right,
-                            new List<Tuple<int, int>>());
-                    }
-                    availableAbscissae[intersectionRectangle.Right].Add(
-                        new Tuple<int, int>(intersectionRectangle.Top, intersectionRectangle.Bottom));
-
-                    // Add Y-coordinates, if necessary.
-                    if (!availableOrdinates.Contains(intersectionRectangle.Top))
-                    {
-                        availableOrdinates.Add(intersectionRectangle.Top);
-                    }
-                    if (!availableOrdinates.Contains(intersectionRectangle.Bottom))
-                    {
-                        availableOrdinates.Add(intersectionRectangle.Bottom);
-                    }
-                }
-                catch (ArgumentException)
-                { }
+                return true;
             }
 
-            // Construct segment tree for sweep line algorithm.
-            var segmentTree = new SegmentTree(availableOrdinates.ToArray());
+            // Get visual information about the current window.
+            var visualInformation = new NativeMethods.WindowVisualInformation();
+            NativeMethods.GetWindowInfo(windowHandle, ref visualInformation);
 
-            // Sweep line over ordered events on X-axis.
-            int unionArea = 0;
-            int previousAbscissa = -1;
-            foreach (var abscissaEvent in availableAbscissae)
+            // If it is one of the windows we want to find: Add to that list.
+            if (WindowMatchesConstraints(windowTitle, windowHandle))
             {
-                // For all intervals in list of this event: Activate in segment tree.
-                foreach (var interval in abscissaEvent.Value)
+                MatchingWindowsFound.Add(windowHandle, new WindowToplevelInformation
                 {
-                    segmentTree.ActivateInterval(interval.Item1, interval.Item2);
-                }
-
-                // If we are not at the first abscissa:
-                if (previousAbscissa > 0)
-                {
-                    // Add rectangle to total.
-                    unionArea += (abscissaEvent.Key - previousAbscissa) * segmentTree.GetActiveLength();
-                }
-
-                previousAbscissa = abscissaEvent.Key;
+                    Handle = windowHandle,
+                    Title = windowTitle,
+                    Visibility = CalculateWindowVisibility(visualInformation.rcWindow, WindowsFound),
+                    VisualInformation = visualInformation,
+                    ZIndex = WindowsFound.Count
+                });
             }
 
-            return boundingRectangle.Area;
+            // Add the current window to all windows now.
+            WindowsFound.Add(visualInformation.rcWindow);
+
+            return true;
         }
 
         /// <summary>
         /// Calculates how much (percentage) of the queriedWindow is visible other windows above.
         /// </summary>
-        /// <param name="windowsAbove">The windows above (z-index) the queried window.</param>
         /// <param name="queriedWindow">Queried window.</param>
+        /// <param name="windowsAbove">The windows above (z-index) the queried window.</param>
         /// <returns>The percentage of how much of the window is visible.</returns>
-        private float CalculateWindowVisibility(IList<Rectangle> windowsAbove, Rectangle queriedWindow)
+        private float CalculateWindowVisibility(Rectangle queriedWindow, IList<Rectangle> windowsAbove)
         {
+            // If there are no windows above: Return immediately.
+            if (windowsAbove.Count < 1)
+            {
+                return 100f;
+            }
+
             // If there is no area of the window, return "no visibility".
             if (queriedWindow.Area < 1)
             {
                 return 0f;
             }
 
-            int subtractArea = CalculateOverlappingArea(queriedWindow, windowsAbove);
+            int subtractArea = new RectangleUnionCalculator().CalculateRectangleUnion(queriedWindow, windowsAbove);
 
-            return ((queriedWindow.Area - subtractArea) / queriedWindow.Area) * 100f;
+            return (float)(queriedWindow.Area - subtractArea) / queriedWindow.Area * 100f;
         }
 
         /// <summary>
-        /// Get intersection rectangle of the two rectangles.
-        /// 
-        /// Throws an ArgumentException if there is none.
+        /// Tries to get the title of the given window.
+        /// If returning false this did not work and the out parameter is an empty string.
         /// </summary>
-        /// <param name="firstRectangle">Order does not matter.</param>
-        /// <param name="secondRectangle">Order does not matter.</param>
-        /// <returns>The intersection rectangle.</returns>
-        private Rectangle Intersection(Rectangle firstRectangle, Rectangle secondRectangle)
+        /// <param name="windowHandle">Window handle IntPtr to get the title from.</param>
+        /// <param name="windowTitle">Out parameter to write the title to, if possible.</param>
+        /// <returns>True if the title could be obtained.</returns>
+        private bool GetWindowTitle(IntPtr windowHandle, out string windowTitle)
         {
-            int left = Math.Max(firstRectangle.Left, secondRectangle.Left);
-            int right = Math.Min(firstRectangle.Right, secondRectangle.Right);
+            // Some windows have no title, so make sure we don't access the title if it is not there.
+            int titleLength = NativeMethods.GetWindowTextLength(windowHandle);
 
-            if (left >= right)
+            if (titleLength > 0)
             {
-                throw new ArgumentException("No intersection possible.");
+                // Get window title into string builder.
+                var titleStringBuilder = new StringBuilder(titleLength);
+                NativeMethods.GetWindowText(windowHandle, titleStringBuilder, titleLength + 1);
+                windowTitle = titleStringBuilder.ToString();
+                return true;
             }
-
-            int top = Math.Max(firstRectangle.Top, secondRectangle.Top);
-            int bottom = Math.Min(firstRectangle.Bottom, secondRectangle.Bottom);
-
-            if (top >= bottom)
+            else
             {
-                throw new ArgumentException("No intersection possible.");
+                windowTitle = "";
+                return false;
             }
+        }
 
-            return new Rectangle(left, top, right, bottom);
+        /// <summary>
+        /// (Re)set necessary class variables for detection.
+        /// </summary>
+        /// <param name="runtimeInformation">The object to get information from.</param>
+        private void InitializeDetection(ref ArtifactRuntimeInformation runtimeInformation)
+        {
+            // Copy to local variables for EnumWindowsProc.
+            WindowHandles = runtimeInformation.MatchingWindowsInformation.Keys;
+            PossibleWindowTitles = runtimeInformation.PossibleWindowTitles;
+
+            // Initialize class properties for this detection run.
+            WindowsFound = new List<Rectangle>();
+            MatchingWindowsFound = new Dictionary<IntPtr, WindowToplevelInformation>();
+        }
+
+        /// <summary>
+        /// Check if a window matches the detector's constraints.
+        /// </summary>
+        /// <param name="windowTitle">Obvious.</param>
+        /// <param name="windowHandle">Internal IntPtr for window.</param>
+        /// <returns>True if the window matches.</returns>
+        private bool WindowMatchesConstraints(string windowTitle, IntPtr windowHandle)
+        {
+            return WindowHandles.Contains(windowHandle) || WindowTitleMatches(windowTitle);
+        }
+
+        /// <summary>
+        /// Check if a window title contains a substring from the PossibleWindowTitles.
+        /// Ignoring the case.
+        /// </summary>
+        /// <param name="windowTitle">Obvious.</param>
+        /// <returns>True if the window title contains a substring.</returns>
+        private bool WindowTitleMatches(string windowTitle)
+        {
+            return windowTitle.ContainsAny(PossibleWindowTitles, StringComparison.InvariantCultureIgnoreCase);
         }
     }
 }
