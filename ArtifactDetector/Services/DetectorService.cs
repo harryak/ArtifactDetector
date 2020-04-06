@@ -76,6 +76,7 @@ namespace ItsApe.ArtifactDetector.Services
             }
 
             Logger = Setup.GetLogger("DetectorService");
+            Logger.LogInformation("Detector service initialized.");
         }
 
         /// <summary>
@@ -211,6 +212,7 @@ namespace ItsApe.ArtifactDetector.Services
 
             if (serviceHost != null)
             {
+                Logger.LogWarning("Service host was still running.");
                 serviceHost.Close();
             }
 
@@ -218,9 +220,10 @@ namespace ItsApe.ArtifactDetector.Services
             serviceHost.Open();
 
             // Restore configuration from file, if present.
-            FileInfo configurationFileInfo = new FileInfo(ConfigurationFile);
+            var configurationFileInfo = new FileInfo(ConfigurationFile);
             if (configurationFileInfo.Exists)
             {
+                Logger.LogInformation("Restoring configuration from file.");
                 using (var reader = new StreamReader(configurationFileInfo.FullName))
                 {
                     serviceState = JsonConvert.DeserializeObject<ServiceState>(reader.ReadToEnd());
@@ -228,12 +231,16 @@ namespace ItsApe.ArtifactDetector.Services
             }
             else
             {
+                Logger.LogInformation("Creating new configuration.");
                 serviceState = new ServiceState();
             }
+
+            Logger.LogInformation("Detector service started.");
 
             // Check if the detection must be started.
             if (serviceState.IsRunning)
             {
+                Logger.LogInformation("Watch task should be running, start it.");
                 serviceState.IsRunning = false;
                 StartWatch();
             }
@@ -254,11 +261,14 @@ namespace ItsApe.ArtifactDetector.Services
             string jsonEncodedConfig = JsonConvert.SerializeObject(serviceState);
             using (var writer = new StreamWriter(ConfigurationFile))
             {
+                Logger.LogInformation("Saving configuration to file");
                 writer.Write(jsonEncodedConfig);
             }
 
             // Dispose detection timer just in case.
             detectionTimer.Dispose();
+
+            Logger.LogInformation("Detector service stopped. Bye bye!");
         }
 
         /// <summary>

@@ -4,6 +4,7 @@ using System.Reflection;
 using System.Windows.Forms;
 using ItsApe.ArtifactDetector.DebugUtilities;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.EventLog;
 using NLog.Extensions.Logging;
 
 namespace ItsApe.ArtifactDetector
@@ -47,7 +48,7 @@ namespace ItsApe.ArtifactDetector
         /// <summary>
         /// Factory for loggers.
         /// </summary>
-        public ILoggerFactory LoggerFactory { get; private set; }
+        public ILoggerFactory LoggerFactoryInstance { get; private set; }
 
         /// <summary>
         /// Flag for determining whether the program should cache its data for next runs.
@@ -74,6 +75,10 @@ namespace ItsApe.ArtifactDetector
         /// </summary>
         private ILogger Logger { get; set; }
 
+        /// <summary>
+        /// Retrieve singleton instance of setup.
+        /// </summary>
+        /// <returns>The instance of ApplicationSetup.</returns>
         public static ApplicationSetup GetInstance()
         {
             if (_instance == null)
@@ -105,8 +110,8 @@ namespace ItsApe.ArtifactDetector
         /// <returns>A new ILogger instance for the category name.</returns>
         public ILogger GetLogger(string categoryName)
         {
-            if (LoggerFactory == null) { SetupLogging(); }
-            return LoggerFactory.CreateLogger(categoryName);
+            if (LoggerFactoryInstance == null) { SetupLogging(); }
+            return LoggerFactoryInstance.CreateLogger(categoryName);
         }
 
         /// <summary>
@@ -115,8 +120,19 @@ namespace ItsApe.ArtifactDetector
         /// <returns></returns>
         private void SetupLogging()
         {
-            LoggerFactory = new LoggerFactory();
-            LoggerFactory.AddProvider(new NLogLoggerProvider());
+            var eventLogSettings = new EventLogSettings()
+            {
+                SourceName = "ITS.APE ArtifactDetector Service"
+            };
+            // Set event log filtering to "information".
+            eventLogSettings.Filter = (_, logLevel) => logLevel >= LogLevel.Information;
+
+            // Add factory with NLog and Windows EventLog.
+            LoggerFactoryInstance = LoggerFactory.Create(builder =>
+            {
+                builder.AddProvider(new NLogLoggerProvider())
+                    .AddEventLog(eventLogSettings);
+            });
         }
     }
 }
