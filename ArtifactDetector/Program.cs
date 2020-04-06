@@ -8,7 +8,7 @@ namespace ItsApe.ArtifactDetector
     /// <summary>
     /// Starting point of this program.
     /// </summary>
-    internal class Program
+    internal static class Program
     {
         /// <summary>
         /// Starting point of the execution, just instantiates and runs the

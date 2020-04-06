@@ -17,12 +17,12 @@ namespace ItsApe.ArtifactDetector.Detectors
         /// <summary>
         /// Choose a buffer size which is large enough for the operations in this class.
         /// </summary>
-        private const int BUFFER_SIZE = 0x1000;
+        protected const int BUFFER_SIZE = 0x1100;
 
         /// <summary>
         /// Buffer to use for getting data from other processes.
         /// </summary>
-        private readonly byte[] _buffer = new byte[BUFFER_SIZE];
+        protected readonly byte[] _buffer = new byte[BUFFER_SIZE];
 
         /// <summary>
         /// Pointers to other processes' buffers-
@@ -30,16 +30,75 @@ namespace ItsApe.ArtifactDetector.Detectors
         private readonly IDictionary<IntPtr, IntPtr> _bufferPointers = new Dictionary<IntPtr, IntPtr>();
 
         private readonly uint _getIconCountCode;
-        private readonly Func<StructType, IntPtr> _getIconIdAction;
         private readonly uint _getIconsCode;
-        private readonly uint _getIconTitleCode;
 
-        protected IconDetector(uint getIconsCode, uint getIconCountCode, uint getIconTitleCode, Func<StructType, IntPtr> getIconIdAction)
+        protected IconDetector(uint getIconsCode, uint getIconCountCode, IntPtr windowHandle)
         {
             _getIconsCode = getIconsCode;
             _getIconCountCode = getIconCountCode;
-            _getIconTitleCode = getIconTitleCode;
-            _getIconIdAction = getIconIdAction;
+
+            WindowHandle = windowHandle;
+            ProcessHandle = InitProcessHandle();
+        }
+
+        protected IntPtr ProcessHandle { get; set; }
+        protected IntPtr WindowHandle { get; set; }
+
+        /// <summary>
+        /// Find the artifact provided by the runtime information.
+        /// </summary>
+        /// <param name="runtimeInformation">Information must contain "possibleIconTitles" for this to work.</param>
+        /// <param name="previousResponse">Not necessary for this.</param>
+        /// <returns>Response based on whether the artifact was found.</returns>
+        public override DetectorResponse FindArtifact(ref ArtifactRuntimeInformation runtimeInformation, DetectorResponse previousResponse = null)
+        {
+            // This error is really unlikely.
+            if (WindowHandle == IntPtr.Zero)
+            {
+                Logger.LogError("The window handle is not available.");
+                return new DetectorResponse() { ArtifactPresent = DetectorResponse.ArtifactPresence.Impossible };
+            }
+
+            // Stopwatch for evaluation.
+            StartStopwatch();
+
+            if (FindIcon(ref runtimeInformation))
+            {
+                StopStopwatch("Got icons in {0}ms.");
+                Logger.LogInformation("Found matching icon.");
+                return new DetectorResponse { ArtifactPresent = DetectorResponse.ArtifactPresence.Certain };
+            }
+
+            StopStopwatch("Got icons in {0}ms.");
+            Logger.LogInformation("Found no matching icons.");
+            return new DetectorResponse { ArtifactPresent = DetectorResponse.ArtifactPresence.Impossible };
+        }
+
+        /// <summary>
+        /// Retrieve window address from a list of nested processes.
+        /// </summary>
+        /// <param name="processNames">Nested pairs of process names and window names.</param>
+        /// <returns>The window's address or IntPtr.Zero on failure.</returns>
+        protected static IntPtr GetWindowHandle(string[][] processNames)
+        {
+            var windowHandle = IntPtr.Zero;
+
+            if (processNames.Length > 0)
+            {
+                windowHandle = NativeMethods.FindWindow(processNames[0][0], processNames[0][1]);
+            }
+
+            for (int i = 1; i < processNames.Length; i++)
+            {
+                if (windowHandle == IntPtr.Zero)
+                {
+                    return windowHandle;
+                }
+
+                windowHandle = NativeMethods.FindWindowEx(windowHandle, IntPtr.Zero, processNames[i][0], processNames[i][1]);
+            }
+
+            return windowHandle;
         }
 
         /// <summary>
@@ -56,12 +115,12 @@ namespace ItsApe.ArtifactDetector.Detectors
         /// Clean up the buffer in given process.
         /// </summary>
         /// <param name="processHandle">Handle of the buffer's process.</param>
-        protected void CleanUnmanagedMemory(IntPtr processHandle)
+        protected void CleanUnmanagedMemory()
         {
-            if (!_bufferPointers.ContainsKey(processHandle))
+            foreach (var entry in _bufferPointers)
             {
-                NativeMethods.VirtualFreeEx(processHandle, _bufferPointers[processHandle], UIntPtr.Zero, NativeMethods.MEM.RELEASE);
-                NativeMethods.CloseHandle(processHandle);
+                NativeMethods.VirtualFreeEx(entry.Key, entry.Value, UIntPtr.Zero, NativeMethods.MEM.RELEASE);
+                NativeMethods.CloseHandle(entry.Key);
             }
         }
 
@@ -91,44 +150,48 @@ namespace ItsApe.ArtifactDetector.Detectors
             structToFill = Marshal.PtrToStructure<StructType>(Marshal.UnsafeAddrOfPinnedArrayElement(_buffer, 0));
         }
 
-        protected DetectorResponse FindIcon(IntPtr windowHandle, ref ArtifactRuntimeInformation runtimeInformation)
+        protected bool FindIcon(ref ArtifactRuntimeInformation runtimeInformation)
         {
-            // Stopwatch for evaluation.
-            StartStopwatch();
-
             // Get the desktop window's process to enumerate child windows.
-            var processHandle = GetProcessHandle(windowHandle);
-            var currentIcon = new StructType();
+            ProcessHandle = InitProcessHandle();
+            // Count subwindows of window => count of icons.
+            int iconCount = GetIconCount(WindowHandle);
 
-            // Count subwindows of desktop => count of icons.
-            int iconCount = GetIconCount(windowHandle);
+            var icon = InitIconStruct();
+
             try
             {
-                // Loop through available tray icons.
+                // Loop through available desktop icons.
                 for (int i = 0; i < iconCount; i++)
                 {
-                    // Get TBBUTTON struct filled.
-                    FillIconStruct(processHandle, windowHandle, i, ref currentIcon);
-                    string currentIconTitle = GetIconTitle(processHandle, windowHandle, _getIconIdAction(currentIcon));
-
-                    // Check if the current title has a substring in the possible titles.
-                    if (IconTitleMatches(currentIconTitle, runtimeInformation.PossibleIconTitles))
+                    if (IconMatches(ref runtimeInformation, i, icon))
                     {
-                        // Memory cleanup in finally clause is always executed.
-                        StopStopwatch("Got icons in {0}ms.");
-                        Logger.LogInformation("Found matching icon.");
-                        return new DetectorResponse { ArtifactPresent = DetectorResponse.ArtifactPresence.Certain };
+                        return true;
                     }
                 }
             }
             finally
             {
-                CleanUnmanagedMemory(processHandle);
+                // Clean up unmanaged memory.
+                CleanUnmanagedMemory();
             }
 
-            StopStopwatch("Got icons in {0}ms.");
-            Logger.LogInformation("Found no matching icons.");
-            return new DetectorResponse { ArtifactPresent = DetectorResponse.ArtifactPresence.Impossible };
+            return false;
+        }
+
+        /// <summary>
+        /// Yields the allocated buffer for this process.
+        /// </summary>
+        /// <param name="processHandle">Address of the process.</param>
+        /// <returns>Pointer to an allocated buffer.</returns>
+        protected IntPtr GetBufferPointer(IntPtr processHandle)
+        {
+            if (!_bufferPointers.ContainsKey(processHandle))
+            {
+                _bufferPointers.Add(processHandle, AllocateBufferInProcess(processHandle));
+            }
+
+            return _bufferPointers[processHandle];
         }
 
         /// <summary>
@@ -144,64 +207,24 @@ namespace ItsApe.ArtifactDetector.Detectors
         /// <summary>
         /// Gets the title of the icon with the given ID.
         /// </summary>
-        /// <param name="processHandle">Address of the process.</param>
-        /// <param name="windowHandle">Address of the window.</param>
-        /// <param name="messageCode">Which message to send to the window.</param>
-        /// <param name="iconId">Internal address of the icon.</param>
-        /// <returns></returns>
-        protected string GetIconTitle(IntPtr processHandle, IntPtr windowHandle, IntPtr iconId)
-        {
-            if (!_bufferPointers.ContainsKey(processHandle))
-            {
-                _bufferPointers.Add(processHandle, AllocateBufferInProcess(processHandle));
-            }
-
-            uint bytesRead = 0;
-            int titleLength = (int) NativeMethods.SendMessage(windowHandle, _getIconTitleCode, iconId, _bufferPointers[processHandle]);
-            NativeMethods.ReadProcessMemory(processHandle, _bufferPointers[processHandle], Marshal.UnsafeAddrOfPinnedArrayElement(_buffer, 0), new UIntPtr(BUFFER_SIZE), ref bytesRead);
-
-            return Marshal.PtrToStringUni(Marshal.UnsafeAddrOfPinnedArrayElement(_buffer, 0), titleLength);
-        }
+        /// <param name="index">Index of icon in parent window.</param>
+        /// <param name="icon">Icon instance.</param>
+        /// <returns>The icon title.</returns>
+        protected abstract string GetIconTitle(int index, StructType icon);
 
         /// <summary>
-        /// Retrieve a process handle by a given window.
+        /// Check if the given icon at the index matches the titles from runtime information.
         /// </summary>
-        /// <param name="windowHandle">Address of a window.</param>
-        /// <returns>Pointer to the window's process.</returns>
-        protected IntPtr GetProcessHandle(IntPtr windowHandle)
+        /// <param name="runtimeInformation">Information on what to look for.</param>
+        /// <param name="index">Index of icon in parent window.</param>
+        /// <param name="icon">Icon structure.</param>
+        /// <returns>True if the icon matches.</returns>
+        protected bool IconMatches(ref ArtifactRuntimeInformation runtimeInformation, int index, StructType icon)
         {
-            NativeMethods.GetWindowThreadProcessId(windowHandle, out uint processId);
-            return NativeMethods.OpenProcess(NativeMethods.PROCESS_VM.OPERATION | NativeMethods.PROCESS_VM.READ | NativeMethods.PROCESS_VM.WRITE, false, processId);
-        }
+            string currentIconTitle = GetIconTitle(index, icon);
 
-        /// <summary>
-        /// Retrieve window address from a list of nested processes.
-        /// </summary>
-        /// <param name="processNames">Nested process names.</param>
-        /// <returns>The window's address or IntPtr.Zero on failure.</returns>
-        protected IntPtr GetWindowHandle(string[] processNames)
-        {
-            var windowHandle = IntPtr.Zero;
-
-            if (processNames.Length > 0)
-            {
-                windowHandle = NativeMethods.FindWindow(processNames[0], null);
-            }
-
-            if (processNames.Length > 1)
-            {
-                for (int i = 1; i < processNames.Length; i++)
-                {
-                    if (windowHandle == IntPtr.Zero)
-                    {
-                        return windowHandle;
-                    }
-
-                    windowHandle = NativeMethods.FindWindowEx(windowHandle, IntPtr.Zero, processNames[i], null);
-                }
-            }
-
-            return windowHandle;
+            // Check if the current title has a substring in the possible titles.
+            return IconTitleMatches(currentIconTitle, runtimeInformation.PossibleIconTitles);
         }
 
         /// <summary>
@@ -213,6 +236,23 @@ namespace ItsApe.ArtifactDetector.Detectors
         protected bool IconTitleMatches(string iconTitle, IList<string> PossibleIconTitles)
         {
             return iconTitle.ContainsAny(PossibleIconTitles, StringComparison.InvariantCultureIgnoreCase);
+        }
+
+        /// <summary>
+        /// Return a new (usable) instance of the icon struct.
+        /// </summary>
+        /// <returns></returns>
+        protected abstract StructType InitIconStruct();
+
+        /// <summary>
+        /// Retrieve a process handle by a given window.
+        /// </summary>
+        /// <param name="windowHandle">Address of a window.</param>
+        /// <returns>Pointer to the window's process.</returns>
+        protected IntPtr InitProcessHandle()
+        {
+            NativeMethods.GetWindowThreadProcessId(WindowHandle, out uint processId);
+            return NativeMethods.OpenProcess(NativeMethods.PROCESS_VM.OPERATION | NativeMethods.PROCESS_VM.READ | NativeMethods.PROCESS_VM.WRITE, false, processId);
         }
     }
 }

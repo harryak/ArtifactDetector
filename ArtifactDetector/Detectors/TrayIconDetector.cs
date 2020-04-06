@@ -1,7 +1,6 @@
 ﻿using System;
-using ItsApe.ArtifactDetector.Models;
+using System.Runtime.InteropServices;
 using ItsApe.ArtifactDetector.Utilities;
-using Microsoft.Extensions.Logging;
 
 namespace ItsApe.ArtifactDetector.Detectors
 {
@@ -10,39 +9,53 @@ namespace ItsApe.ArtifactDetector.Detectors
     /// </summary>
     internal class TrayIconDetector : IconDetector<NativeMethods.TBBUTTON>
     {
-        public TrayIconDetector() : base(NativeMethods.TB.GETBUTTON, NativeMethods.TB.BUTTONCOUNT, NativeMethods.TB.GETBUTTONTEXTW, instance => new IntPtr(instance.idCommand))
+        public TrayIconDetector()
+            : base(
+                  NativeMethods.TB.GETBUTTON,
+                  NativeMethods.TB.BUTTONCOUNT,
+                  GetSystemTrayHandle())
         {
         }
 
         /// <summary>
-        /// Find the artifact provided by the runtime information.
+        /// Check if the given icon at the index matches the titles from runtime information.
         /// </summary>
-        /// <param name="runtimeInformation">Information must contain "possibleIconTitles" for this to work.</param>
-        /// <param name="previousResponse">Not necessary for this.</param>
-        /// <returns>Response based on whether the artifact was found.</returns>
-        public override DetectorResponse FindArtifact(ref ArtifactRuntimeInformation runtimeInformation, DetectorResponse previousResponse = null)
+        /// <param name="runtimeInformation">Information on what to look for.</param>
+        /// <param name="index">Index of icon in parent window.</param>
+        /// <param name="icon">Icon structure.</param>
+        /// <returns>True if the icon matches.</returns>
+        protected override string GetIconTitle(int index, NativeMethods.TBBUTTON icon)
         {
-            // Get tray window.
-            var trayWindowHandle = GetSystemTrayHandle();
+            var bufferPointer = GetBufferPointer(ProcessHandle);
 
-            // This error is really unlikely.
-            if (trayWindowHandle == IntPtr.Zero)
-            {
-                StopStopwatch("Got tray icons in {0}ms.");
-                Logger.LogError("The system tray handle is not available.");
-                return new DetectorResponse() { ArtifactPresent = DetectorResponse.ArtifactPresence.Impossible };
-            }
+            uint bytesRead = 0;
+            int titleLength = (int) NativeMethods.SendMessage(WindowHandle, NativeMethods.TB.GETBUTTONTEXTW, new IntPtr(icon.idCommand), bufferPointer);
+            NativeMethods.ReadProcessMemory(ProcessHandle, bufferPointer, Marshal.UnsafeAddrOfPinnedArrayElement(_buffer, 0), new UIntPtr(BUFFER_SIZE), ref bytesRead);
 
-            return FindIcon(trayWindowHandle, ref runtimeInformation);
+            return Marshal.PtrToStringUni(Marshal.UnsafeAddrOfPinnedArrayElement(_buffer, 0), titleLength);
+        }
+
+        /// <summary>
+        /// Return a new (usable) instance of the icon struct.
+        /// </summary>
+        /// <returns></returns>
+        protected override NativeMethods.TBBUTTON InitIconStruct()
+        {
+            return new NativeMethods.TBBUTTON();
         }
 
         /// <summary>
         /// Get the system tray window's handle.
         /// </summary>
         /// <returns>The handle if found or IntPtr.Zero if not.</returns>
-        private IntPtr GetSystemTrayHandle()
+        private static IntPtr GetSystemTrayHandle()
         {
-            return GetWindowHandle(new string[] { "Shell_TrayWnd", "TrayNotifyWnd", "SysPager", "ToolbarWindow32" });
+            return GetWindowHandle(new string[][] {
+                new string[] { "Shell_TrayWnd", null },
+                new string[] { "TrayNotifyWnd", null },
+                new string[] { "SysPager", null },
+                new string[] { "ToolbarWindow32", null }
+            });
         }
     }
 }

@@ -1,9 +1,6 @@
 ﻿using System;
-using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text;
-using ItsApe.ArtifactDetector.Helpers;
-using ItsApe.ArtifactDetector.Models;
 using ItsApe.ArtifactDetector.Utilities;
 
 namespace ItsApe.ArtifactDetector.Detectors
@@ -11,122 +8,98 @@ namespace ItsApe.ArtifactDetector.Detectors
     /// <summary>
     /// Detector to detect desktop icons.
     /// </summary>
-    internal class DesktopIconDetector : BaseDetector, IDetector
+    internal class DesktopIconDetector : IconDetector<NativeMethods.LVITEMA>
     {
-        private const int BUFFER_SIZE = 0x110;
+        public DesktopIconDetector()
+            : base(
+                  NativeMethods.LVM.GETITEMW,
+                  NativeMethods.LVM.GETITEMCOUNT,
+                  GetDesktopHandle())
+        { }
 
         /// <summary>
-        /// Find the artifact provided by the runtime information.
+        /// Check if the given icon at the index matches the titles from runtime information.
         /// </summary>
-        /// <param name="runtimeInformation">Information must contain "possibleIconTitles" for this to work.</param>
-        /// <param name="previousResponse">Not necessary for this.</param>
-        /// <returns>Response based on whether the artifact was found.</returns>
-        public override DetectorResponse FindArtifact(ref ArtifactRuntimeInformation runtimeInformation, DetectorResponse previousResponse = null)
+        /// <param name="runtimeInformation">Information on what to look for.</param>
+        /// <param name="index">Index of icon in parent window.</param>
+        /// <param name="icon">Icon structure.</param>
+        /// <returns>True if the icon matches.</returns>
+        protected override string GetIconTitle(int index, NativeMethods.LVITEMA icon)
         {
-            // Find window handles via process names.
-            var desktopWindowHandle = GetDesktopHandle();
+            icon.iItem = index;
 
-            // This error is really unlikely.
-            if (desktopWindowHandle == IntPtr.Zero)
-            {
-                throw new Exception("Desktop is not available.");
-            }
-
-            // Count subwindows of desktop => count of icons.
-            int iconCount = (int) NativeMethods.SendMessage(desktopWindowHandle, NativeMethods.LVM.GETITEMCOUNT, IntPtr.Zero, IntPtr.Zero);
-            string currentIconTitle;
-
-            // Get the desktop window's process to enumerate child windows.
-            NativeMethods.GetWindowThreadProcessId(desktopWindowHandle, out uint desktopProcessId);
-            var desktopProcessHandle = NativeMethods.OpenProcess(NativeMethods.PROCESS_VM.OPERATION | NativeMethods.PROCESS_VM.READ | NativeMethods.PROCESS_VM.WRITE, false, desktopProcessId);
-
-            // Allocate memory in the desktop process.
-            var bufferPointer = NativeMethods.VirtualAllocEx(desktopProcessHandle, IntPtr.Zero, new UIntPtr(BUFFER_SIZE), NativeMethods.MEM.RESERVE | NativeMethods.MEM.COMMIT, NativeMethods.PAGE.READWRITE);
-
-            // Initialize loop variables.
-            var currentDesktopIcon = new NativeMethods.LVITEMA();
-            byte[] vBuffer = new byte[BUFFER_SIZE];
             uint bytesRead = 0;
 
-            // Instantiate an item to get to the remote buffer and be filled there.
-            NativeMethods.LVITEMA[] remoteBufferDesktopIcon = new NativeMethods.LVITEMA[1];
+            // Write to desktop process the structure we want to get.
+            var currentIcon = FillStructFromProcess(icon, ref bytesRead);
 
+            // Use the now set pszText pointer to read the icon text into the buffer. Maximum length is 260, more characters won't be displayed.
+            NativeMethods.ReadProcessMemory(ProcessHandle, currentIcon.pszText, Marshal.UnsafeAddrOfPinnedArrayElement(_buffer, 0), new UIntPtr(260), ref bytesRead);
+
+            // Read from buffer into string with unicode encoding, then trim string.
+            return IconTitleFromBuffer((int)bytesRead);
+        }
+
+        /// <summary>
+        /// Creates a new (usable) instance of the icon struct.
+        /// </summary>
+        /// <returns>The created instance.</returns>
+        protected override NativeMethods.LVITEMA InitIconStruct()
+        {
             // Initialize basic structure.
-            // We want to get the icon's text, so set the mask accordingly.
-            remoteBufferDesktopIcon[0].mask = NativeMethods.LVIF.TEXT;
-
-            // Set maximum text length to buffer length minus offset used in pszText.
-            remoteBufferDesktopIcon[0].cchTextMax = vBuffer.Length - Marshal.SizeOf(typeof(NativeMethods.LVITEMA));
-
-            // Set pszText at point in the remote process's buffer.
-            remoteBufferDesktopIcon[0].pszText = (IntPtr)((int)bufferPointer + Marshal.SizeOf(typeof(NativeMethods.LVITEMA)));
-
-            try
+            return new NativeMethods.LVITEMA
             {
-                // Loop through available desktop icons.
-                for (int i = 0; i < iconCount; i++)
-                {
-                    remoteBufferDesktopIcon[0].iItem = i;
+                // We want to get the icon's text, so set the mask accordingly.
+                mask = NativeMethods.LVIF.TEXT,
 
-                    // Write to desktop process the structure we want to get.
-                    NativeMethods.WriteProcessMemory(desktopProcessHandle, bufferPointer, Marshal.UnsafeAddrOfPinnedArrayElement(remoteBufferDesktopIcon, 0), new UIntPtr((uint)Marshal.SizeOf(typeof(NativeMethods.LVITEMA))), ref bytesRead);
+                // Set maximum text length to buffer length minus offset used in pszText.
+                cchTextMax = BUFFER_SIZE - Marshal.SizeOf(typeof(NativeMethods.LVITEMA)),
 
-                    // Get i-th item of desktop and read its memory.
-                    NativeMethods.SendMessage(desktopWindowHandle, NativeMethods.LVM.GETITEMW, new IntPtr(i), bufferPointer);
-                    NativeMethods.ReadProcessMemory(desktopProcessHandle, bufferPointer, Marshal.UnsafeAddrOfPinnedArrayElement(vBuffer, 0), new UIntPtr((uint)Marshal.SizeOf(currentDesktopIcon)), ref bytesRead);
-
-                    // This error is really unlikely.
-                    if (bytesRead != Marshal.SizeOf(currentDesktopIcon))
-                    {
-                        throw new Exception("Read false amount of bytes.");
-                    }
-
-                    // Get actual struct filled from buffer.
-                    currentDesktopIcon = Marshal.PtrToStructure<NativeMethods.LVITEMA>(Marshal.UnsafeAddrOfPinnedArrayElement(vBuffer, 0));
-
-                    // Use the now set pszText pointer to read the icon text into the buffer. Maximum length is 260, more characters won't be displayed.
-                    NativeMethods.ReadProcessMemory(desktopProcessHandle, currentDesktopIcon.pszText, Marshal.UnsafeAddrOfPinnedArrayElement(vBuffer, 0), new UIntPtr(260), ref bytesRead);
-
-                    // Read from buffer into string with unicode encoding, then trim string.
-                    currentIconTitle = Encoding.Unicode.GetString(vBuffer, 0, (int)bytesRead);
-                    currentIconTitle = currentIconTitle.Substring(0, currentIconTitle.IndexOf('\0'));
-
-                    // Check if the current title has a substring in the possible titles.
-                    if (runtimeInformation.PossibleIconTitles.FirstOrDefault(s => currentIconTitle.Contains(s, StringComparison.InvariantCultureIgnoreCase)) != default(string))
-                    {
-                        // Memory cleanup in finally clause is always executed.
-                        return new DetectorResponse { ArtifactPresent = DetectorResponse.ArtifactPresence.Certain };
-                    }
-                }
-            }
-            finally
-            {
-                // Clean up unmanaged memory.
-                NativeMethods.VirtualFreeEx(desktopProcessHandle, bufferPointer, UIntPtr.Zero, NativeMethods.MEM.RELEASE);
-                NativeMethods.CloseHandle(desktopProcessHandle);
-            }
-
-            return new DetectorResponse { ArtifactPresent = DetectorResponse.ArtifactPresence.Impossible };
+                // Set pszText at point in the remote process's buffer.
+                pszText = GetBufferPointer(ProcessHandle) + Marshal.SizeOf(typeof(NativeMethods.LVITEMA))
+            };
         }
 
         /// <summary>
         /// Get the desktop window's handle.
         /// </summary>
         /// <returns>The handle if found or IntPtr.Zero if not.</returns>
-        private IntPtr GetDesktopHandle()
+        private static IntPtr GetDesktopHandle()
         {
-            // Get desktop window via program manager.
-            var hWndPDesktop = NativeMethods.FindWindow("Progman", "Program Manager");
-            if (hWndPDesktop != IntPtr.Zero)
-            {
-                hWndPDesktop = NativeMethods.FindWindowEx(hWndPDesktop, IntPtr.Zero, "SHELLDLL_DefView", null);
-                if (hWndPDesktop != IntPtr.Zero)
-                {
-                    hWndPDesktop = NativeMethods.FindWindowEx(hWndPDesktop, IntPtr.Zero, "SysListView32", "FolderView");
-                    return hWndPDesktop;
-                }
-            }
-            return IntPtr.Zero;
+            return GetWindowHandle(new string[][] { new string[] { "Progman", "Program Manager" }, new string[] { "SHELLDLL_DefView", null }, new string[] { "SysListView32", "FolderView" } });
+        }
+
+        /// <summary>
+        /// Let the process at ProcessHandle write data to an icon.
+        /// </summary>
+        /// <param name="icon">The icon struct to use as scheme.</param>
+        /// <param name="bytesRead">Reference of read bytes.</param>
+        /// <returns>The filled structure</returns>
+        private NativeMethods.LVITEMA FillStructFromProcess(NativeMethods.LVITEMA icon, ref uint bytesRead)
+        {
+            // Initialize current icon.
+            var currentIcon = new NativeMethods.LVITEMA();
+            // Wrap icon in array so we can get the pinned address of it.
+            NativeMethods.LVITEMA[] pinnedArray = new NativeMethods.LVITEMA[] { icon };
+
+            // Write scheme to foreign process.
+            NativeMethods.WriteProcessMemory(ProcessHandle, GetBufferPointer(ProcessHandle), Marshal.UnsafeAddrOfPinnedArrayElement(pinnedArray, 0), new UIntPtr((uint)Marshal.SizeOf(icon)), ref bytesRead);
+
+            // Get i-th item of desktop and read its memory.
+            FillIconStruct(ProcessHandle, WindowHandle, icon.iItem, ref currentIcon);
+
+            return currentIcon;
+        }
+
+        /// <summary>
+        /// Parse icon title from buffer.
+        /// </summary>
+        /// <param name="length">Title length in buffer.</param>
+        /// <returns>Trimmed title string.</returns>
+        private string IconTitleFromBuffer(int length)
+        {
+            string iconTitle = Encoding.Unicode.GetString(_buffer, 0, length);
+            return iconTitle.Substring(0, iconTitle.IndexOf('\0'));
         }
     }
 }
