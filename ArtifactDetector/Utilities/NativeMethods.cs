@@ -83,7 +83,7 @@ namespace ItsApe.ArtifactDetector.Utilities
         internal static extern IntPtr FindWindowEx(IntPtr hwndParent, IntPtr hwndChildAfter, string lpszClass, string lpszWindow);
 
         [DllImport("user32.dll")]
-        internal static extern uint GetWindowThreadProcessId(IntPtr hWnd, out uint dwProcessId);
+        internal static extern uint GetWindowThreadProcessId(IntPtr hWnd, [Out] out uint dwProcessId);
 
         [DllImport("kernel32.dll")]
         internal static extern IntPtr OpenProcess(uint dwDesiredAccess, bool bInheritHandle, uint dwProcessId);
@@ -94,6 +94,9 @@ namespace ItsApe.ArtifactDetector.Utilities
 
         [DllImport("user32.dll")]
         internal static extern IntPtr SendMessage(IntPtr hWnd, uint Msg, IntPtr wParam, IntPtr lParam);
+
+        [DllImport("shell32.dll", SetLastError = true)]
+        internal static extern int Shell_NotifyIconGetRect([In] ref NOTIFYICONIDENTIFIER identifier, [Out] out RECT iconLocation);
 
         [DllImport("kernel32.dll")]
         internal static extern IntPtr VirtualAllocEx(IntPtr hProcess, IntPtr lpAddress, UIntPtr dwSize, uint flAllocationType, uint flProtect);
@@ -224,6 +227,15 @@ namespace ItsApe.ArtifactDetector.Utilities
             public UIntPtr puColumns;
         }
 
+        [StructLayout(LayoutKind.Sequential)]
+        public struct NOTIFYICONIDENTIFIER
+        {
+            public uint cbSize;
+            public IntPtr hWnd;
+            public uint uID;
+            public Guid guidItem;
+        }
+
 #pragma warning restore CS0649
 
         [StructLayout(LayoutKind.Sequential)]
@@ -240,7 +252,14 @@ namespace ItsApe.ArtifactDetector.Utilities
         [StructLayout(LayoutKind.Sequential)]
         internal struct TBBUTTON
         {
+            /// <summary>
+            /// Zero-based index of the button image.
+            /// </summary>
             public int iBitmap;
+
+            /// <summary>
+            /// Command identifier associated with the button.
+            /// </summary>
             public int idCommand;
 
             [StructLayout(LayoutKind.Explicit)]
@@ -306,7 +325,7 @@ namespace ItsApe.ArtifactDetector.Utilities
             {
                 get
                 {
-                    WindowPlacement result = new WindowPlacement();
+                    var result = new WindowPlacement();
                     result.Length = Marshal.SizeOf(result);
                     return result;
                 }

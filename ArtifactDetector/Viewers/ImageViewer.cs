@@ -1,12 +1,12 @@
-﻿using System.Drawing;
-using System.Windows.Forms;
+﻿using System.Windows.Forms;
 using Emgu.CV;
+using Emgu.CV.Structure;
 
 namespace ItsApe.ArtifactDetector.Viewers
 {
     /// <summary>
     /// Actually a debug utility but has to reside in this namespace for .NET.
-    /// 
+    ///
     /// Used to view EmguCV Mats.
     /// </summary>
     public partial class ImageViewer : Form
@@ -19,16 +19,12 @@ namespace ItsApe.ArtifactDetector.Viewers
         {
             InitializeComponent();
 
-            Text = "DebugWindow: Show Matches";
+            Text = "Debug Window: Showing visual feature matches";
 
             if (image != null)
             {
-                imgBox.Image = image.Bitmap;
-
-                var size = image.Size;
-                size.Width += 12;
-                size.Height += 42;
-                if (!Size.Equals(size)) Size = size;
+                pictureBox.Image = image.ToImage<Bgr, byte>().AsBitmap();
+                Size = image.Size;
             }
         }
     }

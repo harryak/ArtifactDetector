@@ -2,7 +2,6 @@
 using System.ServiceProcess;
 using System.Windows.Forms;
 using ItsApe.ArtifactDetector.Services;
-using Microsoft.Extensions.Logging;
 
 namespace ItsApe.ArtifactDetector
 {
@@ -11,11 +10,6 @@ namespace ItsApe.ArtifactDetector
     /// </summary>
     internal class Program
     {
-        /// <summary>
-        /// Logger instance for this class.
-        /// </summary>
-        private static ILogger Logger { get; set; }
-
         /// <summary>
         /// Starting point of the execution, just instantiates and runs the
         /// detector service.

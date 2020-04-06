@@ -1,10 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
-using ItsApe.ArtifactDetector.Detectors.Compontents;
 using ItsApe.ArtifactDetector.Helpers;
 using ItsApe.ArtifactDetector.Models;
 using ItsApe.ArtifactDetector.Utilities;
+using Microsoft.Extensions.Logging;
 
 namespace ItsApe.ArtifactDetector.Detectors
 {
@@ -32,9 +32,9 @@ namespace ItsApe.ArtifactDetector.Detectors
         private ICollection<IntPtr> WindowHandles { get; set; }
 
         /// <summary>
-        /// List of all (visible) windows that have been found.
+        /// List of all (visible) windows that have been found with their z-index as key.
         /// </summary>
-        private IList<Rectangle> WindowsFound { get; set; }
+        private IDictionary<int, Rectangle> WindowsFound { get; set; }
 
         /// <summary>
         /// Find the artifact defined in the artifactConfiguration given some runtime information and a previous detector's response.
@@ -50,29 +50,20 @@ namespace ItsApe.ArtifactDetector.Detectors
             // Check whether we have enough data to detect the artifact.
             if (runtimeInformation.MatchingWindowsInformation.Count < 1 && runtimeInformation.PossibleWindowTitles.Count < 1)
             {
-                throw new ArgumentException("Neither window handles nor window titles given.");
+                Logger.LogInformation("No matching windows or possible window titles given for detector. Only getting visible windows now.");
+                return FindArtifactLight(ref runtimeInformation);
             }
 
+            Logger.LogInformation("Detecting open windows now.");
             InitializeDetection(ref runtimeInformation);
 
             // Access all open windows and analyze each of them.
             NativeMethods.EnumWindows(
-                new NativeMethods.EnumWindowsProc(AnalyzeWindow),
+                new NativeMethods.EnumWindowsProc(AnalyzeVisibleWindowDelegate),
                 IntPtr.Zero
             );
 
-            // If we found not a single matching window the artifact can't be present.
-            if (MatchingWindowsFound.Count < 1)
-            {
-                StopStopwatch("Got all opened windows in {0}ms.");
-                return new DetectorResponse() { ArtifactPresent = DetectorResponse.ArtifactPresence.Impossible };
-            }
-
-            // Copy found information back to object reference.
-            runtimeInformation.MatchingWindowsInformation = MatchingWindowsFound;
-
-            StopStopwatch("Got all opened windows in {0}ms.");
-            return new DetectorResponse() { ArtifactPresent = DetectorResponse.ArtifactPresence.Possible };
+            return PrepareResponse(ref runtimeInformation);
         }
 
         /// <summary>
@@ -81,7 +72,7 @@ namespace ItsApe.ArtifactDetector.Detectors
         /// <param name="windowHandle">IntPtr for current window.</param>
         /// <param name="parameters">Unused.</param>
         /// <returns>True, always.</returns>
-        private bool AnalyzeWindow(IntPtr windowHandle, int parameters)
+        private bool AnalyzeVisibleWindowDelegate(IntPtr windowHandle, int parameters)
         {
             // If we already found enough windows or the window is invisible, skip.
             // This includes windows which title can not be retrieved.
@@ -102,41 +93,61 @@ namespace ItsApe.ArtifactDetector.Detectors
                 {
                     Handle = windowHandle,
                     Title = windowTitle,
-                    Visibility = CalculateWindowVisibility(visualInformation.rcWindow, WindowsFound),
+                    Visibility = CalculateWindowVisibility(visualInformation.rcWindow, WindowsFound.Values),
                     VisualInformation = visualInformation,
                     ZIndex = WindowsFound.Count
                 });
             }
 
             // Add the current window to all windows now.
-            WindowsFound.Add(visualInformation.rcWindow);
+            WindowsFound.Add(WindowsFound.Count, visualInformation.rcWindow);
 
             return true;
         }
 
         /// <summary>
-        /// Calculates how much (percentage) of the queriedWindow is visible other windows above.
+        /// Only get the visible windows into the runtime information object and do not detect anything.
         /// </summary>
-        /// <param name="queriedWindow">Queried window.</param>
-        /// <param name="windowsAbove">The windows above (z-index) the queried window.</param>
-        /// <returns>The percentage of how much of the window is visible.</returns>
-        private float CalculateWindowVisibility(Rectangle queriedWindow, IList<Rectangle> windowsAbove)
+        /// <param name="runtimeInformation">The runtime object reference to fill.</param>
+        /// <returns>Detector response with "artifact presence possible" set.</returns>
+        private DetectorResponse FindArtifactLight(ref ArtifactRuntimeInformation runtimeInformation)
         {
-            // If there are no windows above: Return immediately.
-            if (windowsAbove.Count < 1)
+            // Access all open windows and just store each of them.
+            NativeMethods.EnumWindows(
+                new NativeMethods.EnumWindowsProc(GetVisibleWindowDelegate),
+                IntPtr.Zero
+            );
+
+            runtimeInformation.VisibleWindows = WindowsFound;
+
+            StopStopwatch("Got all opened windows in {0}ms.");
+            return new DetectorResponse() { ArtifactPresent = DetectorResponse.ArtifactPresence.Possible };
+        }
+
+        /// <summary>
+        /// Function used as delegate for NativeMethods.EnumWindows to just store every open window.
+        /// </summary>
+        /// <param name="windowHandle">IntPtr for current window.</param>
+        /// <param name="parameters">Unused.</param>
+        /// <returns>True, always.</returns>
+        private bool GetVisibleWindowDelegate(IntPtr windowHandle, int parameters)
+        {
+            // If we already found enough windows or the window is invisible, skip.
+            // This includes windows which title can not be retrieved.
+            if (!NativeMethods.IsWindowVisible(windowHandle)
+                || !GetWindowTitle(windowHandle, out string windowTitle))
             {
-                return 100f;
+                return true;
             }
 
-            // If there is no area of the window, return "no visibility".
-            if (queriedWindow.Area < 1)
-            {
-                return 0f;
-            }
+            // Get visual information about the current window.
+            var visualInformation = new NativeMethods.WindowVisualInformation();
+            NativeMethods.GetWindowInfo(windowHandle, ref visualInformation);
 
-            int subtractArea = new RectangleUnionCalculator().CalculateRectangleUnion(queriedWindow, windowsAbove);
+            // Add the current window to all windows now.
+            WindowsFound.Add(WindowsFound.Count, visualInformation.rcWindow);
 
-            return (float)(queriedWindow.Area - subtractArea) / queriedWindow.Area * 100f;
+            return true;
         }
 
         /// <summary>
@@ -177,8 +188,34 @@ namespace ItsApe.ArtifactDetector.Detectors
             PossibleWindowTitles = runtimeInformation.PossibleWindowTitles;
 
             // Initialize class properties for this detection run.
-            WindowsFound = new List<Rectangle>();
+            WindowsFound = new Dictionary<int, Rectangle>();
             MatchingWindowsFound = new Dictionary<IntPtr, WindowToplevelInformation>();
+        }
+
+        /// <summary>
+        /// Create a response based on what was found.
+        /// </summary>
+        /// <param name="runtimeInformation">The runtime information to write to.</param>
+        /// <returns></returns>
+        private DetectorResponse PrepareResponse(ref ArtifactRuntimeInformation runtimeInformation)
+        {
+            // Copy visible windows to runtime information for other detectors.
+            runtimeInformation.VisibleWindows = WindowsFound;
+
+            // If we found not a single matching window the artifact can't be present.
+            if (MatchingWindowsFound.Count < 1)
+            {
+                StopStopwatch("Got all opened windows in {0}ms.");
+                Logger.LogInformation("Found no matching open windows.");
+                return new DetectorResponse() { ArtifactPresent = DetectorResponse.ArtifactPresence.Impossible };
+            }
+
+            // Copy found information back to object reference.
+            runtimeInformation.MatchingWindowsInformation = MatchingWindowsFound;
+
+            StopStopwatch("Got all opened windows in {0}ms.");
+            Logger.LogInformation("Found {0} matching open windows.", MatchingWindowsFound.Count);
+            return new DetectorResponse() { ArtifactPresent = DetectorResponse.ArtifactPresence.Certain };
         }
 
         /// <summary>
@@ -197,7 +234,7 @@ namespace ItsApe.ArtifactDetector.Detectors
         /// Ignoring the case.
         /// </summary>
         /// <param name="windowTitle">Obvious.</param>
-        /// <returns>True if the window title contains a substring.</returns>
+        /// <returns>True if the window title contains any substring.</returns>
         private bool WindowTitleMatches(string windowTitle)
         {
             return windowTitle.ContainsAny(PossibleWindowTitles, StringComparison.InvariantCultureIgnoreCase);

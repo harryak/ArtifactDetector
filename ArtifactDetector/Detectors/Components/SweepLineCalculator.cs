@@ -16,17 +16,12 @@ namespace ItsApe.ArtifactDetector.Detectors.Compontents
         private SweepLineEvents Events { get; set; }
 
         /// <summary>
-        /// Segment tree of line segments in Y-direction.
-        /// </summary>
-        private SegmentTree SegmentTree { get; set; }
-
-        /// <summary>
         /// Calculate the area of intersection of rectilinear rectangles.
         /// </summary>
         /// <param name="boundingRectangle">Bounding box for rectangle union.</param>
         /// <param name="overlayingRectangles">Rectangles of which we want to find the union.</param>
         /// <returns>The area of the intersection.</returns>
-        public int CalculateRectangleUnion(Rectangle boundingRectangle, IList<Rectangle> overlayingRectangles)
+        public int CalculateRectangleUnion(Rectangle boundingRectangle, ICollection<Rectangle> overlayingRectangles)
         {
             // Get events filled for sweep line algorithm.
             if (FillAvailableEvents(boundingRectangle, overlayingRectangles))
@@ -65,7 +60,7 @@ namespace ItsApe.ArtifactDetector.Detectors.Compontents
         /// <param name="boundingRectangle"></param>
         /// <param name="overlayingRectangles"></param>
         /// <returns>False if we already know the overlaying rectangles fill the whole area, true per default.</returns>
-        private bool FillAvailableEvents(Rectangle boundingRectangle, IList<Rectangle> overlayingRectangles)
+        private bool FillAvailableEvents(Rectangle boundingRectangle, ICollection<Rectangle> overlayingRectangles)
         {
             Events = new SweepLineEvents();
 
@@ -191,15 +186,6 @@ namespace ItsApe.ArtifactDetector.Detectors.Compontents
             public Segments()
             {
                 Entries = new List<SegmentEntry>();
-            }
-
-            /// <summary>
-            /// Constructor with values.
-            /// </summary>
-            /// <param name="segmentEntries">Array of segmentEntry.</param>
-            public Segments(SegmentEntry[] segmentEntries)
-            {
-                Entries = segmentEntries.ToList();
             }
 
             public List<SegmentEntry> Entries { get; private set; }

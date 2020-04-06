@@ -74,6 +74,12 @@ namespace ItsApe.ArtifactDetector.Models
         public IList<string> PossibleWindowTitles { get; internal set; } = new List<string>();
 
         /// <summary>
+        /// Can hold currently visible windows.
+        /// </summary>
+        [JsonIgnore]
+        public IDictionary<int, Rectangle> VisibleWindows { get; set; }
+
+        /// <summary>
         /// Image cache for reference image.
         /// </summary>
         [JsonIgnore]

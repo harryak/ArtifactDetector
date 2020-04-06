@@ -6,7 +6,7 @@ namespace ItsApe.ArtifactDetector.Helpers
     /// <summary>
     /// Class of helper functions for files.
     /// </summary>
-    internal class FileHelper
+    internal static class FileHelper
     {
         /// <summary>
         /// Writes to a file using the write action.
@@ -16,15 +16,9 @@ namespace ItsApe.ArtifactDetector.Helpers
         /// <param name="fileMode"></param>
         public static void WriteToFile(string filename, Action<Stream> writeAction, FileMode fileMode = FileMode.OpenOrCreate)
         {
-            Stream stream = null;
-            try
+            using (Stream stream = File.Open(filename, fileMode))
             {
-                stream = File.Open(filename, fileMode);
                 writeAction(stream);
-            }
-            finally
-            {
-                if (stream != null) stream.Dispose();
             }
         }
     }

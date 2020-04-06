@@ -39,11 +39,11 @@ namespace ItsApe.ArtifactDetector.Utilities
             NativeMethods.DeleteDC(hdcDest);
             NativeMethods.ReleaseDC(handle, hdcSrc);
             // get a .NET image object for it
-            Bitmap bitmap = Image.FromHbitmap(hBitmap);
+            var bitmap = Image.FromHbitmap(hBitmap);
             // Free up the Bitmap object.
             NativeMethods.DeleteObject(hBitmap);
             // Get OpenCV Mat from bitmap.
-            var imageCV = new Image<Bgr, byte>(bitmap);
+            var imageCV = bitmap.ToImage<Bgr, byte>();
             return imageCV.Mat;
         }
     }
