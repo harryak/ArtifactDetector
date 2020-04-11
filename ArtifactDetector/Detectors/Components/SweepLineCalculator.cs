@@ -24,7 +24,7 @@ namespace ItsApe.ArtifactDetector.Detectors.Compontents
         public int CalculateRectangleUnion(Rectangle boundingRectangle, ICollection<Rectangle> overlayingRectangles)
         {
             // Get events filled for sweep line algorithm.
-            if (FillAvailableEvents(boundingRectangle, overlayingRectangles))
+            if (!FillAvailableEvents(boundingRectangle, overlayingRectangles))
             {
                 return boundingRectangle.Area;
             }
@@ -71,7 +71,7 @@ namespace ItsApe.ArtifactDetector.Detectors.Compontents
                 int intersectionLeft = Math.Max(currentRectangle.Left, boundingRectangle.Left);
                 int intersectionRight = Math.Min(currentRectangle.Right, boundingRectangle.Right);
 
-                if (intersectionLeft >= intersectionRight)
+                if (intersectionLeft >= 0 && intersectionLeft >= intersectionRight)
                 {
                     continue;
                 }

@@ -1,7 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
+using ItsApe.ArtifactDetector.Helpers;
 using ItsApe.ArtifactDetector.Models;
+using Microsoft.Extensions.Logging;
 using Microsoft.Win32;
 
 namespace ItsApe.ArtifactDetector.Detectors
@@ -9,6 +10,8 @@ namespace ItsApe.ArtifactDetector.Detectors
     internal class InstalledProgramsDetector : BaseDetector, IDetector
     {
         private const string RegistryKey = @"SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall";
+
+        private IList<string> PossibleProgramNames { get; set; }
 
         public override DetectorResponse FindArtifact(ref ArtifactRuntimeInformation runtimeInformation, DetectorResponse previousResponse = null)
         {
@@ -18,17 +21,23 @@ namespace ItsApe.ArtifactDetector.Detectors
             // Check whether we have enough data to detect the artifact.
             if (runtimeInformation.PossibleProgramNames.Count < 1)
             {
-                throw new ArgumentException("No program names given to look for.");
-            }
-
-            var possibleProgramNames = runtimeInformation.PossibleProgramNames;
-
-            if (IsProgramInstalledInRegistry(RegistryView.Registry32, ref possibleProgramNames)
-                || IsProgramInstalledInRegistry(RegistryView.Registry64, ref possibleProgramNames))
-            {
+                StopStopwatch("Got all installed programs in {0}ms.");
+                Logger.LogWarning("No possible program names given for detector. Could not find matching installed programs.");
                 return new DetectorResponse() { ArtifactPresent = DetectorResponse.ArtifactPresence.Possible };
             }
 
+            PossibleProgramNames = runtimeInformation.PossibleProgramNames;
+
+            if (IsProgramInstalledInRegistry(RegistryView.Registry32)
+                || IsProgramInstalledInRegistry(RegistryView.Registry64))
+            {
+                StopStopwatch("Got all installed programs in {0}ms.");
+                Logger.LogInformation("Found no matching open windows.");
+                return new DetectorResponse() { ArtifactPresent = DetectorResponse.ArtifactPresence.Certain };
+            }
+
+            StopStopwatch("Got all installed programs in {0}ms.");
+            Logger.LogInformation("Found a matching installed programs.");
             return new DetectorResponse() { ArtifactPresent = DetectorResponse.ArtifactPresence.Impossible };
         }
 
@@ -38,23 +47,28 @@ namespace ItsApe.ArtifactDetector.Detectors
         /// <param name="registryView">The registry view, e.g. RegistryView.Registry32 or RegistryView.Registry64.</param>
         /// <param name="possibleProgramNames">List of substrings the program to find might contain.</param>
         /// <returns>True if any string of the possible program names is substring of a visible, installed program.</returns>
-        private bool IsProgramInstalledInRegistry(RegistryView registryView, ref IList<string> possibleProgramNames)
+        private bool IsProgramInstalledInRegistry(RegistryView registryView)
         {
             using (var key = Microsoft.Win32.RegistryKey.OpenBaseKey(RegistryHive.LocalMachine, registryView).OpenSubKey(RegistryKey))
             {
-                string currentProgramName;
-                foreach (string subkey_name in key.GetSubKeyNames())
+                return IsProgramInstalledInSubkeys(key);
+            }
+        }
+
+        /// <summary>
+        /// Loop through subkeys of provided key and find out if a program is installed.
+        /// </summary>
+        /// <param name="key">Key to loop through.</param>
+        /// <returns>True when the program is installed.</returns>
+        private bool IsProgramInstalledInSubkeys(RegistryKey key)
+        {
+            foreach (string subkeyName in key.GetSubKeyNames())
+            {
+                using (var subkey = key.OpenSubKey(subkeyName))
                 {
-                    using (var subkey = key.OpenSubKey(subkey_name))
+                    if (SubkeyMatchesPossibleTitles(subkey))
                     {
-                        if (IsProgramVisible(subkey))
-                        {
-                            currentProgramName = (string) subkey.GetValue("DisplayName");
-                            if (possibleProgramNames.FirstOrDefault(s => currentProgramName.Contains(s)) != default(string))
-                            {
-                                return true;
-                            }
-                        }
+                        return true;
                     }
                 }
             }
@@ -79,6 +93,25 @@ namespace ItsApe.ArtifactDetector.Detectors
                 && string.IsNullOrEmpty(releaseType)
                 && string.IsNullOrEmpty(parentName)
                 && (systemComponent == null || (int)systemComponent == 0);
+        }
+
+        /// <summary>
+        /// Check whether a sukey matches the possible titles.
+        /// </summary>
+        /// <param name="subkey">Registry key to check</param>
+        /// <returns>True if the display name matches.</returns>
+        private bool SubkeyMatchesPossibleTitles(RegistryKey subkey)
+        {
+            if (IsProgramVisible(subkey))
+            {
+                string currentProgramName = (string)subkey.GetValue("DisplayName");
+                if (currentProgramName.ContainsAny(PossibleProgramNames, StringComparison.InvariantCultureIgnoreCase))
+                {
+                    return true;
+                }
+            }
+
+            return false;
         }
     }
 }

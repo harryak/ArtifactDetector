@@ -86,21 +86,25 @@ namespace ItsApe.ArtifactDetector.Detectors
             var visualInformation = new NativeMethods.WindowVisualInformation();
             NativeMethods.GetWindowInfo(windowHandle, ref visualInformation);
 
-            // If it is one of the windows we want to find: Add to that list.
-            if (WindowMatchesConstraints(windowTitle, windowHandle))
+            // Assumption: If the current window is an overlapped window it is "visible".
+            if ((visualInformation.dwExStyle & NativeMethods.WindowStyles.WS_EX_NOACTIVATE) != NativeMethods.WindowStyles.WS_EX_NOACTIVATE)
             {
-                MatchingWindowsFound.Add(windowHandle, new WindowToplevelInformation
+                // If it is one of the windows we want to find: Add to that list.
+                if (WindowMatchesConstraints(windowTitle, windowHandle))
                 {
-                    Handle = windowHandle,
-                    Title = windowTitle,
-                    Visibility = CalculateWindowVisibility(visualInformation.rcWindow, WindowsFound.Values),
-                    VisualInformation = visualInformation,
-                    ZIndex = WindowsFound.Count
-                });
-            }
+                    MatchingWindowsFound.Add(windowHandle, new WindowToplevelInformation
+                    {
+                        Handle = windowHandle,
+                        Title = windowTitle,
+                        Visibility = CalculateWindowVisibility(visualInformation.rcClient, WindowsFound.Values),
+                        VisualInformation = visualInformation,
+                        ZIndex = WindowsFound.Count
+                    });
+                }
 
-            // Add the current window to all windows now.
-            WindowsFound.Add(WindowsFound.Count, visualInformation.rcWindow);
+                // Add the current window to all windows now.
+                WindowsFound.Add(WindowsFound.Count, visualInformation.rcClient);
+            }
 
             return true;
         }
@@ -118,7 +122,7 @@ namespace ItsApe.ArtifactDetector.Detectors
                 IntPtr.Zero
             );
 
-            runtimeInformation.VisibleWindows = WindowsFound;
+            runtimeInformation.VisibleWindowOutlines = WindowsFound;
 
             StopStopwatch("Got all opened windows in {0}ms.");
             return new DetectorResponse() { ArtifactPresent = DetectorResponse.ArtifactPresence.Possible };
@@ -200,7 +204,7 @@ namespace ItsApe.ArtifactDetector.Detectors
         private DetectorResponse PrepareResponse(ref ArtifactRuntimeInformation runtimeInformation)
         {
             // Copy visible windows to runtime information for other detectors.
-            runtimeInformation.VisibleWindows = WindowsFound;
+            runtimeInformation.VisibleWindowOutlines = WindowsFound;
 
             // If we found not a single matching window the artifact can't be present.
             if (MatchingWindowsFound.Count < 1)

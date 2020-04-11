@@ -77,7 +77,7 @@ namespace ItsApe.ArtifactDetector.Models
         /// Can hold currently visible windows.
         /// </summary>
         [JsonIgnore]
-        public IDictionary<int, Rectangle> VisibleWindows { get; set; }
+        public IDictionary<int, Rectangle> VisibleWindowOutlines { get; set; }
 
         /// <summary>
         /// Image cache for reference image.
