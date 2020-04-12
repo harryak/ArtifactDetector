@@ -224,7 +224,7 @@ namespace ItsApe.ArtifactDetector.Detectors
             string currentIconTitle = GetIconTitle(index, icon);
 
             // Check if the current title has a substring in the possible titles.
-            return IconTitleMatches(currentIconTitle, runtimeInformation.PossibleIconTitles);
+            return IconTitleMatches(currentIconTitle, runtimeInformation.PossibleIconSubstrings);
         }
 
         /// <summary>

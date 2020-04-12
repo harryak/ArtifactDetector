@@ -1,6 +1,5 @@
 ﻿using System;
 using System.ServiceProcess;
-using System.Windows.Forms;
 using ItsApe.ArtifactDetector.Services;
 
 namespace ItsApe.ArtifactDetector
@@ -29,12 +28,6 @@ namespace ItsApe.ArtifactDetector
 
             // Start service.
             ServiceBase.Run(ServicesToRun);
-
-#if DEBUG
-            // Prepare debug window output.
-            Application.EnableVisualStyles();
-            Application.SetCompatibleTextRenderingDefault(false);
-#endif
         }
     }
 }

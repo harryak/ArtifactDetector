@@ -285,9 +285,7 @@
     <Content Include="face-monkey.ico" />
     <Content Include="License-LGPL.txt" />
     <Content Include="NLog.config">
-      <LastGenOutput>NLog.Designer.cs</LastGenOutput>
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-      <SubType>Designer</SubType>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <None Include="packages.config" />
   </ItemGroup>

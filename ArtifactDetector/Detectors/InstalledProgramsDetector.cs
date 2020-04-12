@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using ItsApe.ArtifactDetector.Helpers;
 using ItsApe.ArtifactDetector.Models;
 using Microsoft.Extensions.Logging;
@@ -9,49 +10,84 @@ namespace ItsApe.ArtifactDetector.Detectors
 {
     internal class InstalledProgramsDetector : BaseDetector, IDetector
     {
-        private const string RegistryKey = @"SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall";
+        /// <summary>
+        /// Dictionary of hive and key path for installations lookup.
+        /// </summary>
+        private readonly IList<Tuple<RegistryHive, string>> installationsKeyPaths = new List<Tuple<RegistryHive, string>>()
+        {
+            new Tuple<RegistryHive, string>(RegistryHive.LocalMachine, @"SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall"),
+            new Tuple<RegistryHive, string>(RegistryHive.CurrentUser,  @"SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall"),
+            new Tuple<RegistryHive, string>(RegistryHive.LocalMachine, @"SOFTWARE\Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall")
+        };
 
-        private IList<string> PossibleProgramNames { get; set; }
+        /// <summary>
+        /// Internal counter.
+        /// </summary>
+        private int foundMatches = 0;
 
+        /// <summary>
+        /// The program names to check in the registry.
+        /// </summary>
+        private IList<string> PossibleProgramSubstrings { get; set; }
+
+        /// <summary>
+        /// Storage for matching programs' executables to store in the runtime information.
+        /// </summary>
+        private IList<string> ProgramExecutables { get; } = new List<string>();
+
+        /// <summary>
+        /// Detect installed programs by the info given.
+        /// </summary>
+        /// <param name="runtimeInformation">Data object with possible program names set.</param>
+        /// <param name="previousResponse"></param>
+        /// <returns>A DetectorResponse based on the success of detection.</returns>
         public override DetectorResponse FindArtifact(ref ArtifactRuntimeInformation runtimeInformation, DetectorResponse previousResponse = null)
         {
+            Logger.LogInformation("Detecting installed programs now.");
+
             // Stopwatch for evaluation.
             StartStopwatch();
 
             // Check whether we have enough data to detect the artifact.
-            if (runtimeInformation.PossibleProgramNames.Count < 1)
+            if (runtimeInformation.PossibleProgramSubstrings.Count < 1)
             {
                 StopStopwatch("Got all installed programs in {0}ms.");
                 Logger.LogWarning("No possible program names given for detector. Could not find matching installed programs.");
                 return new DetectorResponse() { ArtifactPresent = DetectorResponse.ArtifactPresence.Possible };
             }
 
-            PossibleProgramNames = runtimeInformation.PossibleProgramNames;
+            PossibleProgramSubstrings = runtimeInformation.PossibleProgramSubstrings;
 
-            if (IsProgramInstalledInRegistry(RegistryView.Registry32)
-                || IsProgramInstalledInRegistry(RegistryView.Registry64))
+            AnalyzeRegistryView(RegistryView.Default);
+
+            if (foundMatches > 0)
             {
+                runtimeInformation.ProgramExecutables = ProgramExecutables;
+
                 StopStopwatch("Got all installed programs in {0}ms.");
-                Logger.LogInformation("Found no matching open windows.");
+                Logger.LogInformation("Found {0} matching installed programs.", foundMatches);
                 return new DetectorResponse() { ArtifactPresent = DetectorResponse.ArtifactPresence.Certain };
             }
 
             StopStopwatch("Got all installed programs in {0}ms.");
-            Logger.LogInformation("Found a matching installed programs.");
+            Logger.LogInformation("Found no matching installed programs.");
             return new DetectorResponse() { ArtifactPresent = DetectorResponse.ArtifactPresence.Impossible };
         }
 
         /// <summary>
-        /// Given a registry view this function checks if any entry in the given list of possible program names is substring of an installed program.
+        /// Add the FileInfo of all *.exe files in the given directory path.
         /// </summary>
-        /// <param name="registryView">The registry view, e.g. RegistryView.Registry32 or RegistryView.Registry64.</param>
-        /// <param name="possibleProgramNames">List of substrings the program to find might contain.</param>
-        /// <returns>True if any string of the possible program names is substring of a visible, installed program.</returns>
-        private bool IsProgramInstalledInRegistry(RegistryView registryView)
+        /// <param name="installDirectoryPath">Path in which to look for *.exe files.</param>
+        private void AddProgramExecutables(string installDirectoryPath)
         {
-            using (var key = Microsoft.Win32.RegistryKey.OpenBaseKey(RegistryHive.LocalMachine, registryView).OpenSubKey(RegistryKey))
+            var installDirectory = new DirectoryInfo(installDirectoryPath);
+
+            foreach (var file in installDirectory.EnumerateFiles("*.exe"))
             {
-                return IsProgramInstalledInSubkeys(key);
+                if (!ProgramExecutables.Contains(file.FullName))
+                {
+                    ProgramExecutables.Add(file.FullName);
+                }
             }
         }
 
@@ -59,59 +95,49 @@ namespace ItsApe.ArtifactDetector.Detectors
         /// Loop through subkeys of provided key and find out if a program is installed.
         /// </summary>
         /// <param name="key">Key to loop through.</param>
-        /// <returns>True when the program is installed.</returns>
-        private bool IsProgramInstalledInSubkeys(RegistryKey key)
+        private void AnalyzeRegistrySubkey(RegistryKey key)
         {
             foreach (string subkeyName in key.GetSubKeyNames())
             {
                 using (var subkey = key.OpenSubKey(subkeyName))
                 {
-                    if (SubkeyMatchesPossibleTitles(subkey))
+                    if (SubkeyMatchesConstraints(subkey))
                     {
-                        return true;
+                        foundMatches++;
+                        AddProgramExecutables((string)subkey.GetValue("InstallLocation"));
                     }
                 }
             }
-
-            return false;
         }
 
         /// <summary>
-        /// Checks whether the given registry key has the necessary values filled in for a visible program.
+        /// Given a registry view this function checks if any entry in the given list of possible program names is substring of an installed program.
+        /// It checks the local machine as well as the current user.
         /// </summary>
-        /// <param name="subkey">The registry key containing information about the program.</param>
-        /// <returns>True if the program is visible.</returns>
-        private bool IsProgramVisible(RegistryKey subkey)
+        /// <param name="registryView">The registry view, e.g. RegistryView.Registry32 or RegistryView.Registry64.</param>
+        private void AnalyzeRegistryView(RegistryView registryView)
         {
-            var name = (string)subkey.GetValue("DisplayName");
-            var releaseType = (string)subkey.GetValue("ReleaseType");
-            var systemComponent = subkey.GetValue("SystemComponent");
-            var parentName = (string)subkey.GetValue("ParentDisplayName");
-
-            return
-                !string.IsNullOrEmpty(name)
-                && string.IsNullOrEmpty(releaseType)
-                && string.IsNullOrEmpty(parentName)
-                && (systemComponent == null || (int)systemComponent == 0);
+            foreach (var installationsKeyPathsEntry in installationsKeyPaths)
+            {
+                using (var subkey = RegistryKey.OpenBaseKey(installationsKeyPathsEntry.Item1, registryView).OpenSubKey(installationsKeyPathsEntry.Item2))
+                {
+                    AnalyzeRegistrySubkey(subkey);
+                }
+            }
         }
 
         /// <summary>
-        /// Check whether a sukey matches the possible titles.
+        /// Check whether a subkey is an installed application and its name matches.
         /// </summary>
         /// <param name="subkey">Registry key to check</param>
         /// <returns>True if the display name matches.</returns>
-        private bool SubkeyMatchesPossibleTitles(RegistryKey subkey)
+        private bool SubkeyMatchesConstraints(RegistryKey subkey)
         {
-            if (IsProgramVisible(subkey))
-            {
-                string currentProgramName = (string)subkey.GetValue("DisplayName");
-                if (currentProgramName.ContainsAny(PossibleProgramNames, StringComparison.InvariantCultureIgnoreCase))
-                {
-                    return true;
-                }
-            }
+            string displayName = (string)subkey.GetValue("DisplayName", "");
+            int systemComponent = (int)subkey.GetValue("SystemComponent", 0);
 
-            return false;
+            return displayName != "" && systemComponent == 0
+                    && displayName.ContainsAny(PossibleProgramSubstrings);
         }
     }
 }

@@ -20,7 +20,7 @@ namespace ItsApe.ArtifactDetector.DebugUtilities
         /// <summary>
         /// Instance of an ILogger to write to.
         /// </summary>
-        protected ILogger Logger { get; set; }
+        protected static ILogger Logger { get; set; }
 
         /// <summary>
         /// Instance of an AADStopwatch to stop the time with.

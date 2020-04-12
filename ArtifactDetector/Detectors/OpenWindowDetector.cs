@@ -19,22 +19,22 @@ namespace ItsApe.ArtifactDetector.Detectors
         /// <summary>
         /// List of matching windows that have been found.
         /// </summary>
-        private IDictionary<IntPtr, WindowToplevelInformation> MatchingWindowsFound { get; set; }
+        private IDictionary<IntPtr, float> WindowsFound { get; } = new Dictionary<IntPtr, float>();
 
         /// <summary>
         /// Local copy of possible window titles for nested delegate function.
         /// </summary>
-        private IList<string> PossibleWindowTitles { get; set; }
+        private IList<string> PossibleWindowTitleSubstrings { get; set; }
+
+        /// <summary>
+        /// List of all (visible) windows that have been found with their z-index as key.
+        /// </summary>
+        private IDictionary<int, Rectangle> VisibleWindowOutlines { get; } = new Dictionary<int, Rectangle>();
 
         /// <summary>
         /// Local copy of previously found window handles for nested delegate function.
         /// </summary>
         private ICollection<IntPtr> WindowHandles { get; set; }
-
-        /// <summary>
-        /// List of all (visible) windows that have been found with their z-index as key.
-        /// </summary>
-        private IDictionary<int, Rectangle> WindowsFound { get; set; }
 
         /// <summary>
         /// Find the artifact defined in the artifactConfiguration given some runtime information and a previous detector's response.
@@ -44,18 +44,22 @@ namespace ItsApe.ArtifactDetector.Detectors
         /// <returns>A response object containing information whether the artifact has been found.</returns>
         public override DetectorResponse FindArtifact(ref ArtifactRuntimeInformation runtimeInformation, DetectorResponse previousResponse = null)
         {
+            Logger.LogInformation("Detecting open windows now.");
+
             // Stopwatch for evaluation.
             StartStopwatch();
 
             // Check whether we have enough data to detect the artifact.
-            if (runtimeInformation.MatchingWindowsInformation.Count < 1 && runtimeInformation.PossibleWindowTitles.Count < 1)
+            if (runtimeInformation.WindowHandles.Count < 1 && runtimeInformation.PossibleWindowTitleSubstrings.Count < 1)
             {
+                StopStopwatch("Got all opened windows in {0}ms.");
                 Logger.LogInformation("No matching windows or possible window titles given for detector. Only getting visible windows now.");
                 return FindArtifactLight(ref runtimeInformation);
             }
 
-            Logger.LogInformation("Detecting open windows now.");
-            InitializeDetection(ref runtimeInformation);
+            // Copy to local variables for EnumWindowsProc.
+            WindowHandles = runtimeInformation.WindowHandles;
+            PossibleWindowTitleSubstrings = runtimeInformation.PossibleWindowTitleSubstrings;
 
             // Access all open windows and analyze each of them.
             NativeMethods.EnumWindows(
@@ -92,18 +96,15 @@ namespace ItsApe.ArtifactDetector.Detectors
                 // If it is one of the windows we want to find: Add to that list.
                 if (WindowMatchesConstraints(windowTitle, windowHandle))
                 {
-                    MatchingWindowsFound.Add(windowHandle, new WindowToplevelInformation
-                    {
-                        Handle = windowHandle,
-                        Title = windowTitle,
-                        Visibility = CalculateWindowVisibility(visualInformation.rcClient, WindowsFound.Values),
-                        VisualInformation = visualInformation,
-                        ZIndex = WindowsFound.Count
-                    });
+                    WindowsFound.Add(
+                        windowHandle,
+                        CalculateWindowVisibility(
+                            visualInformation.rcClient,
+                            VisibleWindowOutlines.Values));
                 }
 
                 // Add the current window to all windows now.
-                WindowsFound.Add(WindowsFound.Count, visualInformation.rcClient);
+                VisibleWindowOutlines.Add(VisibleWindowOutlines.Count, visualInformation.rcClient);
             }
 
             return true;
@@ -122,7 +123,7 @@ namespace ItsApe.ArtifactDetector.Detectors
                 IntPtr.Zero
             );
 
-            runtimeInformation.VisibleWindowOutlines = WindowsFound;
+            runtimeInformation.VisibleWindowOutlines = VisibleWindowOutlines;
 
             StopStopwatch("Got all opened windows in {0}ms.");
             return new DetectorResponse() { ArtifactPresent = DetectorResponse.ArtifactPresence.Possible };
@@ -149,7 +150,7 @@ namespace ItsApe.ArtifactDetector.Detectors
             NativeMethods.GetWindowInfo(windowHandle, ref visualInformation);
 
             // Add the current window to all windows now.
-            WindowsFound.Add(WindowsFound.Count, visualInformation.rcWindow);
+            VisibleWindowOutlines.Add(VisibleWindowOutlines.Count, visualInformation.rcWindow);
 
             return true;
         }
@@ -182,21 +183,6 @@ namespace ItsApe.ArtifactDetector.Detectors
         }
 
         /// <summary>
-        /// (Re)set necessary class variables for detection.
-        /// </summary>
-        /// <param name="runtimeInformation">The object to get information from.</param>
-        private void InitializeDetection(ref ArtifactRuntimeInformation runtimeInformation)
-        {
-            // Copy to local variables for EnumWindowsProc.
-            WindowHandles = runtimeInformation.MatchingWindowsInformation.Keys;
-            PossibleWindowTitles = runtimeInformation.PossibleWindowTitles;
-
-            // Initialize class properties for this detection run.
-            WindowsFound = new Dictionary<int, Rectangle>();
-            MatchingWindowsFound = new Dictionary<IntPtr, WindowToplevelInformation>();
-        }
-
-        /// <summary>
         /// Create a response based on what was found.
         /// </summary>
         /// <param name="runtimeInformation">The runtime information to write to.</param>
@@ -204,10 +190,10 @@ namespace ItsApe.ArtifactDetector.Detectors
         private DetectorResponse PrepareResponse(ref ArtifactRuntimeInformation runtimeInformation)
         {
             // Copy visible windows to runtime information for other detectors.
-            runtimeInformation.VisibleWindowOutlines = WindowsFound;
+            runtimeInformation.VisibleWindowOutlines = VisibleWindowOutlines;
 
             // If we found not a single matching window the artifact can't be present.
-            if (MatchingWindowsFound.Count < 1)
+            if (WindowsFound.Count < 1)
             {
                 StopStopwatch("Got all opened windows in {0}ms.");
                 Logger.LogInformation("Found no matching open windows.");
@@ -215,10 +201,10 @@ namespace ItsApe.ArtifactDetector.Detectors
             }
 
             // Copy found information back to object reference.
-            runtimeInformation.MatchingWindowsInformation = MatchingWindowsFound;
+            runtimeInformation.WindowsInformation = WindowsFound;
 
             StopStopwatch("Got all opened windows in {0}ms.");
-            Logger.LogInformation("Found {0} matching open windows.", MatchingWindowsFound.Count);
+            Logger.LogInformation("Found {0} matching open windows.", WindowsFound.Count);
             return new DetectorResponse() { ArtifactPresent = DetectorResponse.ArtifactPresence.Certain };
         }
 
@@ -230,18 +216,8 @@ namespace ItsApe.ArtifactDetector.Detectors
         /// <returns>True if the window matches.</returns>
         private bool WindowMatchesConstraints(string windowTitle, IntPtr windowHandle)
         {
-            return WindowHandles.Contains(windowHandle) || WindowTitleMatches(windowTitle);
-        }
-
-        /// <summary>
-        /// Check if a window title contains a substring from the PossibleWindowTitles.
-        /// Ignoring the case.
-        /// </summary>
-        /// <param name="windowTitle">Obvious.</param>
-        /// <returns>True if the window title contains any substring.</returns>
-        private bool WindowTitleMatches(string windowTitle)
-        {
-            return windowTitle.ContainsAny(PossibleWindowTitles, StringComparison.InvariantCultureIgnoreCase);
+            return WindowHandles.Contains(windowHandle)
+                || windowTitle.ContainsAny(PossibleWindowTitleSubstrings);
         }
     }
 }

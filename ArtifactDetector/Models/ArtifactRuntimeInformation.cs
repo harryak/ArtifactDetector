@@ -28,8 +28,8 @@ namespace ItsApe.ArtifactDetector.Models
         public ArtifactRuntimeInformation(string artifactName, IList<string> possibleProcessNames, IList<string> possibleWindowTitles, ArtifactReferenceImageCache referenceImages)
         {
             ArtifactName = artifactName;
-            PossibleProcessNames = possibleProcessNames;
-            PossibleWindowTitles = possibleWindowTitles;
+            PossibleProcessSubstrings = possibleProcessNames;
+            PossibleWindowTitleSubstrings = possibleWindowTitles;
             ReferenceImages = referenceImages;
         }
 
@@ -40,44 +40,38 @@ namespace ItsApe.ArtifactDetector.Models
         public string ArtifactName { get; private set; }
 
         /// <summary>
-        /// Information about the matching windows.
-        /// </summary>
-        [JsonIgnore]
-        public IDictionary<IntPtr, WindowToplevelInformation> MatchingWindowsInformation { get; set; } = new Dictionary<IntPtr, WindowToplevelInformation>();
-
-        /// <summary>
         /// Possible (fragments of the) titles of the windows to get.
         /// </summary>
         [JsonProperty("icon_titles")]
         [JsonConverter(typeof(StringToListConverter))]
-        public IList<string> PossibleIconTitles { get; internal set; } = new List<string>();
+        public IList<string> PossibleIconSubstrings { get; internal set; } = new List<string>();
 
         /// <summary>
         /// Possible names of the processes.
         /// </summary>
         [JsonProperty("process_names")]
         [JsonConverter(typeof(StringToListConverter))]
-        public IList<string> PossibleProcessNames { get; set; } = new List<string>();
+        public IList<string> PossibleProcessSubstrings { get; set; } = new List<string>();
 
         /// <summary>
         /// Possible names of the processes.
         /// </summary>
         [JsonProperty("program_names")]
         [JsonConverter(typeof(StringToListConverter))]
-        public IList<string> PossibleProgramNames { get; set; } = new List<string>();
+        public IList<string> PossibleProgramSubstrings { get; set; } = new List<string>();
 
         /// <summary>
         /// Possible (fragments of the) titles of the windows to get.
         /// </summary>
         [JsonProperty("window_titles")]
         [JsonConverter(typeof(StringToListConverter))]
-        public IList<string> PossibleWindowTitles { get; internal set; } = new List<string>();
+        public IList<string> PossibleWindowTitleSubstrings { get; internal set; } = new List<string>();
 
         /// <summary>
-        /// Can hold currently visible windows.
+        /// Information about the matching executables.
         /// </summary>
         [JsonIgnore]
-        public IDictionary<int, Rectangle> VisibleWindowOutlines { get; set; }
+        public IList<string> ProgramExecutables { get; set; } = new List<string>();
 
         /// <summary>
         /// Image cache for reference image.
@@ -92,12 +86,28 @@ namespace ItsApe.ArtifactDetector.Models
         public IDictionary<int, Mat> Screenshots { get; set; } = new Dictionary<int, Mat>();
 
         /// <summary>
+        /// Can hold currently visible windows.
+        /// Index is the z-index (order) with 1 being the topmost.
+        /// </summary>
+        [JsonIgnore]
+        public IDictionary<int, Rectangle> VisibleWindowOutlines { get; set; }
+
+        [JsonIgnore]
+        public IList<IntPtr> WindowHandles { get; set; } = new List<IntPtr>();
+
+        /// <summary>
+        /// For each matching window stores the handle and its visibility.
+        /// </summary>
+        [JsonIgnore]
+        public IDictionary<IntPtr, float> WindowsInformation { get; set; } = new Dictionary<IntPtr, float>();
+
+        /// <summary>
         /// Possibility to copy settings from another object.
         /// </summary>
         /// <param name="runtimeInformation">The object to get arguments from.</param>
         public object Clone()
         {
-            return new ArtifactRuntimeInformation(ArtifactName, PossibleProcessNames, PossibleWindowTitles, ReferenceImages);
+            return new ArtifactRuntimeInformation(ArtifactName, PossibleProcessSubstrings, PossibleWindowTitleSubstrings, ReferenceImages);
         }
     }
 }

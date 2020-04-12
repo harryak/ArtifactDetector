@@ -43,6 +43,20 @@ namespace ItsApe.ArtifactDetector.Helpers
         /// <param name="values">Possible substrings, needles.</param>
         /// <param name="comparisonType">E.g. InvariantCultureIgnoreCase.</param>
         /// <returns>Tue if any needle was found in the haystack.</returns>
+        public static bool ContainsAny(this string source, IList<string> values)
+        {
+            return values.FirstOrDefault(
+                            s => Contains(source, s, StringComparison.InvariantCultureIgnoreCase)
+                        ) != default(string);
+        }
+
+        /// <summary>
+        /// Checks the source for any of the substrings in values.
+        /// </summary>
+        /// <param name="source">Haystack string.</param>
+        /// <param name="values">Possible substrings, needles.</param>
+        /// <param name="comparisonType">E.g. InvariantCultureIgnoreCase.</param>
+        /// <returns>Tue if any needle was found in the haystack.</returns>
         public static bool ContainsAny(this string source, IList<string> values, StringComparison comparisonType)
         {
             return values.FirstOrDefault(

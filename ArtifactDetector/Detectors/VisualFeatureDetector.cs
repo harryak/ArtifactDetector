@@ -45,7 +45,7 @@ namespace ItsApe.ArtifactDetector.Detectors
 
             // For all matching windows:
             bool artifactFound = false;
-            foreach (var matchingWindowEntry in runtimeInformation.MatchingWindowsInformation)
+            foreach (var matchingWindowEntry in runtimeInformation.WindowsInformation)
             {
                 // Make screenshot of artifact window and extract the features.
                 var observedImage = FeatureExtractor.ExtractFeatures(WindowCapturer.CaptureWindow(matchingWindowEntry.Key));

@@ -125,14 +125,20 @@ namespace ItsApe.ArtifactDetector
                 SourceName = "ITS.APE ArtifactDetector Service"
             };
             // Set event log filtering to "information".
-            eventLogSettings.Filter = (_, logLevel) => logLevel >= LogLevel.Information;
+            eventLogSettings.Filter = (_, logLevel) => logLevel >= LogLevel.Debug;
 
             // Add factory with NLog and Windows EventLog.
             LoggerFactoryInstance = LoggerFactory.Create(builder =>
             {
+                builder.SetMinimumLevel(LogLevel.Trace);
                 builder.AddProvider(new NLogLoggerProvider())
                     .AddEventLog(eventLogSettings);
             });
+        }
+
+        ~ApplicationSetup()
+        {
+            NLog.LogManager.Shutdown();
         }
     }
 }
