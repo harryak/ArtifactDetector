@@ -29,9 +29,27 @@ namespace ItsApe.ArtifactDetector.Detectors
         /// </summary>
         private readonly IDictionary<IntPtr, IntPtr> _bufferPointers = new Dictionary<IntPtr, IntPtr>();
 
+        /// <summary>
+        /// Windows API code for SendMessage to get the icon count.
+        /// </summary>
         private readonly uint _getIconCountCode;
+
+        /// <summary>
+        /// Windows API code for SendMessage to get the icons.
+        /// </summary>
         private readonly uint _getIconsCode;
 
+        /// <summary>
+        /// Counter for matching icons.
+        /// </summary>
+        private int foundMatches = 0;
+
+        /// <summary>
+        /// Constructor to switch between icon types.
+        /// </summary>
+        /// <param name="getIconsCode">Windows API code for SendMessage.</param>
+        /// <param name="getIconCountCode">Windows API code for SendMessage.</param>
+        /// <param name="windowHandle">Handle of the icons' parent window.</param>
         protected IconDetector(uint getIconsCode, uint getIconCountCode, IntPtr windowHandle)
         {
             _getIconsCode = getIconsCode;
@@ -41,17 +59,30 @@ namespace ItsApe.ArtifactDetector.Detectors
             ProcessHandle = InitProcessHandle();
         }
 
+        /// <summary>
+        /// Handle of the icons' process.
+        /// </summary>
         protected IntPtr ProcessHandle { get; set; }
+
+        /// <summary>
+        /// Handle of the icons' window.
+        /// </summary>
         protected IntPtr WindowHandle { get; set; }
+
+        /// <summary>
+        /// Copy from runtime information.
+        /// </summary>
+        private IList<string> PossibleIconSubstrings { get; set; }
 
         /// <summary>
         /// Find the artifact provided by the runtime information.
         /// </summary>
         /// <param name="runtimeInformation">Information must contain "possibleIconTitles" for this to work.</param>
-        /// <param name="previousResponse">Not necessary for this.</param>
         /// <returns>Response based on whether the artifact was found.</returns>
-        public override DetectorResponse FindArtifact(ref ArtifactRuntimeInformation runtimeInformation, DetectorResponse previousResponse = null)
+        public override DetectorResponse FindArtifact(ref ArtifactRuntimeInformation runtimeInformation)
         {
+            Logger.LogInformation("Detecting icons now.");
+
             // This error is really unlikely.
             if (WindowHandle == IntPtr.Zero)
             {
@@ -59,13 +90,22 @@ namespace ItsApe.ArtifactDetector.Detectors
                 return new DetectorResponse() { ArtifactPresent = DetectorResponse.ArtifactPresence.Impossible };
             }
 
+            if (runtimeInformation.PossibleIconSubstrings.Count < 1)
+            {
+                Logger.LogInformation("No possible icon titles given for detector. Could not find matching icons.");
+                return new DetectorResponse() { ArtifactPresent = DetectorResponse.ArtifactPresence.Possible };
+            }
+
             // Stopwatch for evaluation.
             StartStopwatch();
+            PossibleIconSubstrings = runtimeInformation.PossibleIconSubstrings;
 
-            if (FindIcon(ref runtimeInformation))
+            FindIcon();
+
+            if (foundMatches > 0)
             {
                 StopStopwatch("Got icons in {0}ms.");
-                Logger.LogInformation("Found matching icon.");
+                Logger.LogInformation("Found {0} matching icons.", foundMatches);
                 return new DetectorResponse { ArtifactPresent = DetectorResponse.ArtifactPresence.Certain };
             }
 
@@ -150,7 +190,10 @@ namespace ItsApe.ArtifactDetector.Detectors
             structToFill = Marshal.PtrToStructure<StructType>(Marshal.UnsafeAddrOfPinnedArrayElement(_buffer, 0));
         }
 
-        protected bool FindIcon(ref ArtifactRuntimeInformation runtimeInformation)
+        /// <summary>
+        /// Gets the icon count and iterates over all icons in the window handle.
+        /// </summary>
+        protected void FindIcon()
         {
             // Get the desktop window's process to enumerate child windows.
             ProcessHandle = InitProcessHandle();
@@ -164,9 +207,9 @@ namespace ItsApe.ArtifactDetector.Detectors
                 // Loop through available desktop icons.
                 for (int i = 0; i < iconCount; i++)
                 {
-                    if (IconMatches(ref runtimeInformation, i, icon))
+                    if (IconMatches(i, icon))
                     {
-                        return true;
+                        foundMatches++;
                     }
                 }
             }
@@ -175,8 +218,6 @@ namespace ItsApe.ArtifactDetector.Detectors
                 // Clean up unmanaged memory.
                 CleanUnmanagedMemory();
             }
-
-            return false;
         }
 
         /// <summary>
@@ -215,16 +256,15 @@ namespace ItsApe.ArtifactDetector.Detectors
         /// <summary>
         /// Check if the given icon at the index matches the titles from runtime information.
         /// </summary>
-        /// <param name="runtimeInformation">Information on what to look for.</param>
         /// <param name="index">Index of icon in parent window.</param>
         /// <param name="icon">Icon structure.</param>
         /// <returns>True if the icon matches.</returns>
-        protected bool IconMatches(ref ArtifactRuntimeInformation runtimeInformation, int index, StructType icon)
+        protected bool IconMatches(int index, StructType icon)
         {
             string currentIconTitle = GetIconTitle(index, icon);
 
             // Check if the current title has a substring in the possible titles.
-            return IconTitleMatches(currentIconTitle, runtimeInformation.PossibleIconSubstrings);
+            return IconTitleMatches(currentIconTitle);
         }
 
         /// <summary>
@@ -233,9 +273,9 @@ namespace ItsApe.ArtifactDetector.Detectors
         /// </summary>
         /// <param name="iconTitle">Obvious.</param>
         /// <returns>True if the icon title contains any substring.</returns>
-        protected bool IconTitleMatches(string iconTitle, IList<string> PossibleIconTitles)
+        protected bool IconTitleMatches(string iconTitle)
         {
-            return iconTitle.ContainsAny(PossibleIconTitles, StringComparison.InvariantCultureIgnoreCase);
+            return iconTitle.ContainsAny(PossibleIconSubstrings);
         }
 
         /// <summary>

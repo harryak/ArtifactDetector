@@ -17,7 +17,7 @@ namespace ItsApe.ArtifactDetector
         [STAThread]
         private static void Main(string[] args)
         {
-            ServiceBase[] ServicesToRun;
+            /*ServiceBase[] ServicesToRun;
             ServicesToRun = new ServiceBase[]
             {
                 new DetectorService()
@@ -27,7 +27,7 @@ namespace ItsApe.ArtifactDetector
             };
 
             // Start service.
-            ServiceBase.Run(ServicesToRun);
+            ServiceBase.Run(ServicesToRun);*/
         }
     }
 }

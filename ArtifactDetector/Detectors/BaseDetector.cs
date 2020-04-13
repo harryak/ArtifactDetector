@@ -25,9 +25,9 @@ namespace ItsApe.ArtifactDetector.Detectors
         /// Find the artifact defined in the artifactConfiguration given some runtime information and a previous detector's response.
         /// </summary>
         /// <param name="runtimeInformation">Information about the artifact.</param>
-        /// <param name="previousResponse">Optional: Response from another detector run before.</param>
+        /// 
         /// <returns>A response object containing information whether the artifact has been found.</returns>
-        public abstract DetectorResponse FindArtifact(ref ArtifactRuntimeInformation runtimeInformation, DetectorResponse previousResponse = null);
+        public abstract DetectorResponse FindArtifact(ref ArtifactRuntimeInformation runtimeInformation);
 
         /// <summary>
         /// Tells whether this detector has preconditions.

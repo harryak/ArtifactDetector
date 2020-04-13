@@ -40,6 +40,42 @@ namespace ItsApe.ArtifactDetector.Models
         public string ArtifactName { get; private set; }
 
         /// <summary>
+        /// How many desktop icons have been found.
+        /// </summary>
+        [JsonIgnore]
+        public int CountDesktopIcons { get; set; } = 0;
+
+        /// <summary>
+        /// How many installed programs have been found.
+        /// </summary>
+        [JsonIgnore]
+        public int CountInstalledPrograms { get; set; } = 0;
+
+        /// <summary>
+        /// How many open windows have been found.
+        /// </summary>
+        [JsonIgnore]
+        public int CountOpenWindows { get; set; } = 0;
+
+        /// <summary>
+        /// How many runnind processes have been found.
+        /// </summary>
+        [JsonIgnore]
+        public int CountRunningProcesses { get; set; } = 0;
+
+        /// <summary>
+        /// How many tray icons have been found.
+        /// </summary>
+        [JsonIgnore]
+        public int CountTrayIcons { get; set; } = 0;
+
+        /// <summary>
+        /// How many reference image matches have been found.
+        /// </summary>
+        [JsonIgnore]
+        public int CountVisualFeautureMatches { get; set; } = 0;
+
+        /// <summary>
         /// Possible (fragments of the) titles of the windows to get.
         /// </summary>
         [JsonProperty("icon_titles")]

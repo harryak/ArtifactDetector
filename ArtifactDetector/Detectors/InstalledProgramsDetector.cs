@@ -39,22 +39,20 @@ namespace ItsApe.ArtifactDetector.Detectors
         /// Detect installed programs by the info given.
         /// </summary>
         /// <param name="runtimeInformation">Data object with possible program names set.</param>
-        /// <param name="previousResponse"></param>
         /// <returns>A DetectorResponse based on the success of detection.</returns>
-        public override DetectorResponse FindArtifact(ref ArtifactRuntimeInformation runtimeInformation, DetectorResponse previousResponse = null)
+        public override DetectorResponse FindArtifact(ref ArtifactRuntimeInformation runtimeInformation)
         {
             Logger.LogInformation("Detecting installed programs now.");
-
-            // Stopwatch for evaluation.
-            StartStopwatch();
 
             // Check whether we have enough data to detect the artifact.
             if (runtimeInformation.PossibleProgramSubstrings.Count < 1)
             {
-                StopStopwatch("Got all installed programs in {0}ms.");
                 Logger.LogWarning("No possible program names given for detector. Could not find matching installed programs.");
                 return new DetectorResponse() { ArtifactPresent = DetectorResponse.ArtifactPresence.Possible };
             }
+
+            // Stopwatch for evaluation.
+            StartStopwatch();
 
             PossibleProgramSubstrings = runtimeInformation.PossibleProgramSubstrings;
 
@@ -63,6 +61,7 @@ namespace ItsApe.ArtifactDetector.Detectors
             if (foundMatches > 0)
             {
                 runtimeInformation.ProgramExecutables = ProgramExecutables;
+                runtimeInformation.CountInstalledPrograms = foundMatches;
 
                 StopStopwatch("Got all installed programs in {0}ms.");
                 Logger.LogInformation("Found {0} matching installed programs.", foundMatches);

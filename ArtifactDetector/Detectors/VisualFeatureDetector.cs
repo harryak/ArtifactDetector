@@ -29,10 +29,9 @@ namespace ItsApe.ArtifactDetector.Detectors
         /// Main function of this detector: Find the artifact provided by the configuration.
         /// </summary>
         /// <param name="runtimeInformation">Information about the artifact.</param>
-        /// <param name="previousResponse">Optional: Response from another detector run before.</param>
         /// <returns>A response object containing information whether the artifact has been found.</returns>
         /// <exception cref="ArgumentNullException">If there are no images.</exception>
-        public override DetectorResponse FindArtifact(ref ArtifactRuntimeInformation runtimeInformation, DetectorResponse previousResponse = null)
+        public override DetectorResponse FindArtifact(ref ArtifactRuntimeInformation runtimeInformation)
         {
             // Shorthand for reference images.
             var referenceImages = runtimeInformation.ReferenceImages.GetProcessedImages();

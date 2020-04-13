@@ -17,11 +17,6 @@ namespace ItsApe.ArtifactDetector.Detectors
     internal class OpenWindowDetector : BaseDetector, IDetector
     {
         /// <summary>
-        /// List of matching windows that have been found.
-        /// </summary>
-        private IDictionary<IntPtr, float> WindowsFound { get; } = new Dictionary<IntPtr, float>();
-
-        /// <summary>
         /// Local copy of possible window titles for nested delegate function.
         /// </summary>
         private IList<string> PossibleWindowTitleSubstrings { get; set; }
@@ -37,25 +32,28 @@ namespace ItsApe.ArtifactDetector.Detectors
         private ICollection<IntPtr> WindowHandles { get; set; }
 
         /// <summary>
+        /// List of matching windows that have been found.
+        /// </summary>
+        private IDictionary<IntPtr, float> WindowsFound { get; } = new Dictionary<IntPtr, float>();
+        /// <summary>
         /// Find the artifact defined in the artifactConfiguration given some runtime information and a previous detector's response.
         /// </summary>
         /// <param name="runtimeInformation">Information about the artifact.</param>
-        /// <param name="previousResponse">Optional: Response from another detector run before.</param>
+        ///
         /// <returns>A response object containing information whether the artifact has been found.</returns>
-        public override DetectorResponse FindArtifact(ref ArtifactRuntimeInformation runtimeInformation, DetectorResponse previousResponse = null)
+        public override DetectorResponse FindArtifact(ref ArtifactRuntimeInformation runtimeInformation)
         {
             Logger.LogInformation("Detecting open windows now.");
-
-            // Stopwatch for evaluation.
-            StartStopwatch();
 
             // Check whether we have enough data to detect the artifact.
             if (runtimeInformation.WindowHandles.Count < 1 && runtimeInformation.PossibleWindowTitleSubstrings.Count < 1)
             {
-                StopStopwatch("Got all opened windows in {0}ms.");
                 Logger.LogInformation("No matching windows or possible window titles given for detector. Only getting visible windows now.");
                 return FindArtifactLight(ref runtimeInformation);
             }
+
+            // Stopwatch for evaluation.
+            StartStopwatch();
 
             // Copy to local variables for EnumWindowsProc.
             WindowHandles = runtimeInformation.WindowHandles;
@@ -193,19 +191,20 @@ namespace ItsApe.ArtifactDetector.Detectors
             runtimeInformation.VisibleWindowOutlines = VisibleWindowOutlines;
 
             // If we found not a single matching window the artifact can't be present.
-            if (WindowsFound.Count < 1)
+            if (WindowsFound.Count > 0)
             {
+                // Copy found information back to object reference.
+                runtimeInformation.WindowsInformation = WindowsFound;
+                runtimeInformation.CountOpenWindows = WindowsFound.Count;
+
                 StopStopwatch("Got all opened windows in {0}ms.");
-                Logger.LogInformation("Found no matching open windows.");
-                return new DetectorResponse() { ArtifactPresent = DetectorResponse.ArtifactPresence.Impossible };
+                Logger.LogInformation("Found {0} matching open windows.", WindowsFound.Count);
+                return new DetectorResponse() { ArtifactPresent = DetectorResponse.ArtifactPresence.Certain };
             }
 
-            // Copy found information back to object reference.
-            runtimeInformation.WindowsInformation = WindowsFound;
-
             StopStopwatch("Got all opened windows in {0}ms.");
-            Logger.LogInformation("Found {0} matching open windows.", WindowsFound.Count);
-            return new DetectorResponse() { ArtifactPresent = DetectorResponse.ArtifactPresence.Certain };
+            Logger.LogInformation("Found no matching open windows.");
+            return new DetectorResponse() { ArtifactPresent = DetectorResponse.ArtifactPresence.Impossible };
         }
 
         /// <summary>

@@ -37,10 +37,11 @@ namespace ItsApe.ArtifactDetector.Detectors
         /// Find the artifact defined in the artifactConfiguration given some runtime information and a previous detector's response.
         /// </summary>
         /// <param name="runtimeInformation">Information about the artifact.</param>
-        /// <param name="previousResponse">Optional: Response from another detector run before.</param>
+        /// 
         /// <returns>A response object containing information whether the artifact has been found.</returns>
-        public override DetectorResponse FindArtifact(ref ArtifactRuntimeInformation runtimeInformation, DetectorResponse previousResponse = null)
+        public override DetectorResponse FindArtifact(ref ArtifactRuntimeInformation runtimeInformation)
         {
+            DetectorResponse previousResponse = null;
             DetectorResponse response = null;
 
             StartStopwatch();
@@ -52,7 +53,7 @@ namespace ItsApe.ArtifactDetector.Detectors
                     break;
 
                 // Get the new chain element's response.
-                response = currentDetector.FindArtifact(ref runtimeInformation, previousResponse);
+                response = currentDetector.FindArtifact(ref runtimeInformation);
 
                 // If there is an artifact or there is none with 100 certainty, break.
                 if (currentDetector.HasTargetConditions() && !currentDetector.TargetConditionsMatch(response))
