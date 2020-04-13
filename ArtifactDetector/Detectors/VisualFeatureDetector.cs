@@ -14,7 +14,7 @@ namespace ItsApe.ArtifactDetector.Detectors
     /// </summary>
     internal class VisualFeatureDetector : BaseDetector, IDetector
     {
-        private int foundMatches;
+        private bool ArtifactFound;
 
         private ICollection<ProcessedImage> ReferenceImages;
 
@@ -55,19 +55,27 @@ namespace ItsApe.ArtifactDetector.Detectors
             StartStopwatch();
 
             InitializeDetection(ref runtimeInformation);
-            AnalyzeWindowHandles();
 
-            if (foundMatches > 0)
+            if (WindowInformation.Count > 0)
             {
-                runtimeInformation.CountVisualFeautureMatches = foundMatches;
+                AnalyzeWindowHandles();
+            }
+            else
+            {
+                AnalyzeScreens();
+            }
+
+            if (ArtifactFound)
+            {
+                runtimeInformation.CountVisualFeautureMatches = 1;
 
                 StopStopwatch("Got all matching reference images in {0}ms.");
-                Logger.LogInformation("Found {0} matches in reference images.", foundMatches);
+                Logger.LogInformation("Found a match in reference images.");
                 return new DetectorResponse() { ArtifactPresent = DetectorResponse.ArtifactPresence.Certain };
             }
 
             StopStopwatch("Got all matching reference images in {0}ms.");
-            Logger.LogInformation("Found no matches in reference images.", foundMatches);
+            Logger.LogInformation("Found no matches in reference images.");
             return new DetectorResponse() { ArtifactPresent = DetectorResponse.ArtifactPresence.Impossible };
         }
 
@@ -77,23 +85,18 @@ namespace ItsApe.ArtifactDetector.Detectors
         /// <param name="runtimeInformation">Reference to object to initialize from.</param>
         public override void InitializeDetection(ref ArtifactRuntimeInformation runtimeInformation)
         {
-            foundMatches = 0;
+            ArtifactFound = false;
             WindowInformation = runtimeInformation.WindowsInformation;
         }
 
         private void AnalyzeWindowHandles()
         {
-            // For all matching windows:
-            bool artifactFound = false;
             foreach (var windowHandle in WindowInformation)
             {
                 // Make screenshot of artifact window and extract the features.
                 var observedImage = FeatureExtractor.ExtractFeatures(WindowCapturer.CaptureWindow(windowHandle));
 
-                if (FeatureExtractor.ImageMatchesReference(observedImage, ReferenceImages, out var drawingResult, out int matchCount))
-                {
-                    foundMatches++;
-                }
+                ArtifactFound = FeatureExtractor.ImageMatchesReference(observedImage, ReferenceImages, out var drawingResult, out int matchCount);
 
 #if DEBUG
                 // Show the results in a window.
@@ -102,7 +105,24 @@ namespace ItsApe.ArtifactDetector.Detectors
 #endif
 
                 // Stop if the artifact was found.
-                if (artifactFound)
+                if (ArtifactFound)
+                {
+                    break;
+                }
+            }
+        }
+
+        private void AnalyzeScreens()
+        {
+            foreach (var screen in Screen.AllScreens)
+            {
+                // Make screenshot of whole screen and extract the features.
+                var observedImage = FeatureExtractor.ExtractFeatures(WindowCapturer.CaptureScreen(screen));
+
+                ArtifactFound = FeatureExtractor.ImageMatchesReference(observedImage, ReferenceImages, out var drawingResult, out int matchCount);
+
+                // Stop if the artifact was found.
+                if (ArtifactFound)
                 {
                     break;
                 }

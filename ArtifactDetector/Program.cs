@@ -1,13 +1,6 @@
 ﻿using System;
-using System.Drawing;
-using System.Drawing.Imaging;
 using System.ServiceProcess;
-using System.Windows.Forms;
-using Emgu.CV.UI;
-using ItsApe.ArtifactDetector.Detectors;
-using ItsApe.ArtifactDetector.Models;
 using ItsApe.ArtifactDetector.Services;
-using ItsApe.ArtifactDetector.Utilities;
 
 namespace ItsApe.ArtifactDetector
 {
