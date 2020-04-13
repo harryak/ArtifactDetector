@@ -16,6 +16,12 @@ namespace ItsApe.ArtifactDetector.Detectors
         DetectorResponse FindArtifact(ref ArtifactRuntimeInformation runtimeInformation);
 
         /// <summary>
+        /// Initialize (or reset) the detection for FindArtifact.
+        /// </summary>
+        /// <param name="runtimeInformation">Reference to object to initialize from.</param>
+        void InitializeDetection(ref ArtifactRuntimeInformation runtimeInformation);
+
+        /// <summary>
         /// Tells whether this detector has preconditions.
         /// </summary>
         /// <returns>True if it does.</returns>

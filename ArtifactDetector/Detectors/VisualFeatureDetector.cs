@@ -1,9 +1,11 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Windows.Forms;
+using Emgu.CV.UI;
 using ItsApe.ArtifactDetector.Detectors.VisualFeatureExtractor;
 using ItsApe.ArtifactDetector.Models;
 using ItsApe.ArtifactDetector.Utilities;
-using ItsApe.ArtifactDetector.Viewers;
+using Microsoft.Extensions.Logging;
 
 namespace ItsApe.ArtifactDetector.Detectors
 {
@@ -12,6 +14,12 @@ namespace ItsApe.ArtifactDetector.Detectors
     /// </summary>
     internal class VisualFeatureDetector : BaseDetector, IDetector
     {
+        private int foundMatches;
+
+        private ICollection<ProcessedImage> ReferenceImages;
+
+        private IList<WindowInformation> WindowInformation;
+
         /// <summary>
         /// Instantiate via setting the feature extractor from the configurations.
         /// </summary>
@@ -23,7 +31,7 @@ namespace ItsApe.ArtifactDetector.Detectors
         /// <summary>
         /// Feature extractor used in this run.
         /// </summary>
-        protected IVisualFeatureExtractor FeatureExtractor { get; set; }
+        private IVisualFeatureExtractor FeatureExtractor { get; set; }
 
         /// <summary>
         /// Main function of this detector: Find the artifact provided by the configuration.
@@ -34,21 +42,58 @@ namespace ItsApe.ArtifactDetector.Detectors
         public override DetectorResponse FindArtifact(ref ArtifactRuntimeInformation runtimeInformation)
         {
             // Shorthand for reference images.
-            var referenceImages = runtimeInformation.ReferenceImages.GetProcessedImages();
+            ReferenceImages = runtimeInformation.ReferenceImages.GetProcessedImages();
 
             // Do we have reference images?
-            if (referenceImages.Count < 1)
+            if (ReferenceImages.Count < 1)
             {
-                throw new ArgumentNullException("No images for the artifact type found.");
+                Logger.LogInformation("No reference images given for detector. Can not detect visual matches.");
+                return new DetectorResponse() { ArtifactPresent = DetectorResponse.ArtifactPresence.Possible };
             }
 
+            // Stopwatch for evaluation.
+            StartStopwatch();
+
+            InitializeDetection(ref runtimeInformation);
+            AnalyzeWindowHandles();
+
+            if (foundMatches > 0)
+            {
+                runtimeInformation.CountVisualFeautureMatches = foundMatches;
+
+                StopStopwatch("Got all matching reference images in {0}ms.");
+                Logger.LogInformation("Found {0} matches in reference images.", foundMatches);
+                return new DetectorResponse() { ArtifactPresent = DetectorResponse.ArtifactPresence.Certain };
+            }
+
+            StopStopwatch("Got all matching reference images in {0}ms.");
+            Logger.LogInformation("Found no matches in reference images.", foundMatches);
+            return new DetectorResponse() { ArtifactPresent = DetectorResponse.ArtifactPresence.Impossible };
+        }
+
+        /// <summary>
+        /// Initialize (or reset) the detection for FindArtifact.
+        /// </summary>
+        /// <param name="runtimeInformation">Reference to object to initialize from.</param>
+        public override void InitializeDetection(ref ArtifactRuntimeInformation runtimeInformation)
+        {
+            foundMatches = 0;
+            WindowInformation = runtimeInformation.WindowsInformation;
+        }
+
+        private void AnalyzeWindowHandles()
+        {
             // For all matching windows:
             bool artifactFound = false;
-            foreach (var matchingWindowEntry in runtimeInformation.WindowsInformation)
+            foreach (var windowHandle in WindowInformation)
             {
                 // Make screenshot of artifact window and extract the features.
-                var observedImage = FeatureExtractor.ExtractFeatures(WindowCapturer.CaptureWindow(matchingWindowEntry.Key));
-                artifactFound = FeatureExtractor.ImageContainsArtifactType(observedImage, referenceImages, out var drawingResult, out int matchCount);
+                var observedImage = FeatureExtractor.ExtractFeatures(WindowCapturer.CaptureWindow(windowHandle));
+
+                if (FeatureExtractor.ImageMatchesReference(observedImage, ReferenceImages, out var drawingResult, out int matchCount))
+                {
+                    foundMatches++;
+                }
 
 #if DEBUG
                 // Show the results in a window.
@@ -62,9 +107,6 @@ namespace ItsApe.ArtifactDetector.Detectors
                     break;
                 }
             }
-
-            //TODO: Adjust certainty.
-            return new DetectorResponse() { ArtifactPresent = artifactFound ? DetectorResponse.ArtifactPresence.Certain : DetectorResponse.ArtifactPresence.Impossible };
         }
     }
 }

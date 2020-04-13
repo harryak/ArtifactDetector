@@ -1,6 +1,13 @@
 ﻿using System;
+using System.Drawing;
+using System.Drawing.Imaging;
 using System.ServiceProcess;
+using System.Windows.Forms;
+using Emgu.CV.UI;
+using ItsApe.ArtifactDetector.Detectors;
+using ItsApe.ArtifactDetector.Models;
 using ItsApe.ArtifactDetector.Services;
+using ItsApe.ArtifactDetector.Utilities;
 
 namespace ItsApe.ArtifactDetector
 {
@@ -17,7 +24,7 @@ namespace ItsApe.ArtifactDetector
         [STAThread]
         private static void Main(string[] args)
         {
-            /*ServiceBase[] ServicesToRun;
+            ServiceBase[] ServicesToRun;
             ServicesToRun = new ServiceBase[]
             {
                 new DetectorService()
@@ -27,7 +34,7 @@ namespace ItsApe.ArtifactDetector
             };
 
             // Start service.
-            ServiceBase.Run(ServicesToRun);*/
+            ServiceBase.Run(ServicesToRun);
         }
     }
 }

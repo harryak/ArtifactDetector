@@ -42,7 +42,7 @@ namespace ItsApe.ArtifactDetector.Detectors
         /// <summary>
         /// Counter for matching icons.
         /// </summary>
-        private int foundMatches = 0;
+        private int foundMatches;
 
         /// <summary>
         /// Constructor to switch between icon types.
@@ -98,9 +98,9 @@ namespace ItsApe.ArtifactDetector.Detectors
 
             // Stopwatch for evaluation.
             StartStopwatch();
-            PossibleIconSubstrings = runtimeInformation.PossibleIconSubstrings;
 
-            FindIcon();
+            InitializeDetection(ref runtimeInformation);
+            AnalizeIcons();
 
             if (foundMatches > 0)
             {
@@ -112,6 +112,16 @@ namespace ItsApe.ArtifactDetector.Detectors
             StopStopwatch("Got icons in {0}ms.");
             Logger.LogInformation("Found no matching icons.");
             return new DetectorResponse { ArtifactPresent = DetectorResponse.ArtifactPresence.Impossible };
+        }
+
+        /// <summary>
+        /// Initialize (or reset) the detection for FindArtifact.
+        /// </summary>
+        /// <param name="runtimeInformation">Reference to object to initialize from.</param>
+        public override void InitializeDetection(ref ArtifactRuntimeInformation runtimeInformation)
+        {
+            foundMatches = 0;
+            PossibleIconSubstrings = runtimeInformation.PossibleIconSubstrings;
         }
 
         /// <summary>
@@ -152,6 +162,36 @@ namespace ItsApe.ArtifactDetector.Detectors
         }
 
         /// <summary>
+        /// Gets the icon count and iterates over all icons in the window handle.
+        /// </summary>
+        protected void AnalizeIcons()
+        {
+            // Get the desktop window's process to enumerate child windows.
+            ProcessHandle = InitProcessHandle();
+            // Count subwindows of window => count of icons.
+            int iconCount = GetIconCount(WindowHandle);
+
+            var icon = InitIconStruct();
+
+            try
+            {
+                // Loop through available desktop icons.
+                for (int i = 0; i < iconCount; i++)
+                {
+                    if (IconMatches(i, icon))
+                    {
+                        foundMatches++;
+                    }
+                }
+            }
+            finally
+            {
+                // Clean up unmanaged memory.
+                CleanUnmanagedMemory();
+            }
+        }
+
+        /// <summary>
         /// Clean up the buffer in given process.
         /// </summary>
         /// <param name="processHandle">Handle of the buffer's process.</param>
@@ -188,36 +228,6 @@ namespace ItsApe.ArtifactDetector.Detectors
             }
 
             structToFill = Marshal.PtrToStructure<StructType>(Marshal.UnsafeAddrOfPinnedArrayElement(_buffer, 0));
-        }
-
-        /// <summary>
-        /// Gets the icon count and iterates over all icons in the window handle.
-        /// </summary>
-        protected void FindIcon()
-        {
-            // Get the desktop window's process to enumerate child windows.
-            ProcessHandle = InitProcessHandle();
-            // Count subwindows of window => count of icons.
-            int iconCount = GetIconCount(WindowHandle);
-
-            var icon = InitIconStruct();
-
-            try
-            {
-                // Loop through available desktop icons.
-                for (int i = 0; i < iconCount; i++)
-                {
-                    if (IconMatches(i, icon))
-                    {
-                        foundMatches++;
-                    }
-                }
-            }
-            finally
-            {
-                // Clean up unmanaged memory.
-                CleanUnmanagedMemory();
-            }
         }
 
         /// <summary>

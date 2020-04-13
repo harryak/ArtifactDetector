@@ -7,8 +7,6 @@ namespace ItsApe.ArtifactDetector.Utilities
 {
     internal static partial class NativeMethods
     {
-        public const int SRCCOPY = 0x00CC0020; // BitBlt dwRop parameter
-
         /// <summary>
         /// Delegate function to loop over windows.
         /// </summary>
@@ -17,42 +15,13 @@ namespace ItsApe.ArtifactDetector.Utilities
         /// <returns>Can be disregarded.</returns>
         public delegate bool EnumWindowsProc(IntPtr hWnd, int lParam);
 
-        [DllImport("gdi32.dll", EntryPoint = "BitBlt", SetLastError = true)]
-        [return: MarshalAs(UnmanagedType.Bool)]
-        public static extern bool BitBlt(IntPtr hObject, int nXDest, int nYDest, int nWidth, int nHeight, IntPtr hObjectSource, int nXSrc, int nYSrc, int dwRop);
-
-        [DllImport("gdi32.dll", EntryPoint = "CreateCompatibleBitmap")]
-        public static extern IntPtr CreateCompatibleBitmap(IntPtr hDC, int nWidth, int nHeight);
-
-        [DllImport("gdi32.dll", EntryPoint = "CreateCompatibleDC", SetLastError = true)]
-        public static extern IntPtr CreateCompatibleDC(IntPtr hDC);
-
-        [DllImport("gdi32.dll", EntryPoint = "DeleteDC")]
-        [return: MarshalAs(UnmanagedType.Bool)]
-        public static extern bool DeleteDC(IntPtr hDC);
-
-        [DllImport("gdi32.dll", EntryPoint = "DeleteObject")]
-        [return: MarshalAs(UnmanagedType.Bool)]
-        public static extern bool DeleteObject(IntPtr hObject);
-
         [DllImport("user32.dll", SetLastError = true)]
         [return: MarshalAs(UnmanagedType.Bool)]
         public static extern bool EnumWindows(EnumWindowsProc enumFunc, IntPtr lParam);
 
-        [DllImport("user32.dll")]
-        public static extern IntPtr GetWindowDC(IntPtr hWnd);
-
         [DllImport("user32.dll", SetLastError = true)]
         [return: MarshalAs(UnmanagedType.Bool)]
         public static extern bool GetWindowInfo(IntPtr hwnd, ref WindowVisualInformation pwi);
-
-        [DllImport("user32.dll", SetLastError = true)]
-        [return: MarshalAs(UnmanagedType.Bool)]
-        public static extern bool GetWindowPlacement(IntPtr hWnd, ref WindowPlacement lpwndpl);
-
-        [DllImport("user32.dll", SetLastError = true)]
-        [return: MarshalAs(UnmanagedType.Bool)]
-        public static extern bool GetWindowRect(IntPtr hWnd, ref RECT rect);
 
         [DllImport("user32.dll", CharSet = CharSet.Unicode)]
         [return: MarshalAs(UnmanagedType.U4)]
@@ -65,13 +34,6 @@ namespace ItsApe.ArtifactDetector.Utilities
         [DllImport("user32.dll")]
         [return: MarshalAs(UnmanagedType.Bool)]
         public static extern bool IsWindowVisible(IntPtr hWnd);
-
-        [DllImport("user32.dll")]
-        [return: MarshalAs(UnmanagedType.Bool)]
-        public static extern bool ReleaseDC(IntPtr hWnd, IntPtr hDC);
-
-        [DllImport("gdi32.dll", EntryPoint = "SelectObject")]
-        public static extern IntPtr SelectObject(IntPtr hDC, IntPtr hObject);
 
         [DllImport("kernel32.dll")]
         internal static extern bool CloseHandle(IntPtr handle);
@@ -95,9 +57,6 @@ namespace ItsApe.ArtifactDetector.Utilities
         [DllImport("user32.dll")]
         internal static extern IntPtr SendMessage(IntPtr hWnd, uint Msg, IntPtr wParam, IntPtr lParam);
 
-        [DllImport("shell32.dll", SetLastError = true)]
-        internal static extern int Shell_NotifyIconGetRect([In] ref NOTIFYICONIDENTIFIER identifier, [Out] out RECT iconLocation);
-
         [DllImport("kernel32.dll")]
         internal static extern IntPtr VirtualAllocEx(IntPtr hProcess, IntPtr lpAddress, UIntPtr dwSize, uint flAllocationType, uint flProtect);
 
@@ -110,8 +69,6 @@ namespace ItsApe.ArtifactDetector.Utilities
         internal static extern bool WriteProcessMemory(IntPtr hProcess, IntPtr lpBaseAddress, IntPtr lpBuffer, UIntPtr nSize, ref uint vNumberOfBytesRead);
 
         #region structs
-
-#pragma warning disable CS0649
 
         /// <summary>
         /// This is the structure for a list view item, such as the icons on the desktop.
@@ -228,28 +185,6 @@ namespace ItsApe.ArtifactDetector.Utilities
         }
 
         [StructLayout(LayoutKind.Sequential)]
-        public struct NOTIFYICONIDENTIFIER
-        {
-            public uint cbSize;
-            public IntPtr hWnd;
-            public uint uID;
-            public Guid guidItem;
-        }
-
-#pragma warning restore CS0649
-
-        [StructLayout(LayoutKind.Sequential)]
-        public struct RECT
-        {
-            public int left;
-            public int top;
-            public int right;
-            public int bottom;
-        }
-
-#pragma warning disable IDE1006
-
-        [StructLayout(LayoutKind.Sequential)]
         internal struct TBBUTTON
         {
             /// <summary>
@@ -277,87 +212,6 @@ namespace ItsApe.ArtifactDetector.Utilities
             public IntPtr iString;
         }
 
-#pragma warning restore IDE1006
-
-        /// <summary>
-        /// Contains information about the placement of a window on the screen.
-        /// </summary>
-        [StructLayout(LayoutKind.Sequential)]
-        internal struct WindowPlacement
-        {
-            /// <summary>
-            /// The length of the structure, in bytes. Before calling the GetWindowPlacement or SetWindowPlacement functions, set this member to sizeof(WINDOWPLACEMENT).
-            /// <para>
-            /// GetWindowPlacement and SetWindowPlacement fail if this member is not set correctly.
-            /// </para>
-            /// </summary>
-            public int Length;
-
-            /// <summary>
-            /// Specifies flags that control the position of the minimized window and the method by which the window is restored.
-            /// </summary>
-            public int Flags;
-
-            /// <summary>
-            /// The current show state of the window.
-            /// </summary>
-            public ShowWindowCommands ShowCmd;
-
-            /// <summary>
-            /// The coordinates of the window's upper-left corner when the window is minimized.
-            /// </summary>
-            public WindowPosition MinPosition;
-
-            /// <summary>
-            /// The coordinates of the window's upper-left corner when the window is maximized.
-            /// </summary>
-            public WindowPosition MaxPosition;
-
-            /// <summary>
-            /// The window's coordinates when the window is in the restored position.
-            /// </summary>
-            public Rectangle NormalPosition;
-
-            /// <summary>
-            /// Gets the default (empty) value.
-            /// </summary>
-            public static WindowPlacement Default
-            {
-                get
-                {
-                    var result = new WindowPlacement();
-                    result.Length = Marshal.SizeOf(result);
-                    return result;
-                }
-            }
-        }
-
-        /// <summary>
-        /// A two-dimensional point for window positions.
-        /// </summary>
-        [StructLayout(LayoutKind.Sequential)]
-        internal struct WindowPosition
-        {
-            public int X;
-            public int Y;
-
-            public WindowPosition(int x, int y)
-            {
-                X = x;
-                Y = y;
-            }
-
-            public static implicit operator System.Drawing.Point(WindowPosition p)
-            {
-                return new System.Drawing.Point(p.X, p.Y);
-            }
-
-            public static implicit operator WindowPosition(System.Drawing.Point p)
-            {
-                return new WindowPosition(p.X, p.Y);
-            }
-        }
-
         [StructLayout(LayoutKind.Sequential)]
         internal struct WindowVisualInformation
         {
@@ -371,104 +225,92 @@ namespace ItsApe.ArtifactDetector.Utilities
             public uint cyWindowBorders;
             public ushort atomWindowType;
             public ushort wCreatorVersion;
-
-            public WindowVisualInformation(bool? filler) : this()   // Allows automatic initialization of "cbSize" with "new WINDOWINFO(null/true/false)".
-            {
-                cbSize = (uint)(Marshal.SizeOf(typeof(WindowVisualInformation)));
-            }
         }
 
         #endregion structs
 
-        #region enums
-
-        internal enum ShowWindowCommands
-        {
-            /// <summary>
-            /// Hides the window and activates another window.
-            /// </summary>
-            Hide = 0,
-
-            /// <summary>
-            /// Activates and displays a window. If the window is minimized or
-            /// maximized, the system restores it to its original size and position.
-            /// An application should specify this flag when displaying the window
-            /// for the first time.
-            /// </summary>
-            Normal = 1,
-
-            /// <summary>
-            /// Activates the window and displays it as a minimized window.
-            /// </summary>
-            ShowMinimized = 2,
-
-            /// <summary>
-            /// Maximizes the specified window.
-            /// </summary>
-            Maximize = 3, // is this the right value?
-
-            /// <summary>
-            /// Activates the window and displays it as a maximized window.
-            /// </summary>
-            ShowMaximized = 3,
-
-            /// <summary>
-            /// Displays a window in its most recent size and position. This value
-            /// is similar to <see cref="Win32.ShowWindowCommand.Normal"/>, except
-            /// the window is not activated.
-            /// </summary>
-            ShowNoActivate = 4,
-
-            /// <summary>
-            /// Activates the window and displays it in its current size and position.
-            /// </summary>
-            Show = 5,
-
-            /// <summary>
-            /// Minimizes the specified window and activates the next top-level
-            /// window in the Z order.
-            /// </summary>
-            Minimize = 6,
-
-            /// <summary>
-            /// Displays the window as a minimized window. This value is similar to
-            /// <see cref="Win32.ShowWindowCommand.ShowMinimized"/>, except the
-            /// window is not activated.
-            /// </summary>
-            ShowMinNoActive = 7,
-
-            /// <summary>
-            /// Displays the window in its current size and position. This value is
-            /// similar to <see cref="Win32.ShowWindowCommand.Show"/>, except the
-            /// window is not activated.
-            /// </summary>
-            ShowNA = 8,
-
-            /// <summary>
-            /// Activates and displays the window. If the window is minimized or
-            /// maximized, the system restores it to its original size and position.
-            /// An application should specify this flag when restoring a minimized window.
-            /// </summary>
-            Restore = 9,
-
-            /// <summary>
-            /// Sets the show state based on the SW_* value specified in the
-            /// STARTUPINFO structure passed to the CreateProcess function by the
-            /// program that started the application.
-            /// </summary>
-            ShowDefault = 10,
-
-            /// <summary>
-            ///  <b>Windows 2000/XP:</b> Minimizes a window, even if the thread
-            /// that owns the window is not responding. This flag should only be
-            /// used when minimizing windows from a different thread.
-            /// </summary>
-            ForceMinimize = 11
-        }
-
-        #endregion enums
-
         #region Windows Messages
+
+        public abstract class WindowStyles
+        {
+            public const uint WS_BORDER         = 0x00800000;
+            public const uint WS_CAPTION        = 0x00C00000;
+            public const uint WS_CHILD          = 0x40000000;
+            public const uint WS_CHILDWINDOW = WS_CHILD;
+            public const uint WS_CLIPCHILDREN   = 0x02000000;
+            public const uint WS_CLIPSIBLINGS   = 0x04000000;
+            public const uint WS_DISABLED       = 0x08000000;
+            public const uint WS_DLGFRAME       = 0x00400000;
+            public const uint WS_EX_ACCEPTFILES       = 0x00000010;
+            public const uint WS_EX_APPWINDOW         = 0x00040000;
+            public const uint WS_EX_CLIENTEDGE        = 0x00000200;
+            public const uint WS_EX_COMPOSITED        = 0x02000000;
+            public const uint WS_EX_CONTEXTHELP       = 0x00000400;
+            public const uint WS_EX_CONTROLPARENT     = 0x00010000;
+            public const uint WS_EX_DLGMODALFRAME     = 0x00000001;
+            public const uint WS_EX_LAYERED           = 0x00080000;
+            public const uint WS_EX_LAYOUTRTL         = 0x00400000;
+            public const uint WS_EX_LEFT              = 0x00000000;
+            public const uint WS_EX_LEFTSCROLLBAR     = 0x00004000;
+            public const uint WS_EX_LTRREADING        = 0x00000000;
+            public const uint WS_EX_MDICHILD          = 0x00000040;
+
+            // Right to left mirroring
+            public const uint WS_EX_NOACTIVATE        = 0x08000000;
+
+            public const uint WS_EX_NOINHERITLAYOUT   = 0x00100000;
+            public const uint WS_EX_NOPARENTNOTIFY    = 0x00000004;
+
+            // Disable inheritence of mirroring by children
+            public const uint WS_EX_OVERLAPPEDWINDOW  = (WS_EX_WINDOWEDGE | WS_EX_CLIENTEDGE);
+
+            public const uint WS_EX_PALETTEWINDOW     = (WS_EX_WINDOWEDGE | WS_EX_TOOLWINDOW | WS_EX_TOPMOST);
+            public const uint WS_EX_RIGHT             = 0x00001000;
+
+            //Extended Window Styles
+            public const uint WS_EX_RIGHTSCROLLBAR    = 0x00000000;
+
+            public const uint WS_EX_RTLREADING        = 0x00002000;
+            public const uint WS_EX_STATICEDGE        = 0x00020000;
+            public const uint WS_EX_TOOLWINDOW        = 0x00000080;
+            public const uint WS_EX_TOPMOST           = 0x00000008;
+            public const uint WS_EX_TRANSPARENT       = 0x00000020;
+            public const uint WS_EX_WINDOWEDGE        = 0x00000100;
+            public const uint WS_GROUP          = 0x00020000;
+            public const uint WS_HSCROLL        = 0x00100000;
+            public const uint WS_ICONIC         = WS_MINIMIZE;
+            public const uint WS_MAXIMIZE       = 0x01000000;
+            public const uint WS_MAXIMIZEBOX    = 0x00010000;
+            public const uint WS_MINIMIZE       = 0x20000000;
+            public const uint WS_MINIMIZEBOX    = 0x00020000;
+            public const uint WS_OVERLAPPED     = 0x00000000;
+
+            // Common Window Styles
+            public const uint WS_OVERLAPPEDWINDOW =
+            ( WS_OVERLAPPED  |
+              WS_CAPTION     |
+              WS_SYSMENU     |
+              WS_THICKFRAME  |
+              WS_MINIMIZEBOX |
+              WS_MAXIMIZEBOX );
+
+            public const uint WS_POPUP          = 0x80000000;
+
+            public const uint WS_POPUPWINDOW =
+            ( WS_POPUP   |
+              WS_BORDER  |
+              WS_SYSMENU );
+
+            public const uint WS_SIZEBOX        = WS_THICKFRAME;
+            public const uint WS_SYSMENU        = 0x00080000;
+            public const uint WS_TABSTOP        = 0x00010000;
+            public const uint WS_THICKFRAME     = 0x00040000;
+            public const uint WS_TILED          = WS_OVERLAPPED;
+            public const uint WS_TILEDWINDOW    = WS_OVERLAPPEDWINDOW;
+            public const uint WS_VISIBLE        = 0x10000000;
+            /* WS_BORDER | WS_DLGFRAME  */
+            public const uint WS_VSCROLL        = 0x00200000;
+        }
 
         internal class LVIF
         {
@@ -515,81 +357,6 @@ namespace ItsApe.ArtifactDetector.Utilities
         internal class WM
         {
             public const uint USER = 0x0400;
-        }
-
-        public abstract class WindowStyles
-        {
-            public const uint WS_OVERLAPPED     = 0x00000000;
-            public const uint WS_POPUP          = 0x80000000;
-            public const uint WS_CHILD          = 0x40000000;
-            public const uint WS_MINIMIZE       = 0x20000000;
-            public const uint WS_VISIBLE        = 0x10000000;
-            public const uint WS_DISABLED       = 0x08000000;
-            public const uint WS_CLIPSIBLINGS   = 0x04000000;
-            public const uint WS_CLIPCHILDREN   = 0x02000000;
-            public const uint WS_MAXIMIZE       = 0x01000000;
-            public const uint WS_CAPTION        = 0x00C00000; /* WS_BORDER | WS_DLGFRAME  */
-            public const uint WS_BORDER         = 0x00800000;
-            public const uint WS_DLGFRAME       = 0x00400000;
-            public const uint WS_VSCROLL        = 0x00200000;
-            public const uint WS_HSCROLL        = 0x00100000;
-            public const uint WS_SYSMENU        = 0x00080000;
-            public const uint WS_THICKFRAME     = 0x00040000;
-            public const uint WS_GROUP          = 0x00020000;
-            public const uint WS_TABSTOP        = 0x00010000;
-
-            public const uint WS_MINIMIZEBOX    = 0x00020000;
-            public const uint WS_MAXIMIZEBOX    = 0x00010000;
-
-            public const uint WS_TILED          = WS_OVERLAPPED;
-            public const uint WS_ICONIC         = WS_MINIMIZE;
-            public const uint WS_SIZEBOX        = WS_THICKFRAME;
-            public const uint WS_TILEDWINDOW    = WS_OVERLAPPEDWINDOW;
-
-            // Common Window Styles
-            public const uint WS_OVERLAPPEDWINDOW =
-            ( WS_OVERLAPPED  |
-              WS_CAPTION     |
-              WS_SYSMENU     |
-              WS_THICKFRAME  |
-              WS_MINIMIZEBOX |
-              WS_MAXIMIZEBOX );
-
-            public const uint WS_POPUPWINDOW =
-            ( WS_POPUP   |
-              WS_BORDER  |
-              WS_SYSMENU );
-
-            public const uint WS_CHILDWINDOW = WS_CHILD;
-
-            //Extended Window Styles
-            public const uint WS_EX_RIGHTSCROLLBAR    = 0x00000000;
-            public const uint WS_EX_LTRREADING        = 0x00000000;
-            public const uint WS_EX_LEFT              = 0x00000000;
-            public const uint WS_EX_DLGMODALFRAME     = 0x00000001;
-            public const uint WS_EX_NOPARENTNOTIFY    = 0x00000004;
-            public const uint WS_EX_TOPMOST           = 0x00000008;
-            public const uint WS_EX_ACCEPTFILES       = 0x00000010;
-            public const uint WS_EX_TRANSPARENT       = 0x00000020;
-            public const uint WS_EX_MDICHILD          = 0x00000040;
-            public const uint WS_EX_TOOLWINDOW        = 0x00000080;
-            public const uint WS_EX_WINDOWEDGE        = 0x00000100;
-            public const uint WS_EX_CLIENTEDGE        = 0x00000200;
-            public const uint WS_EX_CONTEXTHELP       = 0x00000400;
-            public const uint WS_EX_RIGHT             = 0x00001000;
-            public const uint WS_EX_RTLREADING        = 0x00002000;
-            public const uint WS_EX_LEFTSCROLLBAR     = 0x00004000;
-            public const uint WS_EX_CONTROLPARENT     = 0x00010000;
-            public const uint WS_EX_STATICEDGE        = 0x00020000;
-            public const uint WS_EX_APPWINDOW         = 0x00040000;
-            public const uint WS_EX_LAYERED           = 0x00080000;
-            public const uint WS_EX_NOINHERITLAYOUT   = 0x00100000; // Disable inheritence of mirroring by children
-            public const uint WS_EX_LAYOUTRTL         = 0x00400000; // Right to left mirroring
-            public const uint WS_EX_COMPOSITED        = 0x02000000;
-            public const uint WS_EX_NOACTIVATE        = 0x08000000;
-
-            public const uint WS_EX_OVERLAPPEDWINDOW  = (WS_EX_WINDOWEDGE | WS_EX_CLIENTEDGE);
-            public const uint WS_EX_PALETTEWINDOW     = (WS_EX_WINDOWEDGE | WS_EX_TOOLWINDOW | WS_EX_TOPMOST);
         }
 
         #endregion Windows Messages

@@ -8,7 +8,7 @@ namespace ItsApe.ArtifactDetector.Detectors
     /// <summary>
     /// Detector to detect desktop icons.
     /// </summary>
-    internal class DesktopIconDetector : IconDetector<NativeMethods.LVITEMA>
+    internal class DesktopIconDetector : IconDetector<NativeMethods.LVITEMA>, IDetector
     {
         public DesktopIconDetector()
             : base(

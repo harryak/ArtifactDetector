@@ -23,7 +23,7 @@ namespace ItsApe.ArtifactDetector.Detectors
         /// <summary>
         /// Internal counter.
         /// </summary>
-        private int foundMatches = 0;
+        private int foundMatches;
 
         /// <summary>
         /// The program names to check in the registry.
@@ -54,8 +54,7 @@ namespace ItsApe.ArtifactDetector.Detectors
             // Stopwatch for evaluation.
             StartStopwatch();
 
-            PossibleProgramSubstrings = runtimeInformation.PossibleProgramSubstrings;
-
+            InitializeDetection(ref runtimeInformation);
             AnalyzeRegistryView(RegistryView.Default);
 
             if (foundMatches > 0)
@@ -123,6 +122,16 @@ namespace ItsApe.ArtifactDetector.Detectors
                     AnalyzeRegistrySubkey(subkey);
                 }
             }
+        }
+
+        /// <summary>
+        /// Initialize (or reset) the detection for FindArtifact.
+        /// </summary>
+        /// <param name="runtimeInformation">Reference to object to initialize from.</param>
+        public override void InitializeDetection(ref ArtifactRuntimeInformation runtimeInformation)
+        {
+            foundMatches = 0;
+            PossibleProgramSubstrings = runtimeInformation.PossibleProgramSubstrings;
         }
 
         /// <summary>

@@ -135,7 +135,7 @@ namespace ItsApe.ArtifactDetector.Models
         /// For each matching window stores the handle and its visibility.
         /// </summary>
         [JsonIgnore]
-        public IDictionary<IntPtr, float> WindowsInformation { get; set; } = new Dictionary<IntPtr, float>();
+        public IList<WindowInformation> WindowsInformation { get; set; } = new List<WindowInformation>();
 
         /// <summary>
         /// Possibility to copy settings from another object.

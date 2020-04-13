@@ -7,7 +7,7 @@ namespace ItsApe.ArtifactDetector.Detectors
     /// <summary>
     /// Detector to detect tray icons.
     /// </summary>
-    internal class TrayIconDetector : IconDetector<NativeMethods.TBBUTTON>
+    internal class TrayIconDetector : IconDetector<NativeMethods.TBBUTTON>, IDetector
     {
         public TrayIconDetector()
             : base(

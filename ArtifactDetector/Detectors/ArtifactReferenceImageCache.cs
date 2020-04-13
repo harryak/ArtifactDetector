@@ -27,7 +27,7 @@ namespace ItsApe.ArtifactDetector.Detectors
         /// Configuration: File extension for persistence file.
         /// </summary>
         [NonSerialized]
-        private const string persistentFileExtension = ".bin";
+        private const string PersistentFileExtension = ".bin";
 
         /// <summary>
         /// Logger for telling what is done.
@@ -68,7 +68,7 @@ namespace ItsApe.ArtifactDetector.Detectors
             VisualFeatureExtractor = visualFeatureExtrator ?? throw new ArgumentNullException(nameof(visualFeatureExtrator));
 
             // Make sure the path is set right.
-            PersistentFilePath = new FileInfo(Path.Combine(setup.WorkingDirectory.FullName, ArtifactType + persistentFileExtension));
+            PersistentFilePath = new FileInfo(Path.Combine(setup.WorkingDirectory.FullName, ArtifactType + PersistentFileExtension));
 
             // Instantiate library.
             ProcessedImages = new Dictionary<string, ProcessedImage>();
@@ -133,7 +133,7 @@ namespace ItsApe.ArtifactDetector.Detectors
                 stopwatch.Restart();
 
             // Build filename from working directory and artifact target.
-            string fileName = Path.Combine(setup.WorkingDirectory.FullName, artifactType + persistentFileExtension);
+            string fileName = Path.Combine(setup.WorkingDirectory.FullName, artifactType + PersistentFileExtension);
 
             // New instance of this class to be filled.
             ArtifactReferenceImageCache artifactLibrary = null;

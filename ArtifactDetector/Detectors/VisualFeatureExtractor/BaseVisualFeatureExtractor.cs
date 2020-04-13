@@ -109,7 +109,7 @@ namespace ItsApe.ArtifactDetector.Detectors.VisualFeatureExtractor
         /// <param name="drawingResult">The result of the drawing (for Debug).</param>
         /// <param name="matchCount">Count of matches, if found.</param>
         /// <returns>A homography or null if none was found.</returns>
-        public bool ImageContainsArtifactType(ProcessedImage observedImage, ICollection<ProcessedImage> referenceImages, out Mat drawingResult, out int matchCount)
+        public bool ImageMatchesReference(ProcessedImage observedImage, ICollection<ProcessedImage> referenceImages, out Mat drawingResult, out int matchCount)
         {
             // Only needed for debugging purposes, otherwise will always be null.
             drawingResult = null;

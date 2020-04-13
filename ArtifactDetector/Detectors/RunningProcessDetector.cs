@@ -15,7 +15,7 @@ namespace ItsApe.ArtifactDetector.Detectors
     /// </summary>
     internal class RunningProcessDetector : BaseDetector, IDetector
     {
-        private int foundMatches = 0;
+        private int foundMatches;
         private IList<string> PossibleProcessSubstrings { get; set; }
         private IList<string> ProcessNames { get; set; }
         private IList<IntPtr> WindowHandles { get; } = new List<IntPtr>();
@@ -38,9 +38,7 @@ namespace ItsApe.ArtifactDetector.Detectors
             // Stopwatch for evaluation.
             StartStopwatch();
 
-            ProcessNames = runtimeInformation.ProgramExecutables;
-            PossibleProcessSubstrings = runtimeInformation.PossibleProcessSubstrings;
-
+            InitializeDetection(ref runtimeInformation);
             AnalyzeProcesses();
 
             if (foundMatches > 0)
@@ -56,6 +54,13 @@ namespace ItsApe.ArtifactDetector.Detectors
             StopStopwatch("Got all running processes in {0}ms.");
             Logger.LogInformation("Found no matching running processes.");
             return new DetectorResponse() { ArtifactPresent = DetectorResponse.ArtifactPresence.Impossible };
+        }
+
+        public override void InitializeDetection(ref ArtifactRuntimeInformation runtimeInformation)
+        {
+            foundMatches = 0;
+            ProcessNames = runtimeInformation.ProgramExecutables;
+            PossibleProcessSubstrings = runtimeInformation.PossibleProcessSubstrings;
         }
 
         /// <summary>

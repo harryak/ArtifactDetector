@@ -37,7 +37,6 @@ namespace ItsApe.ArtifactDetector.Detectors
         /// Find the artifact defined in the artifactConfiguration given some runtime information and a previous detector's response.
         /// </summary>
         /// <param name="runtimeInformation">Information about the artifact.</param>
-        /// 
         /// <returns>A response object containing information whether the artifact has been found.</returns>
         public override DetectorResponse FindArtifact(ref ArtifactRuntimeInformation runtimeInformation)
         {
@@ -45,7 +44,7 @@ namespace ItsApe.ArtifactDetector.Detectors
             DetectorResponse response = null;
 
             StartStopwatch();
-            foreach (KeyValuePair<int, IDetector> entry in DetectorList)
+            foreach (var entry in DetectorList)
             {
                 var currentDetector = entry.Value;
                 // Check if previous certainty meets required level.
@@ -65,6 +64,15 @@ namespace ItsApe.ArtifactDetector.Detectors
 
             StopStopwatch("Went through all necessary detectors in chain in {0}ms.");
             return response;
+        }
+
+        /// <summary>
+        /// Initialize (or reset) the detection for FindArtifact.
+        /// </summary>
+        /// <param name="runtimeInformation">Reference to object to initialize from.</param>
+        public override void InitializeDetection(ref ArtifactRuntimeInformation runtimeInformation)
+        {
+            return;
         }
 
         /// <summary>

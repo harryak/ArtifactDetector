@@ -231,6 +231,7 @@
     <Compile Include="Detectors\TrayIconDetector.cs" />
     <Compile Include="Detectors\RunningProcessDetector.cs" />
     <Compile Include="Detectors\VisualFeatureExtractor\VisualFeatureExtractorFactory.cs" />
+    <Compile Include="GlobalSuppressions.cs" />
     <Compile Include="Models\ArtifactConfiguration.cs" />
     <Compile Include="Converters\DetectorConverter.cs" />
     <Compile Include="Models\SegmentTree.cs" />
@@ -267,7 +268,7 @@
     <Compile Include="Detectors\InstalledProgramsDetector.cs" />
     <Compile Include="Detectors\Model\InstalledProgram.cs" />
     <Compile Include="Detectors\OpenWindowDetector.cs" />
-    <Compile Include="Detectors\Model\WindowToplevelInformation.cs" />
+    <Compile Include="Detectors\Model\WindowInformation.cs" />
     <Compile Include="Detectors\IDetector.cs" />
     <Compile Include="Utilities\DefaultApplicationFinder.cs" />
     <Compile Include="Utilities\NativeMethods.cs" />

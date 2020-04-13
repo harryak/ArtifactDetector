@@ -24,7 +24,7 @@ namespace ItsApe.ArtifactDetector.Detectors
         /// <summary>
         /// List of all (visible) windows that have been found with their z-index as key.
         /// </summary>
-        private IDictionary<int, Rectangle> VisibleWindowOutlines { get; } = new Dictionary<int, Rectangle>();
+        private IDictionary<int, Rectangle> VisibleWindowOutlines { get; set; }
 
         /// <summary>
         /// Local copy of previously found window handles for nested delegate function.
@@ -34,7 +34,8 @@ namespace ItsApe.ArtifactDetector.Detectors
         /// <summary>
         /// List of matching windows that have been found.
         /// </summary>
-        private IDictionary<IntPtr, float> WindowsFound { get; } = new Dictionary<IntPtr, float>();
+        private IList<WindowInformation> WindowsFound { get; set; }
+
         /// <summary>
         /// Find the artifact defined in the artifactConfiguration given some runtime information and a previous detector's response.
         /// </summary>
@@ -55,17 +56,33 @@ namespace ItsApe.ArtifactDetector.Detectors
             // Stopwatch for evaluation.
             StartStopwatch();
 
+            InitializeDetection(ref runtimeInformation);
+            AnalyzeVisibleWindows();
+
+            return PrepareResponse(ref runtimeInformation);
+        }
+
+        /// <summary>
+        /// Initialize (or reset) the detection for FindArtifact.
+        /// </summary>
+        /// <param name="runtimeInformation">Reference to object to initialize from.</param>
+        public override void InitializeDetection(ref ArtifactRuntimeInformation runtimeInformation)
+        {
+            VisibleWindowOutlines = new Dictionary<int, Rectangle>();
+            WindowsFound = new List<WindowInformation>();
+
             // Copy to local variables for EnumWindowsProc.
             WindowHandles = runtimeInformation.WindowHandles;
             PossibleWindowTitleSubstrings = runtimeInformation.PossibleWindowTitleSubstrings;
+        }
 
+        private void AnalyzeVisibleWindows()
+        {
             // Access all open windows and analyze each of them.
             NativeMethods.EnumWindows(
                 new NativeMethods.EnumWindowsProc(AnalyzeVisibleWindowDelegate),
                 IntPtr.Zero
             );
-
-            return PrepareResponse(ref runtimeInformation);
         }
 
         /// <summary>
@@ -95,10 +112,16 @@ namespace ItsApe.ArtifactDetector.Detectors
                 if (WindowMatchesConstraints(windowTitle, windowHandle))
                 {
                     WindowsFound.Add(
-                        windowHandle,
-                        CalculateWindowVisibility(
-                            visualInformation.rcClient,
-                            VisibleWindowOutlines.Values));
+                        new WindowInformation()
+                        {
+                            BoundingArea = visualInformation.rcWindow,
+                            Handle = windowHandle,
+                            Title = windowTitle,
+                            Visibility = CalculateWindowVisibility(
+                                visualInformation.rcClient,
+                                VisibleWindowOutlines.Values),
+                            ZIndex = VisibleWindowOutlines.Count
+                        });
                 }
 
                 // Add the current window to all windows now.

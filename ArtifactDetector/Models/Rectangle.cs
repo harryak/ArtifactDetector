@@ -52,6 +52,11 @@ namespace ItsApe.ArtifactDetector.Models
             get { return Width * Height; }
         }
 
+        public System.Drawing.Size Size
+        {
+            get { return new System.Drawing.Size(Width, Height); }
+        }
+
         /// <summary>
         /// Cast this structure to a System.Drawing.Rectangle.
         /// </summary>
