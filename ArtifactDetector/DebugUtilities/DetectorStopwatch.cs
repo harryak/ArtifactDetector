@@ -13,11 +13,6 @@ namespace ItsApe.ArtifactDetector.DebugUtilities
     /// </summary>
     internal sealed class DetectorStopwatch : Stopwatch
     {
-        /// <summary>
-        /// Singleton instance
-        /// </summary>
-        private static DetectorStopwatch instance = null;
-
         private int ExtraValue = -1;
 
         private List<string> Labels;
@@ -25,26 +20,10 @@ namespace ItsApe.ArtifactDetector.DebugUtilities
         // List of the elapsed times.
         private List<TimeSpan> MeasuredTimes;
 
-        /// <summary>
-        /// Do not allow direct instantiations.
-        /// </summary>
-        private DetectorStopwatch()
+        public DetectorStopwatch()
         {
             MeasuredTimes = new List<TimeSpan>();
             Labels = new List<string>();
-        }
-
-        /// <summary>
-        /// Get the singleton instance.
-        /// </summary>
-        /// <returns>The instance.</returns>
-        public static DetectorStopwatch GetInstance()
-        {
-            if (instance == null)
-            {
-                instance = new DetectorStopwatch();
-            }
-            return instance;
         }
 
         /// <summary>

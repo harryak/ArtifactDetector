@@ -30,14 +30,6 @@ namespace ItsApe.ArtifactDetector
             ShouldEvaluate = ApplicationConfiguration.Evaluate;
 
             WorkingDirectory = GetExecutingDirectory();
-
-            // Determine if we use a stopwatch in this run.
-            if (ApplicationConfiguration.Evaluate)
-            {
-                // Get stopwatch for evaluation.
-                Stopwatch = DetectorStopwatch.GetInstance();
-            }
-
 # if DEBUG
             // Setup display of images if being in debug mode.
             Application.EnableVisualStyles();
@@ -59,11 +51,6 @@ namespace ItsApe.ArtifactDetector
         /// Flag for determining whether this run should be evaluated.
         /// </summary>
         public bool ShouldEvaluate { get; } = false;
-
-        /// <summary>
-        /// Stopwatch for evaluation.
-        /// </summary>
-        public DetectorStopwatch Stopwatch { get; set; } = null;
 
         /// <summary>
         /// The working directory.

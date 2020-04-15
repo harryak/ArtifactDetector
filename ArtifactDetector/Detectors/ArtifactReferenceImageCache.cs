@@ -125,7 +125,7 @@ namespace ItsApe.ArtifactDetector.Detectors
         /// <returns>A cached or new instance of the cache.</returns>
         public static ArtifactReferenceImageCache GetInstance(string artifactType, ApplicationSetup setup, IVisualFeatureExtractor artifactDetector)
         {
-            var stopwatch = setup.Stopwatch;
+            var stopwatch = new DetectorStopwatch();
             var logger = setup.GetLogger("ReferenceImageCache");
 
             // Start stopwatch if there is one.

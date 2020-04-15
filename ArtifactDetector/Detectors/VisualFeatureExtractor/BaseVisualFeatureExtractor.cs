@@ -259,7 +259,7 @@ namespace ItsApe.ArtifactDetector.Detectors.VisualFeatureExtractor
 
                 // Do we have a minimum amount of unique matches?
                 int nonZeroCount = CvInvoke.CountNonZero(matchesMask);
-                //TODO is this a good idea and why?
+                // Calculate the ratio between the reference image and the current artifact image to rule out influence of feature density.
                 double sizeRatio = GetSizeRatio(observedImage.Dimensions, currentArtifactImage.Dimensions);
 
                 if (nonZeroCount >= minMatches / sizeRatio)

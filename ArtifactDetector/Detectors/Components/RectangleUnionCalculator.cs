@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using ItsApe.ArtifactDetector.Models;
 
-namespace ItsApe.ArtifactDetector.Detectors.Compontents
+namespace ItsApe.ArtifactDetector.Detectors.Components
 {
     /// <summary>
     /// Class to perform a sweep line algorithm to find the union of rectilinear rectangles.

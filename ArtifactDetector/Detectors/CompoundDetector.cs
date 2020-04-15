@@ -51,9 +51,11 @@ namespace ItsApe.ArtifactDetector.Detectors
                 if (previousResponse != null && currentDetector.HasPreConditions() && entry.Value.PreConditionsMatch(runtimeInformation))
                     break;
 
+                StartStopwatch();
                 // Get the new chain element's response.
                 response = currentDetector.FindArtifact(ref runtimeInformation);
-
+                StopStopwatch("FindArtifact in {0}ms.");
+                
                 // If there is an artifact or there is none with 100 certainty, break.
                 if (currentDetector.HasTargetConditions() && !currentDetector.TargetConditionsMatch(response))
                     break;

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Runtime.InteropServices;
+using ItsApe.ArtifactDetector.Models;
 using ItsApe.ArtifactDetector.Utilities;
 
 namespace ItsApe.ArtifactDetector.Detectors
@@ -13,6 +14,7 @@ namespace ItsApe.ArtifactDetector.Detectors
             : base(
                   NativeMethods.TB.GETBUTTON,
                   NativeMethods.TB.BUTTONCOUNT,
+                  0,
                   GetSystemTrayHandle())
         {
         }
@@ -26,6 +28,8 @@ namespace ItsApe.ArtifactDetector.Detectors
         /// <returns>True if the icon matches.</returns>
         protected override string GetIconTitle(int index, NativeMethods.TBBUTTON icon)
         {
+            FillIconStruct(index, ref icon);
+
             var bufferPointer = GetBufferPointer(ProcessHandle);
 
             uint bytesRead = 0;
@@ -56,6 +60,13 @@ namespace ItsApe.ArtifactDetector.Detectors
                 new string[] { "SysPager", null },
                 new string[] { "ToolbarWindow32", null }
             });
+        }
+
+        protected override Rectangle GetAbsoluteIconRectangle(int iconIndex)
+        {
+            var rect = new NativeMethods.RECT();
+            NativeMethods.GetWindowRect(WindowHandle, ref rect);
+            return new Rectangle(rect);
         }
     }
 }

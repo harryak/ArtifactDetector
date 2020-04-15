@@ -1,4 +1,5 @@
 ﻿using System.Runtime.InteropServices;
+using ItsApe.ArtifactDetector.Utilities;
 
 namespace ItsApe.ArtifactDetector.Models
 {
@@ -23,6 +24,10 @@ namespace ItsApe.ArtifactDetector.Models
         /// </summary>
         /// <param name="rectangleObject"></param>
         public Rectangle(System.Drawing.Rectangle rectangleObject) : this(rectangleObject.Left, rectangleObject.Top, rectangleObject.Right, rectangleObject.Bottom)
+        {
+        }
+
+        public Rectangle(NativeMethods.RECT rectStruct) : this(rectStruct.left, rectStruct.top, rectStruct.right, rectStruct.bottom)
         {
         }
 

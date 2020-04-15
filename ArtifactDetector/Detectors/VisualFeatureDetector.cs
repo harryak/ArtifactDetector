@@ -56,6 +56,7 @@ namespace ItsApe.ArtifactDetector.Detectors
 
             InitializeDetection(ref runtimeInformation);
 
+            //TODO: Versions for icons.
             if (WindowInformation.Count > 0)
             {
                 AnalyzeWindowHandles();
@@ -91,10 +92,10 @@ namespace ItsApe.ArtifactDetector.Detectors
 
         private void AnalyzeWindowHandles()
         {
-            foreach (var windowHandle in WindowInformation)
+            foreach (var windowInformation in WindowInformation)
             {
                 // Make screenshot of artifact window and extract the features.
-                var observedImage = FeatureExtractor.ExtractFeatures(WindowCapturer.CaptureWindow(windowHandle));
+                var observedImage = FeatureExtractor.ExtractFeatures(VisualCapturer.CaptureRegion(windowInformation.BoundingArea));
 
                 ArtifactFound = FeatureExtractor.ImageMatchesReference(observedImage, ReferenceImages, out var drawingResult, out int matchCount);
 
@@ -117,7 +118,7 @@ namespace ItsApe.ArtifactDetector.Detectors
             foreach (var screen in Screen.AllScreens)
             {
                 // Make screenshot of whole screen and extract the features.
-                var observedImage = FeatureExtractor.ExtractFeatures(WindowCapturer.CaptureScreen(screen));
+                var observedImage = FeatureExtractor.ExtractFeatures(VisualCapturer.CaptureScreen(screen));
 
                 ArtifactFound = FeatureExtractor.ImageMatchesReference(observedImage, ReferenceImages, out var drawingResult, out int matchCount);
 

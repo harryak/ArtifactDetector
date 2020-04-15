@@ -1,7 +1,7 @@
 ﻿using System.Collections.Generic;
 using ItsApe.ArtifactDetector.DebugUtilities;
 using ItsApe.ArtifactDetector.DetectorConditions;
-using ItsApe.ArtifactDetector.Detectors.Compontents;
+using ItsApe.ArtifactDetector.Detectors.Components;
 using ItsApe.ArtifactDetector.Models;
 
 namespace ItsApe.ArtifactDetector.Detectors

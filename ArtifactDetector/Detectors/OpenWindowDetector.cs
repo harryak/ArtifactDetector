@@ -16,6 +16,8 @@ namespace ItsApe.ArtifactDetector.Detectors
     /// </summary>
     internal class OpenWindowDetector : BaseDetector, IDetector
     {
+        public IntPtr ProgramManagerWindowHandle { get; private set; }
+
         /// <summary>
         /// Local copy of possible window titles for nested delegate function.
         /// </summary>
@@ -40,10 +42,11 @@ namespace ItsApe.ArtifactDetector.Detectors
         /// Find the artifact defined in the artifactConfiguration given some runtime information and a previous detector's response.
         /// </summary>
         /// <param name="runtimeInformation">Information about the artifact.</param>
-        ///
         /// <returns>A response object containing information whether the artifact has been found.</returns>
         public override DetectorResponse FindArtifact(ref ArtifactRuntimeInformation runtimeInformation)
         {
+            // Stopwatch for evaluation.
+            StartStopwatch();
             Logger.LogInformation("Detecting open windows now.");
 
             // Check whether we have enough data to detect the artifact.
@@ -52,9 +55,6 @@ namespace ItsApe.ArtifactDetector.Detectors
                 Logger.LogInformation("No matching windows or possible window titles given for detector. Only getting visible windows now.");
                 return FindArtifactLight(ref runtimeInformation);
             }
-
-            // Stopwatch for evaluation.
-            StartStopwatch();
 
             InitializeDetection(ref runtimeInformation);
             AnalyzeVisibleWindows();
@@ -68,35 +68,26 @@ namespace ItsApe.ArtifactDetector.Detectors
         /// <param name="runtimeInformation">Reference to object to initialize from.</param>
         public override void InitializeDetection(ref ArtifactRuntimeInformation runtimeInformation)
         {
-            VisibleWindowOutlines = new Dictionary<int, Rectangle>();
-            WindowsFound = new List<WindowInformation>();
+            InitializeDetectionLight();
 
             // Copy to local variables for EnumWindowsProc.
             WindowHandles = runtimeInformation.WindowHandles;
             PossibleWindowTitleSubstrings = runtimeInformation.PossibleWindowTitleSubstrings;
         }
 
-        private void AnalyzeVisibleWindows()
-        {
-            // Access all open windows and analyze each of them.
-            NativeMethods.EnumWindows(
-                new NativeMethods.EnumWindowsProc(AnalyzeVisibleWindowDelegate),
-                IntPtr.Zero
-            );
-        }
-
         /// <summary>
         /// Function used as delegate for NativeMethods.EnumWindows to analyze every open window.
         /// </summary>
         /// <param name="windowHandle">IntPtr for current window.</param>
-        /// <param name="parameters">Unused.</param>
+        /// <param name="_">Unused.</param>
         /// <returns>True, always.</returns>
-        private bool AnalyzeVisibleWindowDelegate(IntPtr windowHandle, int parameters)
+        private bool AnalyzeVisibleWindowDelegate(IntPtr windowHandle, int _)
         {
             // If we already found enough windows or the window is invisible, skip.
             // This includes windows which title can not be retrieved.
             if (!NativeMethods.IsWindowVisible(windowHandle)
-                || !GetWindowTitle(windowHandle, out string windowTitle))
+                || !GetWindowTitle(windowHandle, out string windowTitle)
+                || windowHandle == ProgramManagerWindowHandle)
             {
                 return true;
             }
@@ -120,15 +111,24 @@ namespace ItsApe.ArtifactDetector.Detectors
                             Visibility = CalculateWindowVisibility(
                                 visualInformation.rcClient,
                                 VisibleWindowOutlines.Values),
-                            ZIndex = VisibleWindowOutlines.Count
+                            ZIndex = VisibleWindowOutlines.Count + 1
                         });
                 }
 
                 // Add the current window to all windows now.
-                VisibleWindowOutlines.Add(VisibleWindowOutlines.Count, visualInformation.rcClient);
+                VisibleWindowOutlines.Add(VisibleWindowOutlines.Count + 1, visualInformation.rcClient);
             }
 
             return true;
+        }
+
+        private void AnalyzeVisibleWindows()
+        {
+            // Access all open windows and analyze each of them.
+            NativeMethods.EnumWindows(
+                AnalyzeVisibleWindowDelegate,
+                IntPtr.Zero
+            );
         }
 
         /// <summary>
@@ -138,9 +138,11 @@ namespace ItsApe.ArtifactDetector.Detectors
         /// <returns>Detector response with "artifact presence possible" set.</returns>
         private DetectorResponse FindArtifactLight(ref ArtifactRuntimeInformation runtimeInformation)
         {
+            InitializeDetectionLight();
+
             // Access all open windows and just store each of them.
             NativeMethods.EnumWindows(
-                new NativeMethods.EnumWindowsProc(GetVisibleWindowDelegate),
+                GetVisibleWindowDelegate,
                 IntPtr.Zero
             );
 
@@ -151,17 +153,27 @@ namespace ItsApe.ArtifactDetector.Detectors
         }
 
         /// <summary>
+        /// Retrieve the desktop window handle to exclude from open windows.
+        /// </summary>
+        /// <returns>Desktop window handle.</returns>
+        private IntPtr GetDesktopWindowHandle()
+        {
+            return NativeMethods.FindWindow("Progman", "Program Manager");
+        }
+
+        /// <summary>
         /// Function used as delegate for NativeMethods.EnumWindows to just store every open window.
         /// </summary>
         /// <param name="windowHandle">IntPtr for current window.</param>
-        /// <param name="parameters">Unused.</param>
+        /// <param name="_">Unused.</param>
         /// <returns>True, always.</returns>
-        private bool GetVisibleWindowDelegate(IntPtr windowHandle, int parameters)
+        private bool GetVisibleWindowDelegate(IntPtr windowHandle, int _)
         {
             // If we already found enough windows or the window is invisible, skip.
             // This includes windows which title can not be retrieved.
             if (!NativeMethods.IsWindowVisible(windowHandle)
-                || !GetWindowTitle(windowHandle, out string windowTitle))
+                || !GetWindowTitle(windowHandle, out string windowTitle)
+                || windowHandle == ProgramManagerWindowHandle)
             {
                 return true;
             }
@@ -170,8 +182,12 @@ namespace ItsApe.ArtifactDetector.Detectors
             var visualInformation = new NativeMethods.WindowVisualInformation();
             NativeMethods.GetWindowInfo(windowHandle, ref visualInformation);
 
-            // Add the current window to all windows now.
-            VisibleWindowOutlines.Add(VisibleWindowOutlines.Count, visualInformation.rcWindow);
+            // Assumption: If the current window is an overlapped window it is "visible".
+            if ((visualInformation.dwExStyle & NativeMethods.WindowStyles.WS_EX_NOACTIVATE) != NativeMethods.WindowStyles.WS_EX_NOACTIVATE)
+            {
+                // Add the current window to all windows now.
+                VisibleWindowOutlines.Add(VisibleWindowOutlines.Count + 1, visualInformation.rcClient);
+            }
 
             return true;
         }
@@ -204,6 +220,16 @@ namespace ItsApe.ArtifactDetector.Detectors
         }
 
         /// <summary>
+        /// "Light" version of detection initialization without copying anything from runtime information.
+        /// </summary>
+        private void InitializeDetectionLight()
+        {
+            ProgramManagerWindowHandle = GetDesktopWindowHandle();
+            VisibleWindowOutlines = new Dictionary<int, Rectangle>();
+            WindowsFound = new List<WindowInformation>();
+        }
+
+        /// <summary>
         /// Create a response based on what was found.
         /// </summary>
         /// <param name="runtimeInformation">The runtime information to write to.</param>
@@ -220,13 +246,13 @@ namespace ItsApe.ArtifactDetector.Detectors
                 runtimeInformation.WindowsInformation = WindowsFound;
                 runtimeInformation.CountOpenWindows = WindowsFound.Count;
 
-                StopStopwatch("Got all opened windows in {0}ms.");
                 Logger.LogInformation("Found {0} matching open windows.", WindowsFound.Count);
+                StopStopwatch("Got all opened windows in {0}ms.");
                 return new DetectorResponse() { ArtifactPresent = DetectorResponse.ArtifactPresence.Certain };
             }
 
-            StopStopwatch("Got all opened windows in {0}ms.");
             Logger.LogInformation("Found no matching open windows.");
+            StopStopwatch("Got all opened windows in {0}ms.");
             return new DetectorResponse() { ArtifactPresent = DetectorResponse.ArtifactPresence.Impossible };
         }
 

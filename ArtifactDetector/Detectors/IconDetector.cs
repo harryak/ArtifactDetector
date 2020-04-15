@@ -25,6 +25,11 @@ namespace ItsApe.ArtifactDetector.Detectors
         protected readonly byte[] _buffer = new byte[BUFFER_SIZE];
 
         /// <summary>
+        /// Default zIndex for icons.
+        /// </summary>
+        protected int IconZIndex = 9999;
+
+        /// <summary>
         /// Pointers to other processes' buffers-
         /// </summary>
         private readonly IDictionary<IntPtr, IntPtr> _bufferPointers = new Dictionary<IntPtr, IntPtr>();
@@ -33,6 +38,11 @@ namespace ItsApe.ArtifactDetector.Detectors
         /// Windows API code for SendMessage to get the icon count.
         /// </summary>
         private readonly uint _getIconCountCode;
+
+        /// <summary>
+        /// Windows API code for SendMessage to get the icon rectangle.
+        /// </summary>
+        private readonly uint _getIconRectCode;
 
         /// <summary>
         /// Windows API code for SendMessage to get the icons.
@@ -50,10 +60,11 @@ namespace ItsApe.ArtifactDetector.Detectors
         /// <param name="getIconsCode">Windows API code for SendMessage.</param>
         /// <param name="getIconCountCode">Windows API code for SendMessage.</param>
         /// <param name="windowHandle">Handle of the icons' parent window.</param>
-        protected IconDetector(uint getIconsCode, uint getIconCountCode, IntPtr windowHandle)
+        protected IconDetector(uint getIconsCode, uint getIconCountCode, uint getIconRectCode, IntPtr windowHandle)
         {
             _getIconsCode = getIconsCode;
             _getIconCountCode = getIconCountCode;
+            _getIconRectCode = getIconRectCode;
 
             WindowHandle = windowHandle;
             ProcessHandle = InitProcessHandle();
@@ -70,9 +81,19 @@ namespace ItsApe.ArtifactDetector.Detectors
         protected IntPtr WindowHandle { get; set; }
 
         /// <summary>
+        /// List of matching icons that have been found.
+        /// </summary>
+        private IList<WindowInformation> IconsFound { get; set; }
+
+        /// <summary>
         /// Copy from runtime information.
         /// </summary>
         private IList<string> PossibleIconSubstrings { get; set; }
+
+        /// <summary>
+        /// Outlines of (possibly overlapping) other windows.
+        /// </summary>
+        private IDictionary<int, Rectangle> VisibleWindowOutlines { get; set; }
 
         /// <summary>
         /// Find the artifact provided by the runtime information.
@@ -104,6 +125,8 @@ namespace ItsApe.ArtifactDetector.Detectors
 
             if (foundMatches > 0)
             {
+                runtimeInformation.WindowsInformation = IconsFound;
+
                 StopStopwatch("Got icons in {0}ms.");
                 Logger.LogInformation("Found {0} matching icons.", foundMatches);
                 return new DetectorResponse { ArtifactPresent = DetectorResponse.ArtifactPresence.Certain };
@@ -121,7 +144,9 @@ namespace ItsApe.ArtifactDetector.Detectors
         public override void InitializeDetection(ref ArtifactRuntimeInformation runtimeInformation)
         {
             foundMatches = 0;
+            IconsFound = new List<WindowInformation>();
             PossibleIconSubstrings = runtimeInformation.PossibleIconSubstrings;
+            VisibleWindowOutlines = runtimeInformation.VisibleWindowOutlines;
         }
 
         /// <summary>
@@ -152,75 +177,22 @@ namespace ItsApe.ArtifactDetector.Detectors
         }
 
         /// <summary>
-        /// Allocate memory in the given process.
-        /// </summary>
-        /// <param name="processHandle">Address of the process.</param>
-        /// <returns>The allocated memory's address.</returns>
-        protected IntPtr AllocateBufferInProcess(IntPtr processHandle)
-        {
-            return NativeMethods.VirtualAllocEx(processHandle, IntPtr.Zero, new UIntPtr(BUFFER_SIZE), NativeMethods.MEM.RESERVE | NativeMethods.MEM.COMMIT, NativeMethods.PAGE.READWRITE);
-        }
-
-        /// <summary>
-        /// Gets the icon count and iterates over all icons in the window handle.
-        /// </summary>
-        protected void AnalizeIcons()
-        {
-            // Get the desktop window's process to enumerate child windows.
-            ProcessHandle = InitProcessHandle();
-            // Count subwindows of window => count of icons.
-            int iconCount = GetIconCount(WindowHandle);
-
-            var icon = InitIconStruct();
-
-            try
-            {
-                // Loop through available desktop icons.
-                for (int i = 0; i < iconCount; i++)
-                {
-                    if (IconMatches(i, icon))
-                    {
-                        foundMatches++;
-                    }
-                }
-            }
-            finally
-            {
-                // Clean up unmanaged memory.
-                CleanUnmanagedMemory();
-            }
-        }
-
-        /// <summary>
-        /// Clean up the buffer in given process.
-        /// </summary>
-        /// <param name="processHandle">Handle of the buffer's process.</param>
-        protected void CleanUnmanagedMemory()
-        {
-            foreach (var entry in _bufferPointers)
-            {
-                NativeMethods.VirtualFreeEx(entry.Key, entry.Value, UIntPtr.Zero, NativeMethods.MEM.RELEASE);
-                NativeMethods.CloseHandle(entry.Key);
-            }
-        }
-
-        /// <summary>
         /// Gets data from the supplied process and window into the struct of type StructType.
         /// </summary>
         /// <param name="processHandle">Address of the process.</param>
         /// <param name="windowHandle">Address of the window.</param>
         /// <param name="iconIndex">Index of the icon in the window.</param>
         /// <param name="structToFill">Reference of a struct to fill.</param>
-        protected void FillIconStruct(IntPtr processHandle, IntPtr windowHandle, int iconIndex, ref StructType structToFill)
+        protected void FillIconStruct(int iconIndex, ref StructType structToFill)
         {
-            if (!_bufferPointers.ContainsKey(processHandle))
+            if (!_bufferPointers.ContainsKey(ProcessHandle))
             {
-                _bufferPointers.Add(processHandle, AllocateBufferInProcess(processHandle));
+                _bufferPointers.Add(ProcessHandle, AllocateBufferInProcess(ProcessHandle));
             }
 
             uint bytesRead = 0;
-            NativeMethods.SendMessage(windowHandle, _getIconsCode, new IntPtr(iconIndex), _bufferPointers[processHandle]);
-            NativeMethods.ReadProcessMemory(processHandle, _bufferPointers[processHandle], Marshal.UnsafeAddrOfPinnedArrayElement(_buffer, 0), new UIntPtr((uint)Marshal.SizeOf(structToFill)), ref bytesRead);
+            NativeMethods.SendMessage(WindowHandle, _getIconsCode, new IntPtr(iconIndex), _bufferPointers[ProcessHandle]);
+            NativeMethods.ReadProcessMemory(ProcessHandle, _bufferPointers[ProcessHandle], Marshal.UnsafeAddrOfPinnedArrayElement(_buffer, 0), new UIntPtr((uint)Marshal.SizeOf(structToFill)), ref bytesRead);
 
             if (bytesRead != Marshal.SizeOf(structToFill))
             {
@@ -228,6 +200,33 @@ namespace ItsApe.ArtifactDetector.Detectors
             }
 
             structToFill = Marshal.PtrToStructure<StructType>(Marshal.UnsafeAddrOfPinnedArrayElement(_buffer, 0));
+        }
+
+        /// <summary>
+        /// Get an icons bounding rectangle in absolute positioning.
+        /// </summary>
+        /// <param name="iconIndex">Index of the icon in WindowHandle.</param>
+        /// <returns>A filled rectangle structure, offset if needed.</returns>
+        protected virtual Rectangle GetAbsoluteIconRectangle(int iconIndex)
+        {
+            var rectangle = new Rectangle();
+            if (!_bufferPointers.ContainsKey(ProcessHandle))
+            {
+                _bufferPointers.Add(ProcessHandle, AllocateBufferInProcess(ProcessHandle));
+            }
+
+            uint bytesRead = 0;
+            NativeMethods.SendMessage(WindowHandle, _getIconRectCode, new IntPtr(iconIndex), _bufferPointers[ProcessHandle]);
+            NativeMethods.ReadProcessMemory(ProcessHandle, _bufferPointers[ProcessHandle], Marshal.UnsafeAddrOfPinnedArrayElement(_buffer, 0), new UIntPtr((uint)Marshal.SizeOf(rectangle)), ref bytesRead);
+
+            if (bytesRead != Marshal.SizeOf(rectangle))
+            {
+                throw new ExternalException("Read false amount of bytes.");
+            }
+
+            rectangle = Marshal.PtrToStructure<Rectangle>(Marshal.UnsafeAddrOfPinnedArrayElement(_buffer, 0));
+            OffsetIconRectangleByParent(ref rectangle);
+            return rectangle;
         }
 
         /// <summary>
@@ -246,16 +245,6 @@ namespace ItsApe.ArtifactDetector.Detectors
         }
 
         /// <summary>
-        /// Returns the icon cound for given window handle.
-        /// </summary>
-        /// <param name="windowHandle">Window address to get the icon count from.</param>
-        /// <returns>Total count of icons in window.</returns>
-        protected int GetIconCount(IntPtr windowHandle)
-        {
-            return (int)NativeMethods.SendMessage(windowHandle, _getIconCountCode, IntPtr.Zero, IntPtr.Zero);
-        }
-
-        /// <summary>
         /// Gets the title of the icon with the given ID.
         /// </summary>
         /// <param name="index">Index of icon in parent window.</param>
@@ -264,17 +253,82 @@ namespace ItsApe.ArtifactDetector.Detectors
         protected abstract string GetIconTitle(int index, StructType icon);
 
         /// <summary>
-        /// Check if the given icon at the index matches the titles from runtime information.
+        /// Return a new (usable) instance of the icon struct.
         /// </summary>
-        /// <param name="index">Index of icon in parent window.</param>
-        /// <param name="icon">Icon structure.</param>
-        /// <returns>True if the icon matches.</returns>
-        protected bool IconMatches(int index, StructType icon)
-        {
-            string currentIconTitle = GetIconTitle(index, icon);
+        /// <returns></returns>
+        protected abstract StructType InitIconStruct();
 
-            // Check if the current title has a substring in the possible titles.
-            return IconTitleMatches(currentIconTitle);
+        /// <summary>
+        /// Allocate memory in the given process.
+        /// </summary>
+        /// <param name="processHandle">Address of the process.</param>
+        /// <returns>The allocated memory's address.</returns>
+        private IntPtr AllocateBufferInProcess(IntPtr processHandle)
+        {
+            return NativeMethods.VirtualAllocEx(processHandle, IntPtr.Zero, new UIntPtr(BUFFER_SIZE), NativeMethods.MEM.RESERVE | NativeMethods.MEM.COMMIT, NativeMethods.PAGE.READWRITE);
+        }
+
+        /// <summary>
+        /// Gets the icon count and iterates over all icons in the window handle.
+        /// </summary>
+        private void AnalizeIcons()
+        {
+            // Get the desktop window's process to enumerate child windows.
+            ProcessHandle = InitProcessHandle();
+            // Count subwindows of window => count of icons.
+            int iconCount = GetIconCount();
+
+            var icon = InitIconStruct();
+
+            try
+            {
+                // Loop through available desktop icons.
+                for (int i = 0; i < iconCount; i++)
+                {
+                    string currentIconTitle = GetIconTitle(i, icon);
+                    var iconRectangle = GetAbsoluteIconRectangle(i);
+
+                    if (IconTitleMatches(currentIconTitle))
+                    {
+                        IconsFound.Add(new WindowInformation
+                        {
+                            BoundingArea = iconRectangle,
+                            Title = currentIconTitle,
+                            Visibility = CalculateWindowVisibility(iconRectangle, VisibleWindowOutlines.Values),
+                            ZIndex = IconZIndex
+                        });
+                        foundMatches++;
+                    }
+                }
+            }
+            finally
+            {
+                // Clean up unmanaged memory.
+                CleanUnmanagedMemory();
+            }
+        }
+
+        /// <summary>
+        /// Clean up the buffer in given process.
+        /// </summary>
+        /// <param name="processHandle">Handle of the buffer's process.</param>
+        private void CleanUnmanagedMemory()
+        {
+            foreach (var entry in _bufferPointers)
+            {
+                NativeMethods.VirtualFreeEx(entry.Key, entry.Value, UIntPtr.Zero, NativeMethods.MEM.RELEASE);
+                NativeMethods.CloseHandle(entry.Key);
+            }
+        }
+
+        /// <summary>
+        /// Returns the icon cound for given window handle.
+        /// </summary>
+        /// <param name="windowHandle">Window address to get the icon count from.</param>
+        /// <returns>Total count of icons in window.</returns>
+        private int GetIconCount()
+        {
+            return (int)NativeMethods.SendMessage(WindowHandle, _getIconCountCode, IntPtr.Zero, IntPtr.Zero);
         }
 
         /// <summary>
@@ -283,26 +337,34 @@ namespace ItsApe.ArtifactDetector.Detectors
         /// </summary>
         /// <param name="iconTitle">Obvious.</param>
         /// <returns>True if the icon title contains any substring.</returns>
-        protected bool IconTitleMatches(string iconTitle)
+        private bool IconTitleMatches(string iconTitle)
         {
             return iconTitle.ContainsAny(PossibleIconSubstrings);
         }
-
-        /// <summary>
-        /// Return a new (usable) instance of the icon struct.
-        /// </summary>
-        /// <returns></returns>
-        protected abstract StructType InitIconStruct();
 
         /// <summary>
         /// Retrieve a process handle by a given window.
         /// </summary>
         /// <param name="windowHandle">Address of a window.</param>
         /// <returns>Pointer to the window's process.</returns>
-        protected IntPtr InitProcessHandle()
+        private IntPtr InitProcessHandle()
         {
             NativeMethods.GetWindowThreadProcessId(WindowHandle, out uint processId);
             return NativeMethods.OpenProcess(NativeMethods.PROCESS_VM.OPERATION | NativeMethods.PROCESS_VM.READ | NativeMethods.PROCESS_VM.WRITE, false, processId);
+        }
+
+        /// <summary>
+        /// Add the parent window's offset to an icon rectangle.
+        /// </summary>
+        /// <param name="rectangle"></param>
+        private void OffsetIconRectangleByParent(ref Rectangle rectangle)
+        {
+            var rect = new NativeMethods.RECT();
+            NativeMethods.GetWindowRect(WindowHandle, ref rect);
+            rectangle.Left += rect.left;
+            rectangle.Right += rect.left;
+            rectangle.Top += rect.top;
+            rectangle.Bottom += rect.top;
         }
     }
 }

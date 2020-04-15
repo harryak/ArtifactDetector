@@ -14,6 +14,7 @@ namespace ItsApe.ArtifactDetector.Detectors
             : base(
                   NativeMethods.LVM.GETITEMW,
                   NativeMethods.LVM.GETITEMCOUNT,
+                  NativeMethods.LVM.GETITEMRECT,
                   GetDesktopHandle())
         { }
 
@@ -86,7 +87,7 @@ namespace ItsApe.ArtifactDetector.Detectors
             NativeMethods.WriteProcessMemory(ProcessHandle, GetBufferPointer(ProcessHandle), Marshal.UnsafeAddrOfPinnedArrayElement(pinnedArray, 0), new UIntPtr((uint)Marshal.SizeOf(icon)), ref bytesRead);
 
             // Get i-th item of desktop and read its memory.
-            FillIconStruct(ProcessHandle, WindowHandle, icon.iItem, ref currentIcon);
+            FillIconStruct(icon.iItem, ref currentIcon);
 
             return currentIcon;
         }

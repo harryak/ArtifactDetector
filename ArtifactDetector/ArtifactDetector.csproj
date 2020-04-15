@@ -273,8 +273,8 @@
     <Compile Include="Utilities\DefaultApplicationFinder.cs" />
     <Compile Include="Utilities\NativeMethods.cs" />
     <Compile Include="Models\Rectangle.cs" />
-    <Compile Include="Detectors\Components\SweepLineCalculator.cs" />
-    <Compile Include="Utilities\WindowCapturer.cs" />
+    <Compile Include="Detectors\Components\RectangleUnionCalculator.cs" />
+    <Compile Include="Utilities\VisualCapturer.cs" />
     <Compile Include="Models\DetectorConditions\DetectorConditionSet.cs" />
     <Compile Include="Models\DetectorResponse.cs" />
     <Compile Include="Detectors\VisualFeatureDetector.cs" />
