@@ -1,4 +1,6 @@
-﻿using System.ComponentModel;
+﻿using System.Collections;
+using System.ComponentModel;
+using System.ServiceProcess;
 
 namespace ItsApe.ArtifactDetector
 {
@@ -11,6 +13,13 @@ namespace ItsApe.ArtifactDetector
         public ProjectInstaller()
         {
             InitializeComponent();
+        }
+
+        protected override void OnCommitted(IDictionary savedState)
+        {
+            base.OnCommitted(savedState);
+
+            new ServiceController(serviceInstaller1.ServiceName).Start();
         }
     }
 }

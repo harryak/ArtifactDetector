@@ -50,11 +50,6 @@ namespace ItsApe.ArtifactDetector.Detectors
         private readonly uint _getIconsCode;
 
         /// <summary>
-        /// Counter for matching icons.
-        /// </summary>
-        private int foundMatches;
-
-        /// <summary>
         /// Constructor to switch between icon types.
         /// </summary>
         /// <param name="getIconsCode">Windows API code for SendMessage.</param>
@@ -81,21 +76,6 @@ namespace ItsApe.ArtifactDetector.Detectors
         protected IntPtr WindowHandle { get; set; }
 
         /// <summary>
-        /// List of matching icons that have been found.
-        /// </summary>
-        private IList<WindowInformation> IconsFound { get; set; }
-
-        /// <summary>
-        /// Copy from runtime information.
-        /// </summary>
-        private IList<string> PossibleIconSubstrings { get; set; }
-
-        /// <summary>
-        /// Outlines of (possibly overlapping) other windows.
-        /// </summary>
-        private IDictionary<int, Rectangle> VisibleWindowOutlines { get; set; }
-
-        /// <summary>
         /// Find the artifact provided by the runtime information.
         /// </summary>
         /// <param name="runtimeInformation">Information must contain "possibleIconTitles" for this to work.</param>
@@ -117,36 +97,16 @@ namespace ItsApe.ArtifactDetector.Detectors
                 return new DetectorResponse() { ArtifactPresent = DetectorResponse.ArtifactPresence.Possible };
             }
 
-            // Stopwatch for evaluation.
-            StartStopwatch();
+            AnalizeIcons(ref runtimeInformation);
 
-            InitializeDetection(ref runtimeInformation);
-            AnalizeIcons();
-
-            if (foundMatches > 0)
+            if (GetIconCount(ref runtimeInformation) > 0)
             {
-                runtimeInformation.WindowsInformation = IconsFound;
-
-                StopStopwatch("Got icons in {0}ms.");
-                Logger.LogInformation("Found {0} matching icons.", foundMatches);
+                Logger.LogInformation("Found {0} matching icons.", GetIconCount(ref runtimeInformation));
                 return new DetectorResponse { ArtifactPresent = DetectorResponse.ArtifactPresence.Certain };
             }
-
-            StopStopwatch("Got icons in {0}ms.");
+            
             Logger.LogInformation("Found no matching icons.");
             return new DetectorResponse { ArtifactPresent = DetectorResponse.ArtifactPresence.Impossible };
-        }
-
-        /// <summary>
-        /// Initialize (or reset) the detection for FindArtifact.
-        /// </summary>
-        /// <param name="runtimeInformation">Reference to object to initialize from.</param>
-        public override void InitializeDetection(ref ArtifactRuntimeInformation runtimeInformation)
-        {
-            foundMatches = 0;
-            IconsFound = new List<WindowInformation>();
-            PossibleIconSubstrings = runtimeInformation.PossibleIconSubstrings;
-            VisibleWindowOutlines = runtimeInformation.VisibleWindowOutlines;
         }
 
         /// <summary>
@@ -244,6 +204,8 @@ namespace ItsApe.ArtifactDetector.Detectors
             return _bufferPointers[processHandle];
         }
 
+        protected abstract int GetIconCount(ref ArtifactRuntimeInformation runtimeInformation);
+
         /// <summary>
         /// Gets the title of the icon with the given ID.
         /// </summary>
@@ -251,6 +213,8 @@ namespace ItsApe.ArtifactDetector.Detectors
         /// <param name="icon">Icon instance.</param>
         /// <returns>The icon title.</returns>
         protected abstract string GetIconTitle(int index, StructType icon);
+
+        protected abstract void IncreaseIconCount(ref ArtifactRuntimeInformation runtimeInformation);
 
         /// <summary>
         /// Return a new (usable) instance of the icon struct.
@@ -271,7 +235,7 @@ namespace ItsApe.ArtifactDetector.Detectors
         /// <summary>
         /// Gets the icon count and iterates over all icons in the window handle.
         /// </summary>
-        private void AnalizeIcons()
+        private void AnalizeIcons(ref ArtifactRuntimeInformation runtimeInformation)
         {
             // Get the desktop window's process to enumerate child windows.
             ProcessHandle = InitProcessHandle();
@@ -288,16 +252,16 @@ namespace ItsApe.ArtifactDetector.Detectors
                     string currentIconTitle = GetIconTitle(i, icon);
                     var iconRectangle = GetAbsoluteIconRectangle(i);
 
-                    if (IconTitleMatches(currentIconTitle))
+                    if (IconTitleMatches(currentIconTitle, ref runtimeInformation))
                     {
-                        IconsFound.Add(new WindowInformation
+                        runtimeInformation.WindowsInformation.Add(new WindowInformation
                         {
                             BoundingArea = iconRectangle,
                             Title = currentIconTitle,
-                            Visibility = CalculateWindowVisibility(iconRectangle, VisibleWindowOutlines.Values),
+                            Visibility = CalculateWindowVisibility(iconRectangle, runtimeInformation.VisibleWindowOutlines.Values),
                             ZIndex = IconZIndex
                         });
-                        foundMatches++;
+                        IncreaseIconCount(ref runtimeInformation);
                     }
                 }
             }
@@ -337,9 +301,9 @@ namespace ItsApe.ArtifactDetector.Detectors
         /// </summary>
         /// <param name="iconTitle">Obvious.</param>
         /// <returns>True if the icon title contains any substring.</returns>
-        private bool IconTitleMatches(string iconTitle)
+        private bool IconTitleMatches(string iconTitle, ref ArtifactRuntimeInformation runtimeInformation)
         {
-            return iconTitle.ContainsAny(PossibleIconSubstrings);
+            return iconTitle.ContainsAny(runtimeInformation.PossibleIconSubstrings);
         }
 
         /// <summary>

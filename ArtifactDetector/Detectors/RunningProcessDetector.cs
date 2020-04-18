@@ -35,9 +35,6 @@ namespace ItsApe.ArtifactDetector.Detectors
                 return new DetectorResponse() { ArtifactPresent = DetectorResponse.ArtifactPresence.Possible };
             }
 
-            // Stopwatch for evaluation.
-            StartStopwatch();
-
             InitializeDetection(ref runtimeInformation);
             AnalyzeProcesses();
 
@@ -45,13 +42,11 @@ namespace ItsApe.ArtifactDetector.Detectors
             {
                 runtimeInformation.WindowHandles = WindowHandles;
                 runtimeInformation.CountRunningProcesses = foundMatches;
-
-                StopStopwatch("Got all running processes in {0}ms.");
+                
                 Logger.LogInformation("Found {0} matching running processes.", foundMatches);
                 return new DetectorResponse() { ArtifactPresent = DetectorResponse.ArtifactPresence.Certain };
             }
-
-            StopStopwatch("Got all running processes in {0}ms.");
+            
             Logger.LogInformation("Found no matching running processes.");
             return new DetectorResponse() { ArtifactPresent = DetectorResponse.ArtifactPresence.Impossible };
         }

@@ -126,8 +126,11 @@ namespace ItsApe.ArtifactDetector.Models
         /// Index is the z-index (order) with 1 being the topmost.
         /// </summary>
         [JsonIgnore]
-        public IDictionary<int, Rectangle> VisibleWindowOutlines { get; set; }
+        public IDictionary<int, Rectangle> VisibleWindowOutlines { get; set; } = new Dictionary<int, Rectangle>();
 
+        /// <summary>
+        /// Window handles to look for.
+        /// </summary>
         [JsonIgnore]
         public IList<IntPtr> WindowHandles { get; set; } = new List<IntPtr>();
 

@@ -7,9 +7,9 @@
         /// </summary>
         private System.ComponentModel.IContainer components = null;
 
-        private System.ServiceProcess.ServiceInstaller detectorServiceInstaller;
+        private System.ServiceProcess.ServiceInstaller serviceInstaller1;
 
-        private System.ServiceProcess.ServiceProcessInstaller detectorServiceProcessInstaller;
+        private System.ServiceProcess.ServiceProcessInstaller serviceProcessInstaller1;
 
         /// <summary> 
         /// Clean up any resources being used.
@@ -32,27 +32,27 @@
         /// </summary>
         private void InitializeComponent()
         {
-            this.detectorServiceProcessInstaller = new System.ServiceProcess.ServiceProcessInstaller();
-            this.detectorServiceInstaller = new System.ServiceProcess.ServiceInstaller();
+            this.serviceProcessInstaller1 = new System.ServiceProcess.ServiceProcessInstaller();
+            this.serviceInstaller1 = new System.ServiceProcess.ServiceInstaller();
             // 
-            // detectorServiceProcessInstaller
+            // serviceProcessInstaller1
             // 
-            this.detectorServiceProcessInstaller.Account = System.ServiceProcess.ServiceAccount.LocalSystem;
-            this.detectorServiceProcessInstaller.Password = null;
-            this.detectorServiceProcessInstaller.Username = null;
+            this.serviceProcessInstaller1.Account = System.ServiceProcess.ServiceAccount.LocalSystem;
+            this.serviceProcessInstaller1.Password = null;
+            this.serviceProcessInstaller1.Username = null;
             // 
-            // detectorServiceInstaller
+            // serviceInstaller1
             // 
-            this.detectorServiceInstaller.DelayedAutoStart = true;
-            this.detectorServiceInstaller.Description = "Service of the ITS.APE framework to monitor running tests.";
-            this.detectorServiceInstaller.DisplayName = "ITS.APE Detector Service";
-            this.detectorServiceInstaller.ServiceName = "ITS.APE Detector Service";
+            this.serviceInstaller1.Description = "Service of the ITS.APE framework to monitor running tests.";
+            this.serviceInstaller1.DisplayName = "ITS.APE Detector Service";
+            this.serviceInstaller1.ServiceName = "ITS.APE Detector Service";
+            this.serviceInstaller1.StartType = System.ServiceProcess.ServiceStartMode.Automatic;
             // 
             // ProjectInstaller
             // 
             this.Installers.AddRange(new System.Configuration.Install.Installer[] {
-            this.detectorServiceProcessInstaller,
-            this.detectorServiceInstaller});
+            this.serviceProcessInstaller1,
+            this.serviceInstaller1});
 
         }
 

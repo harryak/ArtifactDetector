@@ -51,9 +51,6 @@ namespace ItsApe.ArtifactDetector.Detectors
                 return new DetectorResponse() { ArtifactPresent = DetectorResponse.ArtifactPresence.Possible };
             }
 
-            // Stopwatch for evaluation.
-            StartStopwatch();
-
             InitializeDetection(ref runtimeInformation);
             AnalyzeRegistryView(RegistryView.Default);
 
@@ -61,13 +58,11 @@ namespace ItsApe.ArtifactDetector.Detectors
             {
                 runtimeInformation.ProgramExecutables = ProgramExecutables;
                 runtimeInformation.CountInstalledPrograms = foundMatches;
-
-                StopStopwatch("Got all installed programs in {0}ms.");
+                
                 Logger.LogInformation("Found {0} matching installed programs.", foundMatches);
                 return new DetectorResponse() { ArtifactPresent = DetectorResponse.ArtifactPresence.Certain };
             }
-
-            StopStopwatch("Got all installed programs in {0}ms.");
+            
             Logger.LogInformation("Found no matching installed programs.");
             return new DetectorResponse() { ArtifactPresent = DetectorResponse.ArtifactPresence.Impossible };
         }

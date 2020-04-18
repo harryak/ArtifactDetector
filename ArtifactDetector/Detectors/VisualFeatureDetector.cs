@@ -51,9 +51,6 @@ namespace ItsApe.ArtifactDetector.Detectors
                 return new DetectorResponse() { ArtifactPresent = DetectorResponse.ArtifactPresence.Possible };
             }
 
-            // Stopwatch for evaluation.
-            StartStopwatch();
-
             InitializeDetection(ref runtimeInformation);
 
             //TODO: Versions for icons.
@@ -69,13 +66,11 @@ namespace ItsApe.ArtifactDetector.Detectors
             if (ArtifactFound)
             {
                 runtimeInformation.CountVisualFeautureMatches = 1;
-
-                StopStopwatch("Got all matching reference images in {0}ms.");
+                
                 Logger.LogInformation("Found a match in reference images.");
                 return new DetectorResponse() { ArtifactPresent = DetectorResponse.ArtifactPresence.Certain };
             }
-
-            StopStopwatch("Got all matching reference images in {0}ms.");
+            
             Logger.LogInformation("Found no matches in reference images.");
             return new DetectorResponse() { ArtifactPresent = DetectorResponse.ArtifactPresence.Impossible };
         }
@@ -96,6 +91,11 @@ namespace ItsApe.ArtifactDetector.Detectors
             {
                 // Make screenshot of artifact window and extract the features.
                 var observedImage = FeatureExtractor.ExtractFeatures(VisualCapturer.CaptureRegion(windowInformation.BoundingArea));
+
+                if (observedImage == null)
+                {
+                    continue;
+                }
 
                 ArtifactFound = FeatureExtractor.ImageMatchesReference(observedImage, ReferenceImages, out var drawingResult, out int matchCount);
 
@@ -125,6 +125,11 @@ namespace ItsApe.ArtifactDetector.Detectors
                 // Stop if the artifact was found.
                 if (ArtifactFound)
                 {
+#if DEBUG
+                    // Show the results in a window.
+                    if (drawingResult != null)
+                        //Application.Run(new ImageViewer(drawingResult));
+#endif
                     break;
                 }
             }

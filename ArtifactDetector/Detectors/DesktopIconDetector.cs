@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Runtime.InteropServices;
 using System.Text;
+using ItsApe.ArtifactDetector.Models;
 using ItsApe.ArtifactDetector.Utilities;
 
 namespace ItsApe.ArtifactDetector.Detectors
@@ -17,6 +18,16 @@ namespace ItsApe.ArtifactDetector.Detectors
                   NativeMethods.LVM.GETITEMRECT,
                   GetDesktopHandle())
         { }
+
+        public override void InitializeDetection(ref ArtifactRuntimeInformation runtimeInformation)
+        {
+            runtimeInformation.CountDesktopIcons = 0;
+        }
+
+        protected override int GetIconCount(ref ArtifactRuntimeInformation runtimeInformation)
+        {
+            return runtimeInformation.CountDesktopIcons;
+        }
 
         /// <summary>
         /// Check if the given icon at the index matches the titles from runtime information.
@@ -39,6 +50,11 @@ namespace ItsApe.ArtifactDetector.Detectors
 
             // Read from buffer into string with unicode encoding, then trim string.
             return IconTitleFromBuffer((int)bytesRead);
+        }
+
+        protected override void IncreaseIconCount(ref ArtifactRuntimeInformation runtimeInformation)
+        {
+            runtimeInformation.CountDesktopIcons++;
         }
 
         /// <summary>

@@ -10,9 +10,9 @@
         /// </summary>
         public enum ArtifactPresence
         {
-            Certain,
+            Impossible,
             Possible,
-            Impossible
+            Certain
         }
 
         /// <summary>

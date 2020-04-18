@@ -19,6 +19,23 @@ namespace ItsApe.ArtifactDetector.Detectors
         {
         }
 
+        public override void InitializeDetection(ref ArtifactRuntimeInformation runtimeInformation)
+        {
+            runtimeInformation.CountTrayIcons = 0;
+        }
+
+        protected override Rectangle GetAbsoluteIconRectangle(int iconIndex)
+        {
+            var rect = new NativeMethods.RECT();
+            NativeMethods.GetWindowRect(WindowHandle, ref rect);
+            return new Rectangle(rect);
+        }
+
+        protected override int GetIconCount(ref ArtifactRuntimeInformation runtimeInformation)
+        {
+            return runtimeInformation.CountTrayIcons;
+        }
+
         /// <summary>
         /// Check if the given icon at the index matches the titles from runtime information.
         /// </summary>
@@ -37,6 +54,11 @@ namespace ItsApe.ArtifactDetector.Detectors
             NativeMethods.ReadProcessMemory(ProcessHandle, bufferPointer, Marshal.UnsafeAddrOfPinnedArrayElement(_buffer, 0), new UIntPtr(BUFFER_SIZE), ref bytesRead);
 
             return Marshal.PtrToStringUni(Marshal.UnsafeAddrOfPinnedArrayElement(_buffer, 0), titleLength);
+        }
+
+        protected override void IncreaseIconCount(ref ArtifactRuntimeInformation runtimeInformation)
+        {
+            runtimeInformation.CountTrayIcons++;
         }
 
         /// <summary>
@@ -60,13 +82,6 @@ namespace ItsApe.ArtifactDetector.Detectors
                 new string[] { "SysPager", null },
                 new string[] { "ToolbarWindow32", null }
             });
-        }
-
-        protected override Rectangle GetAbsoluteIconRectangle(int iconIndex)
-        {
-            var rect = new NativeMethods.RECT();
-            NativeMethods.GetWindowRect(WindowHandle, ref rect);
-            return new Rectangle(rect);
         }
     }
 }

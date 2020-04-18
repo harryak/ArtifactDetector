@@ -13,7 +13,7 @@ namespace ItsApe.ArtifactDetector.Utilities
         /// <param name="hWnd">Input window handle.</param>
         /// <param name="lParam">Parameters for the current window.</param>
         /// <returns>Can be disregarded.</returns>
-        public delegate bool EnumWindowsProc(IntPtr hWnd, int lParam);
+        public delegate bool EnumWindowsProc(IntPtr hWnd, IntPtr lParam);
 
         [DllImport("user32.dll", SetLastError = true)]
         [return: MarshalAs(UnmanagedType.Bool)]

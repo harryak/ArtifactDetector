@@ -42,12 +42,6 @@ namespace ItsApe.ArtifactDetector.Detectors
         private FileInfo _persistentFilePath;
 
         /// <summary>
-        /// Stopwatch for evaluation, might be null.
-        /// </summary>
-        [NonSerialized]
-        private DetectorStopwatch _stopwatch;
-
-        /// <summary>
         /// Instance of a feature extractor to process the raw images.
         /// </summary>
         [NonSerialized]
@@ -61,7 +55,7 @@ namespace ItsApe.ArtifactDetector.Detectors
         /// <param name="visualFeatureExtrator">A visual feature extractor instance to get features from images.</param>
         /// <param name="logger">Logger to use for logging.</param>
         /// <param name="stopwatch">Optional, stopwatch for evaluation.</param>
-        private ArtifactReferenceImageCache(string artifactType, ApplicationSetup setup, IVisualFeatureExtractor visualFeatureExtrator, ILogger logger, DetectorStopwatch stopwatch = null)
+        private ArtifactReferenceImageCache(string artifactType, ApplicationSetup setup, IVisualFeatureExtractor visualFeatureExtrator, ILogger logger)
         {
             _artifactType = artifactType;
 
@@ -74,7 +68,6 @@ namespace ItsApe.ArtifactDetector.Detectors
             ProcessedImages = new Dictionary<string, ProcessedImage>();
 
             Logger = logger;
-            Stopwatch = stopwatch;
 
             DataChanged = false;
         }
@@ -88,11 +81,6 @@ namespace ItsApe.ArtifactDetector.Detectors
         /// Accessors for the file path. Need to be explicit to omit property from serialization.
         /// </summary>
         public FileInfo PersistentFilePath { get => _persistentFilePath; private set => _persistentFilePath = value; }
-
-        /// <summary>
-        /// Accessors for the stopwatch. Need to be explicit to omit property from serialization.
-        /// </summary>
-        public DetectorStopwatch Stopwatch { get => _stopwatch; private set => _stopwatch = value; }
 
         /// <summary>
         /// Accessors for artifact detector. Need to be explicit to omit property from serialization.
@@ -125,12 +113,7 @@ namespace ItsApe.ArtifactDetector.Detectors
         /// <returns>A cached or new instance of the cache.</returns>
         public static ArtifactReferenceImageCache GetInstance(string artifactType, ApplicationSetup setup, IVisualFeatureExtractor artifactDetector)
         {
-            var stopwatch = new DetectorStopwatch();
             var logger = setup.GetLogger("ReferenceImageCache");
-
-            // Start stopwatch if there is one.
-            if (stopwatch != null)
-                stopwatch.Restart();
 
             // Build filename from working directory and artifact target.
             string fileName = Path.Combine(setup.WorkingDirectory.FullName, artifactType + PersistentFileExtension);
@@ -149,7 +132,6 @@ namespace ItsApe.ArtifactDetector.Detectors
                     artifactLibrary.PersistentFilePath = new FileInfo(fileName);
                     artifactLibrary.VisualFeatureExtractor = artifactDetector;
                     artifactLibrary.Logger = logger;
-                    artifactLibrary.Stopwatch = stopwatch;
                     artifactLibrary.DataChanged = false;
 
                     logger.LogInformation("Got processed image cache from file.");
@@ -160,18 +142,12 @@ namespace ItsApe.ArtifactDetector.Detectors
                 if (exception is FileNotFoundException || exception is DirectoryNotFoundException || exception is UnauthorizedAccessException)
                 {
                     logger.LogInformation("No processed image cache existing or not accessible, creating new instance.");
-                    artifactLibrary = new ArtifactReferenceImageCache(artifactType, setup, artifactDetector, logger, stopwatch);
+                    artifactLibrary = new ArtifactReferenceImageCache(artifactType, setup, artifactDetector, logger);
                 }
                 else
                 {
                     throw;
                 }
-            }
-
-            if (stopwatch != null)
-            {
-                stopwatch.Stop("library_retrieved");
-                logger.LogDebug("Retrieved full artifact library in {0}ms.", stopwatch.ElapsedMilliseconds);
             }
 
             return artifactLibrary;
@@ -212,11 +188,6 @@ namespace ItsApe.ArtifactDetector.Detectors
         /// <returns>The retrieved artifact type.</returns>
         public void ProcessImage(string filePath, bool save = true)
         {
-            if (Stopwatch != null)
-            {
-                Stopwatch.Restart();
-            }
-
             // Either read from library, or generate.
             if (!ProcessedImages.ContainsKey(filePath))
             {
@@ -234,12 +205,6 @@ namespace ItsApe.ArtifactDetector.Detectors
                         Save();
                     }
                 }
-            }
-
-            if (Stopwatch != null)
-            {
-                Stopwatch.Stop("image_processed");
-                Logger.LogDebug("Processed image in {0}ms.", Stopwatch.ElapsedMilliseconds);
             }
         }
 

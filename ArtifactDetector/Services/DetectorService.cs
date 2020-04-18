@@ -8,7 +8,6 @@ using System.ServiceProcess;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Timers;
-using ItsApe.ArtifactDetector.DebugUtilities;
 using ItsApe.ArtifactDetector.Models;
 using ItsApe.ArtifactDetector.Utilities;
 using Microsoft.Extensions.Logging;
@@ -51,11 +50,6 @@ namespace ItsApe.ArtifactDetector.Services
         /// Variables describing the current state of the service, to be serialized and saved in the configuration file.
         /// </summary>
         private ServiceState serviceState;
-
-        /// <summary>
-        /// Either null or instance of a stopwatch to evaluate this service.
-        /// </summary>
-        private DetectorStopwatch stopwatch = null;
 
         /// <summary>
         /// Instantiate service with setup.
@@ -103,6 +97,8 @@ namespace ItsApe.ArtifactDetector.Services
         /// <param name="jsonEncodedParameters">Optional paramaters, JSON encoded. Only optional if called in OnStart!</param>
         public bool StartWatch(string jsonEncodedParameters = "")
         {
+            Debugger.Launch();
+
             // Set flag of this to "isRunning" early to only start one watch task at a time.
             if (!serviceState.IsRunning)
             {
@@ -112,11 +108,6 @@ namespace ItsApe.ArtifactDetector.Services
             {
                 Logger.LogError("Can't start watch since it is already running.");
                 return false;
-            }
-
-            if (stopwatch != null)
-            {
-                stopwatch.Restart();
             }
 
             // Check parameters for validity.
@@ -149,12 +140,6 @@ namespace ItsApe.ArtifactDetector.Services
             }
 
             detectorResponses = new StreamWriter(serviceState.ResponsesPath);
-
-            if (stopwatch != null)
-            {
-                stopwatch.Stop("watch_start");
-                Logger.LogDebug("Finished setup of watch task in {0}ms.", stopwatch.ElapsedMilliseconds);
-            }
 
             // Start detection loop.
             Logger.LogInformation("Starting watch task now with interval of {0}ms.", serviceState.ArtifactConfiguration.DetectionInterval);

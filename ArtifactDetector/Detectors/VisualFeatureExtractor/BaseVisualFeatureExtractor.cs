@@ -2,6 +2,7 @@
 using Emgu.CV.CvEnum;
 using Emgu.CV.Features2D;
 using Emgu.CV.Structure;
+using Emgu.CV.UI;
 using Emgu.CV.Util;
 using ItsApe.ArtifactDetector.DebugUtilities;
 using ItsApe.ArtifactDetector.Detectors.VisualFeatureExtractor.VisualMatchFilter;
@@ -11,6 +12,7 @@ using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.IO;
+using System.Windows.Forms;
 
 namespace ItsApe.ArtifactDetector.Detectors.VisualFeatureExtractor
 {
@@ -60,15 +62,20 @@ namespace ItsApe.ArtifactDetector.Detectors.VisualFeatureExtractor
         /// <returns>The observed image with keypoints and descriptors or null on error.</returns>
         public ProcessedImage ExtractFeatures(Mat image)
         {
-            StartStopwatch();
-
             var keyPoints = new VectorOfKeyPoint();
             var descriptors = new Mat();
 
+            if (image.Height < 64 || image.Width < 64)
+            {
+                var borderImage = new Mat();
+                int verticalBorder = 32;
+                int horizontalBorder = 32;
+                CvInvoke.CopyMakeBorder(image, borderImage, verticalBorder, verticalBorder, horizontalBorder, horizontalBorder, BorderType.Replicate);
+                image = borderImage;
+            }
+
             // Get the descriptors from the EmguCV feature detector.
             FeatureDetector.DetectAndCompute(image.GetUMat(AccessType.Read), null, keyPoints, descriptors, false);
-
-            StopStopwatch("Extracted features from image in {0}ms.");
 
             if (descriptors.Width < 1)
             {
@@ -150,7 +157,7 @@ namespace ItsApe.ArtifactDetector.Detectors.VisualFeatureExtractor
         private Mat Draw(ProcessedImage observedImage, ProcessedImage artifactImage, VectorOfVectorOfDMatch matches, Mat matchesMask, Matrix<float> homography)
         {
             //Draw the matched keypoints
-            Mat resultingImage = new Mat();
+            var resultingImage = new Mat();
 
             Features2DToolbox.DrawMatches(
                 artifactImage.Image,
@@ -167,7 +174,7 @@ namespace ItsApe.ArtifactDetector.Detectors.VisualFeatureExtractor
             if (homography != null)
             {
                 // Draw a rectangle along the projected model.
-                System.Drawing.Rectangle rect = new System.Drawing.Rectangle(Point.Empty, artifactImage.Image.Size);
+                var rect = new System.Drawing.Rectangle(Point.Empty, artifactImage.Image.Size);
                 // Set corner points of rectangle and transform them according to homography.
                 PointF[] pointFs = new PointF[]
                 {
@@ -216,9 +223,6 @@ namespace ItsApe.ArtifactDetector.Detectors.VisualFeatureExtractor
 
             // Only needed for debugging output, otherwise will always be null.
             homography = null;
-
-            // Get the stopwatch for matching.
-            StartStopwatch();
 
             int artifactNumber = 0;
             foreach (var currentArtifactImage in referenceImages)
@@ -296,8 +300,6 @@ namespace ItsApe.ArtifactDetector.Detectors.VisualFeatureExtractor
                 artifactNumber++;
             }
 
-            StopStopwatch("Matching finished in {0}ms.");
-
             return matchingArtifact;
         }
 
@@ -326,7 +328,7 @@ namespace ItsApe.ArtifactDetector.Detectors.VisualFeatureExtractor
                 ratio = Math.Sqrt(squaredAreaRatio);
             }
 
-            return ratio;
+            return Math.Min(ratio, 2);
         }
 
         /// <summary>

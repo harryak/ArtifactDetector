@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using ItsApe.ArtifactDetector.Models;
 
 namespace ItsApe.ArtifactDetector.Detectors
@@ -42,29 +43,24 @@ namespace ItsApe.ArtifactDetector.Detectors
         {
             DetectorResponse previousResponse = null;
             DetectorResponse response = null;
-
-            StartStopwatch();
+            
             foreach (var entry in DetectorList)
             {
-                var currentDetector = entry.Value;
                 // Check if previous certainty meets required level.
-                if (previousResponse != null && currentDetector.HasPreConditions() && entry.Value.PreConditionsMatch(runtimeInformation))
+                if (previousResponse != null && entry.Value.HasPreConditions() && entry.Value.PreConditionsMatch(runtimeInformation))
                     break;
 
-                StartStopwatch();
                 // Get the new chain element's response.
-                response = currentDetector.FindArtifact(ref runtimeInformation);
-                StopStopwatch("FindArtifact in {0}ms.");
+                response = entry.Value.FindArtifact(ref runtimeInformation);
                 
                 // If there is an artifact or there is none with 100 certainty, break.
-                if (currentDetector.HasTargetConditions() && !currentDetector.TargetConditionsMatch(response))
+                if (entry.Value.HasTargetConditions() && !entry.Value.TargetConditionsMatch(response))
                     break;
 
                 // Copy to right variable for next run.
                 previousResponse = response;
             }
-
-            StopStopwatch("Went through all necessary detectors in chain in {0}ms.");
+            
             return response;
         }
 
