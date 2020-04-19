@@ -268,7 +268,7 @@
     <Compile Include="Converters\DetectorConditionParser.cs" />
     <Compile Include="Detectors\DesktopIconDetector.cs" />
     <Compile Include="Detectors\ICompoundDetector.cs" />
-    <Compile Include="Detectors\InstalledProgramsDetector.cs" />
+    <Compile Include="Detectors\InstalledProgramDetector.cs" />
     <Compile Include="Detectors\Model\InstalledProgram.cs" />
     <Compile Include="Detectors\OpenWindowDetector.cs" />
     <Compile Include="Detectors\Model\WindowInformation.cs" />

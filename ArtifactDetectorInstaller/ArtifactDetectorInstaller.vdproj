@@ -1981,6 +1981,66 @@
     {
         "CustomAction"
         {
+            "{4AA51A2D-7D85-4A59-BA75-B0809FC8B380}:_0A9502C3DA6949E4857825654E5EE3CF"
+            {
+            "Name" = "8:ArtifactDetector Service"
+            "Condition" = "8:"
+            "Object" = "8:_C9EEA3568B034A749A285F51A834D2EF"
+            "FileType" = "3:2"
+            "InstallAction" = "3:3"
+            "Arguments" = "8:"
+            "EntryPoint" = "8:"
+            "Sequence" = "3:1"
+            "Identifier" = "8:_BA74D19D_60E1_4960_A250_B290A0ABFA18"
+            "InstallerClass" = "11:TRUE"
+            "CustomActionData" = "8:"
+            "Run64Bit" = "11:TRUE"
+            }
+            "{4AA51A2D-7D85-4A59-BA75-B0809FC8B380}:_265C5F0F670145A494967FCD45B143BA"
+            {
+            "Name" = "8:ArtifactDetector Service"
+            "Condition" = "8:"
+            "Object" = "8:_C9EEA3568B034A749A285F51A834D2EF"
+            "FileType" = "3:2"
+            "InstallAction" = "3:2"
+            "Arguments" = "8:"
+            "EntryPoint" = "8:"
+            "Sequence" = "3:1"
+            "Identifier" = "8:_966902A9_20E3_458C_9011_5C69DEA6E506"
+            "InstallerClass" = "11:TRUE"
+            "CustomActionData" = "8:"
+            "Run64Bit" = "11:TRUE"
+            }
+            "{4AA51A2D-7D85-4A59-BA75-B0809FC8B380}:_AB372C26027C4DAFB731384E88129A07"
+            {
+            "Name" = "8:ArtifactDetector Service"
+            "Condition" = "8:"
+            "Object" = "8:_C9EEA3568B034A749A285F51A834D2EF"
+            "FileType" = "3:2"
+            "InstallAction" = "3:1"
+            "Arguments" = "8:"
+            "EntryPoint" = "8:"
+            "Sequence" = "3:1"
+            "Identifier" = "8:_518C1378_6C47_44D9_A6C2_401F34A162CF"
+            "InstallerClass" = "11:TRUE"
+            "CustomActionData" = "8:"
+            "Run64Bit" = "11:TRUE"
+            }
+            "{4AA51A2D-7D85-4A59-BA75-B0809FC8B380}:_D032BB5AF35C483AB2C86E32AEF15052"
+            {
+            "Name" = "8:ArtifactDetector Service"
+            "Condition" = "8:"
+            "Object" = "8:_C9EEA3568B034A749A285F51A834D2EF"
+            "FileType" = "3:2"
+            "InstallAction" = "3:4"
+            "Arguments" = "8:"
+            "EntryPoint" = "8:"
+            "Sequence" = "3:1"
+            "Identifier" = "8:_236D5281_0194_435D_AFF1_31624DDD1429"
+            "InstallerClass" = "11:TRUE"
+            "CustomActionData" = "8:"
+            "Run64Bit" = "11:TRUE"
+            }
         }
         "DefaultFeature"
         {

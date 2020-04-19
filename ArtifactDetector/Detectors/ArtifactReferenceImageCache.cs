@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Runtime.Serialization.Formatters.Binary;
-using ItsApe.ArtifactDetector.DebugUtilities;
 using ItsApe.ArtifactDetector.Detectors.VisualFeatureExtractor;
 using ItsApe.ArtifactDetector.Helpers;
 using ItsApe.ArtifactDetector.Models;
@@ -103,6 +102,34 @@ namespace ItsApe.ArtifactDetector.Detectors
         private Dictionary<string, ProcessedImage> ProcessedImages { get; }
 
         /// <summary>
+        /// If the filename is known directly one can deserialize it.
+        /// </summary>
+        /// <param name="fileName"></param>
+        /// <param name="setup"></param>
+        /// <param name="artifactDetector"></param>
+        /// <returns></returns>
+        public static ArtifactReferenceImageCache FromFile(string fileName, ApplicationSetup setup, IVisualFeatureExtractor artifactDetector)
+        {
+            var logger = setup.GetLogger("ReferenceImageCache");
+            ArtifactReferenceImageCache artifactLibrary = null;
+
+            using (Stream stream = File.Open(fileName, FileMode.Open))
+            {
+                var binaryFormatter = new BinaryFormatter();
+
+                artifactLibrary = (ArtifactReferenceImageCache)binaryFormatter.Deserialize(stream);
+                artifactLibrary.PersistentFilePath = new FileInfo(fileName);
+                artifactLibrary.VisualFeatureExtractor = artifactDetector;
+                artifactLibrary.Logger = logger;
+                artifactLibrary.DataChanged = false;
+
+                logger.LogInformation("Got processed image cache from file.");
+            }
+
+            return artifactLibrary;
+        }
+
+        /// <summary>
         /// Extracts a saved library from the given file.
         /// </summary>
         /// <param name="artifactType">Name of the artifact type this cache is for.</param>
@@ -116,7 +143,9 @@ namespace ItsApe.ArtifactDetector.Detectors
             var logger = setup.GetLogger("ReferenceImageCache");
 
             // Build filename from working directory and artifact target.
-            string fileName = Path.Combine(setup.WorkingDirectory.FullName, artifactType + PersistentFileExtension);
+            string fileName = Uri.UnescapeDataString(
+                Path.Combine(setup.WorkingDirectory.FullName,
+                artifactType + PersistentFileExtension));
 
             // New instance of this class to be filled.
             ArtifactReferenceImageCache artifactLibrary = null;
@@ -124,25 +153,18 @@ namespace ItsApe.ArtifactDetector.Detectors
             // Try to read from file, fail if it doesn't exist or we don't have access rights.
             try
             {
-                using (Stream stream = File.Open(fileName, FileMode.Open))
-                {
-                    var binaryFormatter = new BinaryFormatter();
-
-                    artifactLibrary = (ArtifactReferenceImageCache)binaryFormatter.Deserialize(stream);
-                    artifactLibrary.PersistentFilePath = new FileInfo(fileName);
-                    artifactLibrary.VisualFeatureExtractor = artifactDetector;
-                    artifactLibrary.Logger = logger;
-                    artifactLibrary.DataChanged = false;
-
-                    logger.LogInformation("Got processed image cache from file.");
-                }
+                artifactLibrary = FromFile(fileName, setup, artifactDetector);
             }
             catch (Exception exception)
             {
                 if (exception is FileNotFoundException || exception is DirectoryNotFoundException || exception is UnauthorizedAccessException)
                 {
                     logger.LogInformation("No processed image cache existing or not accessible, creating new instance.");
-                    artifactLibrary = new ArtifactReferenceImageCache(artifactType, setup, artifactDetector, logger);
+                    artifactLibrary = new ArtifactReferenceImageCache(artifactType, setup, artifactDetector, logger)
+                    {
+                        DataChanged = true
+                    };
+                    artifactLibrary.Save();
                 }
                 else
                 {
@@ -198,6 +220,7 @@ namespace ItsApe.ArtifactDetector.Detectors
                 {
                     // Add to cache list.
                     ProcessedImages.Add(filePath, image);
+                    DataChanged = true;
 
                     if (save)
                     {
@@ -237,7 +260,8 @@ namespace ItsApe.ArtifactDetector.Detectors
             DataChanged = false;
 
             var binaryFormatter = new BinaryFormatter();
-            FileHelper.WriteToFile(PersistentFilePath.FullName, stream => binaryFormatter.Serialize(stream, this), FileMode.Create);
+            FileHelper.WriteToFile(Uri.UnescapeDataString(PersistentFilePath.FullName),
+                stream => binaryFormatter.Serialize(stream, this), FileMode.Create);
         }
     }
 }

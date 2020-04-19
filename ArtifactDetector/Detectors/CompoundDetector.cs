@@ -34,6 +34,11 @@ namespace ItsApe.ArtifactDetector.Detectors
             return priority;
         }
 
+        public SortedDictionary<int, IDetector> GetDetectors()
+        {
+            return DetectorList;
+        }
+
         /// <summary>
         /// Find the artifact defined in the artifactConfiguration given some runtime information and a previous detector's response.
         /// </summary>

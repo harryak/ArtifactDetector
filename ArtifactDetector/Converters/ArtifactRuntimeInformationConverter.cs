@@ -15,12 +15,6 @@ namespace ItsApe.ArtifactDetector.Converters
     internal class ArtifactRuntimeInformationConverter : JsonConverter<ArtifactRuntimeInformation>
     {
         /// <summary>
-        /// Flag to tell Newtonsoft.Json that this converter can not write an
-        /// ArtifactRuntimeInformation object to JSON.
-        /// </summary>
-        public override bool CanWrite => false;
-
-        /// <summary>
         /// Read json and parse it into an ArtifactRuntimeInformation with appropriate property values.
         /// </summary>
         /// <param name="reader">Load the JObject from here.</param>
@@ -38,12 +32,23 @@ namespace ItsApe.ArtifactDetector.Converters
             using (var subReader = jObject.CreateReader())
                 serializer.Populate(subReader, outputInformation);
 
-            outputInformation.ReferenceImages = ArtifactReferenceImageCache.GetInstance(outputInformation.ArtifactName, ApplicationSetup.GetInstance(), VisualFeatureExtractorFactory.GetFeatureExtractor());
+            if (jObject.TryGetValue("reference_images_path", out var referenceImagePath))
+            {
+                outputInformation.ReferenceImages = ArtifactReferenceImageCache.GetInstance(
+                    outputInformation.ArtifactName,
+                    ApplicationSetup.GetInstance(),
+                    VisualFeatureExtractorFactory.GetFeatureExtractor());
 
-            jObject.TryGetValue("reference_images_path", out var referenceImagePath);
-            var filePath = new DirectoryInfo(referenceImagePath.Value<string>());
-
-            outputInformation.ReferenceImages.ProcessImagesInPath(filePath);
+                var filePath = new DirectoryInfo(referenceImagePath.Value<string>());
+                outputInformation.ReferenceImages.ProcessImagesInPath(filePath);
+            }
+            else if (jObject.TryGetValue("reference_images_cache", out var referenceImageCacheFile))
+            {
+                outputInformation.ReferenceImages = ArtifactReferenceImageCache.FromFile(
+                    Uri.UnescapeDataString(referenceImageCacheFile.Value<string>()),
+                    ApplicationSetup.GetInstance(),
+                    VisualFeatureExtractorFactory.GetFeatureExtractor());
+            }
 
             return outputInformation;
         }
@@ -56,7 +61,11 @@ namespace ItsApe.ArtifactDetector.Converters
         /// <param name="serializer"></param>
         public override void WriteJson(JsonWriter writer, ArtifactRuntimeInformation value, JsonSerializer serializer)
         {
-            throw new NotImplementedException("Can't write.");
+            var jObject = JObject.FromObject(value);
+            jObject.Add("reference_images_cache", JToken.FromObject(
+                Uri.UnescapeDataString(value.ReferenceImages.PersistentFilePath.FullName),
+                serializer));
+            jObject.WriteTo(writer);
         }
     }
 }

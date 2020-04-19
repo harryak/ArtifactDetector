@@ -8,7 +8,7 @@ using Microsoft.Win32;
 
 namespace ItsApe.ArtifactDetector.Detectors
 {
-    internal class InstalledProgramsDetector : BaseDetector, IDetector
+    internal class InstalledProgramDetector : BaseDetector, IDetector
     {
         /// <summary>
         /// Dictionary of hive and key path for installations lookup.

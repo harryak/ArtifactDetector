@@ -13,12 +13,6 @@ namespace ItsApe.ArtifactDetector.Converters
     internal class DetectorConverter : JsonConverter<IDetector>
     {
         /// <summary>
-        /// Flag to tell Newtonsoft.Json that this converter can not write an
-        /// IDetector object to JSON.
-        /// </summary>
-        public override bool CanWrite => false;
-
-        /// <summary>
         /// Read json and parse it into an IDetector of the appropriate type.
         /// </summary>
         /// <param name="reader">Load the JObject from here.</param>
@@ -29,6 +23,7 @@ namespace ItsApe.ArtifactDetector.Converters
         /// <returns></returns>
         public override IDetector ReadJson(JsonReader reader, Type objectType, IDetector existingValue, bool hasExistingValue, JsonSerializer serializer)
         {
+            if (reader.TokenType == JsonToken.Null || reader.TokenType != JsonToken.StartObject) return null;
             var jObject = JObject.Load(reader);
 
             if (!jObject.HasValues)
@@ -36,11 +31,15 @@ namespace ItsApe.ArtifactDetector.Converters
                 return null;
             }
 
-            string[] entry;
+            string[] entry = new string[3];
             if (jObject.Count < 2)
             {
                 // Only one detector, instantiate directly.
-                entry = jObject.First.Value<string>().Split(';');
+                entry[0] = jObject.First.First.Value<string>();
+                if (entry[0].IndexOf(';') > 0)
+                {
+                    entry = entry[0].Split(';');
+                }
                 return InstantiateDetectorFromString(entry[0], entry[1] ?? "", entry[2] ?? "");
             }
 
@@ -63,7 +62,20 @@ namespace ItsApe.ArtifactDetector.Converters
         /// <param name="serializer"></param>
         public override void WriteJson(JsonWriter writer, IDetector value, JsonSerializer serializer)
         {
-            throw new NotImplementedException();
+            var jObject = new JObject();
+            if (value.GetType() == typeof(CompoundDetector))
+            {
+                var compoundDetector = value as CompoundDetector;
+                foreach (var detector in compoundDetector.GetDetectors())
+                {
+                    jObject.Add(detector.Key.ToString(), detector.Value.GetType().Name + ";;");
+                }
+            }
+            else
+            {
+                jObject.Add("0", value.GetType().Name + ";;");
+            }
+            jObject.WriteTo(writer);
         }
 
         /// <summary>
