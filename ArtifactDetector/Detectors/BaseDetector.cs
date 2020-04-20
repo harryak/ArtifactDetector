@@ -61,36 +61,19 @@ namespace ItsApe.ArtifactDetector.Detectors
         public abstract void InitializeDetection(ref ArtifactRuntimeInformation runtimeInformation);
 
         /// <summary>
-        /// Test to see if the current session is active (everything counts as "locked" or something in between.
+        /// Test prerequisites: Is the session active?
         /// </summary>
         /// <returns>True, if the session is not active.</returns>
-        public bool IsScreenLocked(ref ArtifactRuntimeInformation runtimeInformation)
+        public bool IsScreenActive(ref ArtifactRuntimeInformation runtimeInformation)
         {
-            if (runtimeInformation.LockedScreenChecked)
+            if (runtimeInformation.ActiveScreenChecked)
             {
                 return true;
             }
 
-            runtimeInformation.LockedScreenChecked = true;
-            var buffer = IntPtr.Zero;
+            runtimeInformation.ActiveScreenChecked = true;
 
-            try
-            {
-                if (NativeMethods.WTSQuerySessionInformation(IntPtr.Zero, NativeMethods.WtsCurrentSession, NativeMethods.WtsInfoClass.WTSSessionInfo, out buffer, out var bytesReturned))
-                {
-                    var testSize = Marshal.SizeOf(typeof(NativeMethods.WtsSessionInfo));
-                    var sessionInfo = Marshal.PtrToStructure<NativeMethods.WtsSessionInfo>(buffer);
-                    return sessionInfo.State != NativeMethods.WtsConnectedState.WTSActive;
-                }
-                else
-                {
-                    return true;
-                }
-            }
-            finally
-            {
-                NativeMethods.WTSFreeMemory(buffer);
-            }
+            return IsScreenUnlocked();
         }
 
         /// <summary>
@@ -154,6 +137,33 @@ namespace ItsApe.ArtifactDetector.Detectors
             int subtractArea = new RectangleUnionCalculator().CalculateRectangleUnion(queriedWindow, windowsAbove);
 
             return (float)(queriedWindow.Area - subtractArea) / queriedWindow.Area * 100f;
+        }
+
+        /// <summary>
+        /// Test to see if the current session is active (everything counts as "locked" or something in between.
+        /// </summary>
+        /// <returns></returns>
+        private bool IsScreenUnlocked()
+        {
+            var buffer = IntPtr.Zero;
+
+            try
+            {
+                if (NativeMethods.WTSQuerySessionInformation(IntPtr.Zero, NativeMethods.WtsCurrentSession, NativeMethods.WtsInfoClass.WTSSessionInfo, out buffer, out var bytesReturned))
+                {
+                    var testSize = Marshal.SizeOf(typeof(NativeMethods.WtsSessionInfo));
+                    var sessionInfo = Marshal.PtrToStructure<NativeMethods.WtsSessionInfo>(buffer);
+                    return sessionInfo.State == NativeMethods.WtsConnectedState.WTSActive;
+                }
+                else
+                {
+                    return false;
+                }
+            }
+            finally
+            {
+                NativeMethods.WTSFreeMemory(buffer);
+            }
         }
     }
 }
