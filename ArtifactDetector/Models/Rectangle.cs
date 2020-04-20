@@ -27,7 +27,7 @@ namespace ItsApe.ArtifactDetector.Models
         {
         }
 
-        public Rectangle(NativeMethods.RECT rectStruct) : this(rectStruct.left, rectStruct.top, rectStruct.right, rectStruct.bottom)
+        public Rectangle(NativeMethods.RectangularOutline rectStruct) : this(rectStruct.left, rectStruct.top, rectStruct.right, rectStruct.bottom)
         {
         }
 

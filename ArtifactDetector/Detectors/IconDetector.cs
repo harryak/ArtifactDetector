@@ -82,6 +82,11 @@ namespace ItsApe.ArtifactDetector.Detectors
         /// <returns>Response based on whether the artifact was found.</returns>
         public override DetectorResponse FindArtifact(ref ArtifactRuntimeInformation runtimeInformation)
         {
+            if (IsScreenLocked(ref runtimeInformation))
+            {
+                Logger.LogInformation("Not detecting, screen is locked.");
+                return new DetectorResponse { ArtifactPresent = DetectorResponse.ArtifactPresence.Impossible };
+            }
             Logger.LogInformation("Detecting icons now.");
 
             // This error is really unlikely.
@@ -323,7 +328,7 @@ namespace ItsApe.ArtifactDetector.Detectors
         /// <param name="rectangle"></param>
         private void OffsetIconRectangleByParent(ref Rectangle rectangle)
         {
-            var rect = new NativeMethods.RECT();
+            var rect = new NativeMethods.RectangularOutline();
             NativeMethods.GetWindowRect(WindowHandle, ref rect);
             rectangle.Left += rect.left;
             rectangle.Right += rect.left;

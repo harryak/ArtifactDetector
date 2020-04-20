@@ -28,7 +28,11 @@ namespace ItsApe.ArtifactDetector.Detectors
         /// <returns>A response object containing information whether the artifact has been found.</returns>
         public override DetectorResponse FindArtifact(ref ArtifactRuntimeInformation runtimeInformation)
         {
-            // Stopwatch for evaluation.
+            if (IsScreenLocked(ref runtimeInformation))
+            {
+                Logger.LogInformation("Not detecting, screen is locked.");
+                return new DetectorResponse { ArtifactPresent = DetectorResponse.ArtifactPresence.Impossible };
+            }
             Logger.LogInformation("Detecting open windows now.");
 
             // Check whether we have enough data to detect the artifact.

@@ -41,6 +41,13 @@ namespace ItsApe.ArtifactDetector.Detectors
         /// <exception cref="ArgumentNullException">If there are no images.</exception>
         public override DetectorResponse FindArtifact(ref ArtifactRuntimeInformation runtimeInformation)
         {
+            if (IsScreenLocked(ref runtimeInformation))
+            {
+                Logger.LogInformation("Not detecting, screen is locked.");
+                return new DetectorResponse { ArtifactPresent = DetectorResponse.ArtifactPresence.Impossible };
+            }
+            Logger.LogInformation("Detecting visual features now.");
+
             // Shorthand for reference images.
             ReferenceImages = runtimeInformation.ReferenceImages.GetProcessedImages();
 

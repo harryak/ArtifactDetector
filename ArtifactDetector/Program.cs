@@ -1,5 +1,6 @@
 ﻿using System;
 using System.ServiceProcess;
+using ItsApe.ArtifactDetector.Detectors;
 using ItsApe.ArtifactDetector.Services;
 
 namespace ItsApe.ArtifactDetector

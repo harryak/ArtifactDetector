@@ -1,8 +1,11 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
+using System.Runtime.InteropServices;
 using ItsApe.ArtifactDetector.DebugUtilities;
 using ItsApe.ArtifactDetector.DetectorConditions;
 using ItsApe.ArtifactDetector.Detectors.Components;
 using ItsApe.ArtifactDetector.Models;
+using ItsApe.ArtifactDetector.Utilities;
 
 namespace ItsApe.ArtifactDetector.Detectors
 {
@@ -25,7 +28,7 @@ namespace ItsApe.ArtifactDetector.Detectors
         /// Find the artifact defined in the artifactConfiguration given some runtime information and a previous detector's response.
         /// </summary>
         /// <param name="runtimeInformation">Information about the artifact.</param>
-        /// 
+        ///
         /// <returns>A response object containing information whether the artifact has been found.</returns>
         public abstract DetectorResponse FindArtifact(ref ArtifactRuntimeInformation runtimeInformation);
 
@@ -56,6 +59,39 @@ namespace ItsApe.ArtifactDetector.Detectors
         /// </summary>
         /// <param name="runtimeInformation">Reference to object to initialize from.</param>
         public abstract void InitializeDetection(ref ArtifactRuntimeInformation runtimeInformation);
+
+        /// <summary>
+        /// Test to see if the current session is active (everything counts as "locked" or something in between.
+        /// </summary>
+        /// <returns>True, if the session is not active.</returns>
+        public bool IsScreenLocked(ref ArtifactRuntimeInformation runtimeInformation)
+        {
+            if (runtimeInformation.LockedScreenChecked)
+            {
+                return true;
+            }
+
+            runtimeInformation.LockedScreenChecked = true;
+            var buffer = IntPtr.Zero;
+
+            try
+            {
+                if (NativeMethods.WTSQuerySessionInformation(IntPtr.Zero, NativeMethods.WtsCurrentSession, NativeMethods.WtsInfoClass.WTSSessionInfo, out buffer, out var bytesReturned))
+                {
+                    var testSize = Marshal.SizeOf(typeof(NativeMethods.WtsSessionInfo));
+                    var sessionInfo = Marshal.PtrToStructure<NativeMethods.WtsSessionInfo>(buffer);
+                    return sessionInfo.State != NativeMethods.WtsConnectedState.WTSActive;
+                }
+                else
+                {
+                    return true;
+                }
+            }
+            finally
+            {
+                NativeMethods.WTSFreeMemory(buffer);
+            }
+        }
 
         /// <summary>
         /// Checks whether the current setup and previous response match the conditions for execution of this detector.

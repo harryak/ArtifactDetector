@@ -8,7 +8,7 @@ namespace ItsApe.ArtifactDetector.Detectors
     /// <summary>
     /// Detector to detect tray icons.
     /// </summary>
-    internal class TrayIconDetector : IconDetector<NativeMethods.TBBUTTON>, IDetector
+    internal class TrayIconDetector : IconDetector<NativeMethods.TaskBarButton>, IDetector
     {
         public TrayIconDetector()
             : base(
@@ -26,7 +26,7 @@ namespace ItsApe.ArtifactDetector.Detectors
 
         protected override Rectangle GetAbsoluteIconRectangle(int iconIndex)
         {
-            var rect = new NativeMethods.RECT();
+            var rect = new NativeMethods.RectangularOutline();
             NativeMethods.GetWindowRect(WindowHandle, ref rect);
             return new Rectangle(rect);
         }
@@ -43,7 +43,7 @@ namespace ItsApe.ArtifactDetector.Detectors
         /// <param name="index">Index of icon in parent window.</param>
         /// <param name="icon">Icon structure.</param>
         /// <returns>True if the icon matches.</returns>
-        protected override string GetIconTitle(int index, NativeMethods.TBBUTTON icon)
+        protected override string GetIconTitle(int index, NativeMethods.TaskBarButton icon)
         {
             FillIconStruct(index, ref icon);
 
@@ -65,9 +65,9 @@ namespace ItsApe.ArtifactDetector.Detectors
         /// Return a new (usable) instance of the icon struct.
         /// </summary>
         /// <returns></returns>
-        protected override NativeMethods.TBBUTTON InitIconStruct()
+        protected override NativeMethods.TaskBarButton InitIconStruct()
         {
-            return new NativeMethods.TBBUTTON();
+            return new NativeMethods.TaskBarButton();
         }
 
         /// <summary>

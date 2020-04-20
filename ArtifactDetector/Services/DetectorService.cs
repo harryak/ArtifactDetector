@@ -199,7 +199,7 @@ namespace ItsApe.ArtifactDetector.Services
         protected override void OnStart(string[] args)
         {
             // Uncomment this to debug.
-            Debugger.Launch();
+            //Debugger.Launch();
 
             if (serviceHost != null)
             {
@@ -255,8 +255,9 @@ namespace ItsApe.ArtifactDetector.Services
         private void CompileResponses(int errorWindowSize)
         {
             // Buffer the values inside the current error window.
-            var errorWindowValues = new Dictionary<long, int>();
-            int currentMajority = -1, previousMajority = -1, currentIndex = 0;
+            var errorWindowValues = new SortedDictionary<long, int>();
+            int currentMajority = -1, previousMajority = -1;
+            long changeTimestamp = 0;
 
             using (var reader = new StreamReader(serviceState.ResponsesPath))
             using (var writer = new StreamWriter(serviceState.CompiledResponsesPath, true))
@@ -281,8 +282,8 @@ namespace ItsApe.ArtifactDetector.Services
                     if (currentMajority != previousMajority)
                     {
                         // Artifact detection changed.
-                        currentIndex = Math.Min(errorWindowSize / 2 + 1, errorWindowValues.Count - 1);
-                        writer.WriteLine("{0},{1}", errorWindowValues.ElementAt(currentIndex).Key, currentMajority);
+                        changeTimestamp = errorWindowValues.SkipWhile(entry => entry.Value != currentMajority).First().Key;
+                        writer.WriteLine("{0},{1}", changeTimestamp, currentMajority);
                         previousMajority = currentMajority;
                     }
                 }
@@ -293,7 +294,7 @@ namespace ItsApe.ArtifactDetector.Services
         /// Boyer-Moore majority vote algorithm.
         /// </summary>
         /// <param name="dictionary">Get majority of this dictionaries entries.</param>
-        private int GetMajorityItem([In] ref Dictionary<long, int> dictionary)
+        private int GetMajorityItem([In] ref SortedDictionary<long, int> dictionary)
         {
             int majorityItem = -1, counter = 0;
 

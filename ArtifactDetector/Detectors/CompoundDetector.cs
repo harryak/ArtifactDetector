@@ -1,6 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using ItsApe.ArtifactDetector.Models;
+using Microsoft.Extensions.Logging;
 
 namespace ItsApe.ArtifactDetector.Detectors
 {
@@ -34,11 +34,6 @@ namespace ItsApe.ArtifactDetector.Detectors
             return priority;
         }
 
-        public SortedDictionary<int, IDetector> GetDetectors()
-        {
-            return DetectorList;
-        }
-
         /// <summary>
         /// Find the artifact defined in the artifactConfiguration given some runtime information and a previous detector's response.
         /// </summary>
@@ -46,9 +41,16 @@ namespace ItsApe.ArtifactDetector.Detectors
         /// <returns>A response object containing information whether the artifact has been found.</returns>
         public override DetectorResponse FindArtifact(ref ArtifactRuntimeInformation runtimeInformation)
         {
+            if (IsScreenLocked(ref runtimeInformation))
+            {
+                Logger.LogInformation("Not detecting, screen is locked.");
+                return new DetectorResponse { ArtifactPresent = DetectorResponse.ArtifactPresence.Impossible };
+            }
+            Logger.LogInformation("Compound detector started.");
+
             DetectorResponse previousResponse = null;
             DetectorResponse response = null;
-            
+
             foreach (var entry in DetectorList)
             {
                 // Check if previous certainty meets required level.
@@ -57,16 +59,21 @@ namespace ItsApe.ArtifactDetector.Detectors
 
                 // Get the new chain element's response.
                 response = entry.Value.FindArtifact(ref runtimeInformation);
-                
-                // If there is an artifact or there is none with 100 certainty, break.
+
+                // If there is an artifact or there is none with 100% certainty, break.
                 if (entry.Value.HasTargetConditions() && !entry.Value.TargetConditionsMatch(response))
                     break;
 
                 // Copy to right variable for next run.
                 previousResponse = response;
             }
-            
+
             return response;
+        }
+
+        public SortedDictionary<int, IDetector> GetDetectors()
+        {
+            return DetectorList;
         }
 
         /// <summary>

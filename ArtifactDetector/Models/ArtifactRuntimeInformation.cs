@@ -75,6 +75,9 @@ namespace ItsApe.ArtifactDetector.Models
         [JsonIgnore]
         public int CountVisualFeautureMatches { get; set; } = 0;
 
+        [JsonIgnore]
+        public bool LockedScreenChecked { get; set; } = false;
+
         /// <summary>
         /// Possible (fragments of the) titles of the windows to get.
         /// </summary>

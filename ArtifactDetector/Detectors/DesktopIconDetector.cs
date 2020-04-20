@@ -9,7 +9,7 @@ namespace ItsApe.ArtifactDetector.Detectors
     /// <summary>
     /// Detector to detect desktop icons.
     /// </summary>
-    internal class DesktopIconDetector : IconDetector<NativeMethods.LVITEMA>, IDetector
+    internal class DesktopIconDetector : IconDetector<NativeMethods.ListViewItem>, IDetector
     {
         public DesktopIconDetector()
             : base(
@@ -36,7 +36,7 @@ namespace ItsApe.ArtifactDetector.Detectors
         /// <param name="index">Index of icon in parent window.</param>
         /// <param name="icon">Icon structure.</param>
         /// <returns>True if the icon matches.</returns>
-        protected override string GetIconTitle(int index, NativeMethods.LVITEMA icon)
+        protected override string GetIconTitle(int index, NativeMethods.ListViewItem icon)
         {
             icon.iItem = index;
 
@@ -61,19 +61,19 @@ namespace ItsApe.ArtifactDetector.Detectors
         /// Creates a new (usable) instance of the icon struct.
         /// </summary>
         /// <returns>The created instance.</returns>
-        protected override NativeMethods.LVITEMA InitIconStruct()
+        protected override NativeMethods.ListViewItem InitIconStruct()
         {
             // Initialize basic structure.
-            return new NativeMethods.LVITEMA
+            return new NativeMethods.ListViewItem
             {
                 // We want to get the icon's text, so set the mask accordingly.
                 mask = NativeMethods.LVIF.TEXT,
 
                 // Set maximum text length to buffer length minus offset used in pszText.
-                cchTextMax = BUFFER_SIZE - Marshal.SizeOf(typeof(NativeMethods.LVITEMA)),
+                cchTextMax = BUFFER_SIZE - Marshal.SizeOf(typeof(NativeMethods.ListViewItem)),
 
                 // Set pszText at point in the remote process's buffer.
-                pszText = GetBufferPointer(ProcessHandle) + Marshal.SizeOf(typeof(NativeMethods.LVITEMA))
+                pszText = GetBufferPointer(ProcessHandle) + Marshal.SizeOf(typeof(NativeMethods.ListViewItem))
             };
         }
 
@@ -92,12 +92,12 @@ namespace ItsApe.ArtifactDetector.Detectors
         /// <param name="icon">The icon struct to use as scheme.</param>
         /// <param name="bytesRead">Reference of read bytes.</param>
         /// <returns>The filled structure</returns>
-        private NativeMethods.LVITEMA FillStructFromProcess(NativeMethods.LVITEMA icon, ref uint bytesRead)
+        private NativeMethods.ListViewItem FillStructFromProcess(NativeMethods.ListViewItem icon, ref uint bytesRead)
         {
             // Initialize current icon.
-            var currentIcon = new NativeMethods.LVITEMA();
+            var currentIcon = new NativeMethods.ListViewItem();
             // Wrap icon in array so we can get the pinned address of it.
-            NativeMethods.LVITEMA[] pinnedArray = new NativeMethods.LVITEMA[] { icon };
+            NativeMethods.ListViewItem[] pinnedArray = new NativeMethods.ListViewItem[] { icon };
 
             // Write scheme to foreign process.
             NativeMethods.WriteProcessMemory(ProcessHandle, GetBufferPointer(ProcessHandle), Marshal.UnsafeAddrOfPinnedArrayElement(pinnedArray, 0), new UIntPtr((uint)Marshal.SizeOf(icon)), ref bytesRead);

@@ -7,6 +7,8 @@ namespace ItsApe.ArtifactDetector.Utilities
 {
     internal static class NativeMethods
     {
+        internal const int WtsCurrentSession = -1;
+
         /// <summary>
         /// Delegate function to loop over windows.
         /// </summary>
@@ -25,7 +27,7 @@ namespace ItsApe.ArtifactDetector.Utilities
 
         [DllImport("user32.dll", SetLastError = true)]
         [return: MarshalAs(UnmanagedType.Bool)]
-        public static extern bool GetWindowRect(IntPtr hWnd, ref RECT rect);
+        public static extern bool GetWindowRect(IntPtr hWnd, ref RectangularOutline rect);
 
         [DllImport("user32.dll", CharSet = CharSet.Unicode)]
         [return: MarshalAs(UnmanagedType.U4)]
@@ -72,13 +74,74 @@ namespace ItsApe.ArtifactDetector.Utilities
         [return: MarshalAs(UnmanagedType.Bool)]
         internal static extern bool WriteProcessMemory(IntPtr hProcess, IntPtr lpBaseAddress, IntPtr lpBuffer, UIntPtr nSize, ref uint vNumberOfBytesRead);
 
+        [DllImport("Wtsapi32.dll")]
+        internal static extern void WTSFreeMemory(IntPtr pointer);
+
+        [DllImport("Kernel32.dll")]
+        internal static extern int WTSGetActiveConsoleSessionId();
+
+        [DllImport("Wtsapi32.dll")]
+        internal static extern bool WTSQuerySessionInformation(IntPtr hServer, int sessionId, WtsInfoClass wtsInfoClass, out IntPtr ppBuffer, out uint pBytesReturned);
+
+        #region enums
+
+        internal enum WtsConnectedState
+        {
+            WTSActive,
+            WTSConnected,
+            WTSConnectQuery,
+            WTSShadow,
+            WTSDisconnected,
+            WTSIdle,
+            WTSListen,
+            WTSReset,
+            WTSDown,
+            WTSInit
+        }
+
+        internal enum WtsInfoClass
+        {
+            WTSInitialProgram,
+            WTSApplicationName,
+            WTSWorkingDirectory,
+            WTSOEMId,
+            WTSSessionId,
+            WTSUserName,
+            WTSWinStationName,
+            WTSDomainName,
+            WTSConnectState,
+            WTSClientBuildNumber,
+            WTSClientName,
+            WTSClientDirectory,
+            WTSClientProductId,
+            WTSClientHardwareId,
+            WTSClientAddress,
+            WTSClientDisplay,
+            WTSClientProtocolType,
+            WTSIdleTime,
+            WTSLogonTime,
+            WTSIncomingBytes,
+            WTSOutgoingBytes,
+            WTSIncomingFrames,
+            WTSOutgoingFrames,
+            WTSClientInfo,
+            WTSSessionInfo,
+            WTSSessionInfoEx,
+            WTSConfigInfo,
+            WTSValidationInfo,
+            WTSSessionAddressV4,
+            WTSIsRemoteSession
+        }
+
+        #endregion enums
+
         #region structs
 
         /// <summary>
         /// This is the structure for a list view item, such as the icons on the desktop.
         /// </summary>
         [StructLayout(LayoutKind.Sequential)]
-        internal struct LVITEMA
+        internal struct ListViewItem
         {
             /// <summary>
             /// Set of flags that specify which members of this structure contain data to be set or which members are being requested. This member can have one or more of the following flags set:
@@ -189,7 +252,7 @@ namespace ItsApe.ArtifactDetector.Utilities
         }
 
         [StructLayout(LayoutKind.Sequential)]
-        internal struct RECT
+        internal struct RectangularOutline
         {
             public int left;
             public int top;
@@ -198,7 +261,7 @@ namespace ItsApe.ArtifactDetector.Utilities
         }
 
         [StructLayout(LayoutKind.Sequential)]
-        internal struct TBBUTTON
+        internal struct TaskBarButton
         {
             /// <summary>
             /// Zero-based index of the button image.
@@ -240,40 +303,90 @@ namespace ItsApe.ArtifactDetector.Utilities
             public ushort wCreatorVersion;
         }
 
+        [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Ansi)]
+        internal struct WtsSessionInfo
+        {
+            public const int WinStationNameLength = 32;
+            public const int DomainLength = 17;
+            public const int UserNameLength = 20;
+
+            public WtsConnectedState State;
+            public int SessionId;
+            public int IncomingBytes;
+            public int OutgoingBytes;
+            public int IncomingFrames;
+            public int OutgoingFrames;
+            public int IncomingCompressedBytes;
+            public int OutgoingCompressedBytes;
+
+            [MarshalAs(UnmanagedType.ByValArray, SizeConst = WinStationNameLength)]
+            public byte[] WinStationNameRaw;
+
+            [MarshalAs(UnmanagedType.ByValArray, SizeConst = DomainLength)]
+            public byte[] DomainRaw;
+
+            [MarshalAs(UnmanagedType.ByValArray, SizeConst = UserNameLength + 1)]
+            public byte[] UserNameRaw;
+
+            public long ConnectTimeUTC;
+            public long DisconnectTimeUTC;
+            public long LastInputTimeUTC;
+            public long LogonTimeUTC;
+            public long CurrentTimeUTC;
+        }
+
         #endregion structs
 
         #region Windows Messages
 
         public abstract class WindowStyles
         {
-            public const uint WS_OVERLAPPED           = 0x00000000;
-            public const uint WS_MAXIMIZEBOX          = 0x00010000;
-            public const uint WS_TABSTOP              = 0x00010000;
-            public const uint WS_GROUP                = 0x00020000;
-            public const uint WS_MINIMIZEBOX          = 0x00020000;
-            public const uint WS_THICKFRAME           = 0x00040000;
-            public const uint WS_SYSMENU              = 0x00080000;
-            public const uint WS_HSCROLL              = 0x00100000;
-            public const uint WS_VSCROLL              = 0x00200000;
-            public const uint WS_DLGFRAME             = 0x00400000;
-            public const uint WS_CAPTION              = 0x00C00000;
             public const uint WS_BORDER               = 0x00800000;
-            public const uint WS_MAXIMIZE             = 0x01000000;
+            public const uint WS_CAPTION              = 0x00C00000;
+            public const uint WS_CHILD                = 0x40000000;
+            public const uint WS_CHILDWINDOW          = WS_CHILD;
             public const uint WS_CLIPCHILDREN         = 0x02000000;
             public const uint WS_CLIPSIBLINGS         = 0x04000000;
             public const uint WS_DISABLED             = 0x08000000;
-            public const uint WS_CHILD                = 0x40000000;
-            public const uint WS_VISIBLE              = 0x10000000;
-            public const uint WS_MINIMIZE             = 0x20000000;
-            public const uint WS_POPUP                = 0x80000000;
-            public const uint WS_TILED                = WS_OVERLAPPED;
+            public const uint WS_DLGFRAME             = 0x00400000;
+            public const uint WS_EX_ACCEPTFILES       = 0x00000010;
+            public const uint WS_EX_APPWINDOW         = 0x00040000;
+            public const uint WS_EX_CLIENTEDGE        = 0x00000200;
+            public const uint WS_EX_COMPOSITED        = 0x02000000;
+            public const uint WS_EX_CONTEXTHELP       = 0x00000400;
+            public const uint WS_EX_CONTROLPARENT     = 0x00010000;
+            public const uint WS_EX_DLGMODALFRAME     = 0x00000001;
+            public const uint WS_EX_LAYERED           = 0x00080000;
+            public const uint WS_EX_LAYOUTRTL         = 0x00400000;
+
+            //Extended Window Styles
+            public const uint WS_EX_LEFT              = 0x00000000;
+
+            public const uint WS_EX_LEFTSCROLLBAR     = 0x00004000;
+            public const uint WS_EX_LTRREADING        = 0x00000000;
+            public const uint WS_EX_MDICHILD          = 0x00000040;
+            public const uint WS_EX_NOACTIVATE        = 0x08000000;
+            public const uint WS_EX_NOINHERITLAYOUT   = 0x00100000;
+            public const uint WS_EX_NOPARENTNOTIFY    = 0x00000004;
+            public const uint WS_EX_OVERLAPPEDWINDOW  = (WS_EX_WINDOWEDGE | WS_EX_CLIENTEDGE);
+            public const uint WS_EX_PALETTEWINDOW     = (WS_EX_WINDOWEDGE | WS_EX_TOOLWINDOW | WS_EX_TOPMOST);
+            public const uint WS_EX_RIGHT             = 0x00001000;
+            public const uint WS_EX_RIGHTSCROLLBAR    = 0x00000000;
+            public const uint WS_EX_RTLREADING        = 0x00002000;
+            public const uint WS_EX_STATICEDGE        = 0x00020000;
+            public const uint WS_EX_TOOLWINDOW        = 0x00000080;
+            public const uint WS_EX_TOPMOST           = 0x00000008;
+            public const uint WS_EX_TRANSPARENT       = 0x00000020;
+            public const uint WS_EX_WINDOWEDGE        = 0x00000100;
+            public const uint WS_GROUP                = 0x00020000;
+            public const uint WS_HSCROLL              = 0x00100000;
             public const uint WS_ICONIC               = WS_MINIMIZE;
-            public const uint WS_SIZEBOX              = WS_THICKFRAME;
-            public const uint WS_CHILDWINDOW          = WS_CHILD;
-            public const uint WS_POPUPWINDOW =
-            ( WS_POPUP   |
-              WS_BORDER  |
-              WS_SYSMENU );
+            public const uint WS_MAXIMIZE             = 0x01000000;
+            public const uint WS_MAXIMIZEBOX          = 0x00010000;
+            public const uint WS_MINIMIZE             = 0x20000000;
+            public const uint WS_MINIMIZEBOX          = 0x00020000;
+            public const uint WS_OVERLAPPED           = 0x00000000;
+
             public const uint WS_OVERLAPPEDWINDOW     =
             ( WS_OVERLAPPED  |
               WS_CAPTION     |
@@ -281,36 +394,22 @@ namespace ItsApe.ArtifactDetector.Utilities
               WS_THICKFRAME  |
               WS_MINIMIZEBOX |
               WS_MAXIMIZEBOX );
+
+            public const uint WS_POPUP                = 0x80000000;
+
+            public const uint WS_POPUPWINDOW =
+            ( WS_POPUP   |
+              WS_BORDER  |
+              WS_SYSMENU );
+
+            public const uint WS_SIZEBOX              = WS_THICKFRAME;
+            public const uint WS_SYSMENU              = 0x00080000;
+            public const uint WS_TABSTOP              = 0x00010000;
+            public const uint WS_THICKFRAME           = 0x00040000;
+            public const uint WS_TILED                = WS_OVERLAPPED;
             public const uint WS_TILEDWINDOW          = WS_OVERLAPPEDWINDOW;
-
-            //Extended Window Styles
-            public const uint WS_EX_LEFT              = 0x00000000;
-            public const uint WS_EX_RIGHTSCROLLBAR    = 0x00000000;
-            public const uint WS_EX_LTRREADING        = 0x00000000;
-            public const uint WS_EX_DLGMODALFRAME     = 0x00000001;
-            public const uint WS_EX_NOPARENTNOTIFY    = 0x00000004;
-            public const uint WS_EX_TOPMOST           = 0x00000008;
-            public const uint WS_EX_ACCEPTFILES       = 0x00000010;
-            public const uint WS_EX_TRANSPARENT       = 0x00000020;
-            public const uint WS_EX_MDICHILD          = 0x00000040;
-            public const uint WS_EX_TOOLWINDOW        = 0x00000080;
-            public const uint WS_EX_WINDOWEDGE        = 0x00000100;
-            public const uint WS_EX_CLIENTEDGE        = 0x00000200;
-            public const uint WS_EX_CONTEXTHELP       = 0x00000400;
-            public const uint WS_EX_RIGHT             = 0x00001000;
-            public const uint WS_EX_RTLREADING        = 0x00002000;
-            public const uint WS_EX_LEFTSCROLLBAR     = 0x00004000;
-            public const uint WS_EX_CONTROLPARENT     = 0x00010000;
-            public const uint WS_EX_STATICEDGE        = 0x00020000;
-            public const uint WS_EX_APPWINDOW         = 0x00040000;
-            public const uint WS_EX_LAYERED           = 0x00080000;
-            public const uint WS_EX_NOINHERITLAYOUT   = 0x00100000;
-            public const uint WS_EX_LAYOUTRTL         = 0x00400000;
-            public const uint WS_EX_COMPOSITED        = 0x02000000;
-            public const uint WS_EX_NOACTIVATE        = 0x08000000;
-            public const uint WS_EX_OVERLAPPEDWINDOW  = (WS_EX_WINDOWEDGE | WS_EX_CLIENTEDGE);
-            public const uint WS_EX_PALETTEWINDOW     = (WS_EX_WINDOWEDGE | WS_EX_TOOLWINDOW | WS_EX_TOPMOST);
-
+            public const uint WS_VISIBLE              = 0x10000000;
+            public const uint WS_VSCROLL              = 0x00200000;
         }
 
         internal class LVIF
