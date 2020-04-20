@@ -15,6 +15,11 @@ namespace ItsApe.ArtifactDetector.Converters
     internal class DetectorConditionParser<ObjectType>
     {
         /// <summary>
+        /// A regex to describe all characters that will be cut from the condition string.
+        /// </summary>
+        private const string CutCharacters = @"[^a-zA-Z0-9<>=&|()]";
+
+        /// <summary>
         /// Map used to get the right condition object from the given operator.
         /// </summary>
         private static readonly Dictionary<string, Func<string, string, IDetectorCondition<ObjectType>>> TranslateSimpleExpressionMap =
@@ -29,15 +34,6 @@ namespace ItsApe.ArtifactDetector.Converters
 
         /// <summary>
         /// Parse the given string into a detector condition object.
-        ///
-        /// The following rules apply:
-        /// conditionString   = " " conditionString | conditionString " " | "none" | simpleCondition | "(" conditionString ")" | compoundCondition.
-        /// simpleCondition   = literal | literal operator value.
-        /// compoundCondition = conditionString logicalConnector conditionString.
-        /// logicalConnector  = "&" | "|"
-        /// literal           = "a" | ... | "z" | "A" | ... | "Z" | literal value | literal literal.
-        /// operator          = "<" | ">" | "<=" | ">=" | "=".
-        /// value             = "0" | ... | "9" | value value.
         ///
         /// Notes: The literals should refer to properties of the given ObjectType's class, otherwise testing against
         /// the resulting objects will lead to an exception.
@@ -107,7 +103,7 @@ namespace ItsApe.ArtifactDetector.Converters
         private static IDetectorCondition<ObjectType> ParseComplexConditionString(string complexConditionString)
         {
             // Replace everything but the allowed characters for general conditions.
-            complexConditionString = Regex.Replace(complexConditionString, "[^a-zA-Z0-9<>=&|()]", "");
+            complexConditionString = Regex.Replace(complexConditionString, CutCharacters, "");
 
             // Get index of first opening bracket.
             int firstOpeningBracketPosition = complexConditionString.IndexOf('(');
@@ -213,7 +209,7 @@ namespace ItsApe.ArtifactDetector.Converters
         private static IDetectorCondition<ObjectType> ParseSimpleConditionString(string simpleConditionString)
         {
             // Replace everything but the allowed characters for simple conditions.
-            simpleConditionString = Regex.Replace(simpleConditionString, "[^a-zA-Z0-9<>=]", "");
+            simpleConditionString = Regex.Replace(simpleConditionString, CutCharacters, "");
 
             // Split the condition string at its operator
             var operatorStrings = new Regex(@"(<=|>=|=|<|>)");

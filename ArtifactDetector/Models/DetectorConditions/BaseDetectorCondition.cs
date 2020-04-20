@@ -17,7 +17,7 @@ namespace ItsApe.ArtifactDetector.DetectorConditions
         public BaseDetectorCondition(string aspectToCheck, Func<GeneralAspectType, Type, bool> checkingFunction)
         {
             // Check the aspect for validity and get the type.
-            PropertyInfo property = typeof(ObjectType).GetProperty(aspectToCheck);
+            var property = typeof(ObjectType).GetProperty(aspectToCheck);
             if (property == null)
             {
                 throw new ArgumentException("Property not valid for given class.");
@@ -50,7 +50,7 @@ namespace ItsApe.ArtifactDetector.DetectorConditions
         /// <returns>True if the checking function yields true given the object's aspect.</returns>
         public bool ObjectMatchesConditions(ObjectType objectToCheck)
         {
-            PropertyInfo property = objectToCheck.GetType().GetProperty(AspectToCheck);
+            var property = objectToCheck.GetType().GetProperty(AspectToCheck);
 
             if (property == null)
             {
@@ -58,7 +58,7 @@ namespace ItsApe.ArtifactDetector.DetectorConditions
                 return false;
             }
 
-            GeneralAspectType t = (GeneralAspectType) property.GetValue(objectToCheck);
+            var t = (GeneralAspectType) property.GetValue(objectToCheck);
 
             return AspectToCheck != null && CheckingFunction != null
                 && CheckingFunction(t, ActualAspectType);

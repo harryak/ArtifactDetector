@@ -88,18 +88,24 @@ namespace ItsApe.ArtifactDetector.Detectors
                 // If it is one of the windows we want to find: Add to that list.
                 if (WindowMatchesConstraints(windowTitle, windowHandle, ref runtimeInformation))
                 {
+                    float visibility = CalculateWindowVisibility(
+                                visualInformation.rcClient,
+                                runtimeInformation.VisibleWindowOutlines.Values);
                     runtimeInformation.WindowsInformation.Add(
                         new WindowInformation()
                         {
                             BoundingArea = visualInformation.rcWindow,
                             Handle = windowHandle,
                             Title = windowTitle,
-                            Visibility = CalculateWindowVisibility(
-                                visualInformation.rcClient,
-                                runtimeInformation.VisibleWindowOutlines.Values),
+                            Visibility = visibility,
                             ZIndex = runtimeInformation.VisibleWindowOutlines.Count + 1
                         });
                     runtimeInformation.CountOpenWindows++;
+
+                    if (runtimeInformation.MaxWindowVisibilityPercentage < visibility)
+                    {
+                        runtimeInformation.MaxWindowVisibilityPercentage = visibility;
+                    }
                 }
 
                 // Add the current window to all windows now.

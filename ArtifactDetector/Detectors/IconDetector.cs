@@ -109,7 +109,7 @@ namespace ItsApe.ArtifactDetector.Detectors
                 Logger.LogInformation("Found {0} matching icons.", GetIconCount(ref runtimeInformation));
                 return new DetectorResponse { ArtifactPresent = DetectorResponse.ArtifactPresence.Certain };
             }
-            
+
             Logger.LogInformation("Found no matching icons.");
             return new DetectorResponse { ArtifactPresent = DetectorResponse.ArtifactPresence.Impossible };
         }
@@ -259,14 +259,20 @@ namespace ItsApe.ArtifactDetector.Detectors
 
                     if (IconTitleMatches(currentIconTitle, ref runtimeInformation))
                     {
+                        float visibility = CalculateWindowVisibility(iconRectangle, runtimeInformation.VisibleWindowOutlines.Values);
                         runtimeInformation.WindowsInformation.Add(new WindowInformation
                         {
                             BoundingArea = iconRectangle,
                             Title = currentIconTitle,
-                            Visibility = CalculateWindowVisibility(iconRectangle, runtimeInformation.VisibleWindowOutlines.Values),
+                            Visibility = visibility,
                             ZIndex = IconZIndex
                         });
                         IncreaseIconCount(ref runtimeInformation);
+
+                        if (runtimeInformation.MaxWindowVisibilityPercentage < visibility)
+                        {
+                            runtimeInformation.MaxWindowVisibilityPercentage = visibility;
+                        }
                     }
                 }
             }
