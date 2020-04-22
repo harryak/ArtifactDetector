@@ -20,7 +20,7 @@ namespace ItsApe.ArtifactDetector.DetectorConditions
             var property = typeof(ObjectType).GetProperty(aspectToCheck);
             if (property == null)
             {
-                throw new ArgumentException("Property not valid for given class.");
+                throw new ArgumentException("Property '" + aspectToCheck + "' not valid for given class.");
             }
 
             AspectToCheck = aspectToCheck;

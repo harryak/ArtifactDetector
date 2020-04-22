@@ -13,12 +13,6 @@ namespace ItsApe.ArtifactDetector.Models
     internal class ArtifactRuntimeInformation : ICloneable
     {
         /// <summary>
-        /// Store the visibility of the most visible window here.
-        /// </summary>
-        [JsonIgnore]
-        public float MaxWindowVisibilityPercentage = 0f;
-
-        /// <summary>
         /// Empty constructor for setting the properties later on.
         /// </summary>
         public ArtifactRuntimeInformation()
@@ -83,6 +77,12 @@ namespace ItsApe.ArtifactDetector.Models
         /// </summary>
         [JsonIgnore]
         public int CountVisualFeautureMatches { get; set; } = 0;
+
+        /// <summary>
+        /// Store the visibility of the most visible window here.
+        /// </summary>
+        [JsonIgnore]
+        public float MaxWindowVisibilityPercentage { get; set; } = 0f;
 
         /// <summary>
         /// Possible (fragments of the) titles of the windows to get.
