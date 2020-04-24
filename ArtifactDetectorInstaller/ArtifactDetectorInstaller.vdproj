@@ -33,6 +33,12 @@
         }
         "Entry"
         {
+        "MsmKey" = "8:_137331EBE6544DD2BDD76DE8BBCB2E76"
+        "OwnerKey" = "8:_UNDEFINED"
+        "MsmSig" = "8:_UNDEFINED"
+        }
+        "Entry"
+        {
         "MsmKey" = "8:_13F80DC56CF9F476099FD9741130D935"
         "OwnerKey" = "8:_C9EEA3568B034A749A285F51A834D2EF"
         "MsmSig" = "8:_UNDEFINED"
@@ -59,6 +65,12 @@
         {
         "MsmKey" = "8:_1569B0661052275528099AF555110FBC"
         "OwnerKey" = "8:_B61E65D8AD849627A66FD7B8699463A4"
+        "MsmSig" = "8:_UNDEFINED"
+        }
+        "Entry"
+        {
+        "MsmKey" = "8:_1C0018677F9E4C5CA3B0E8FB76F7A660"
+        "OwnerKey" = "8:_UNDEFINED"
         "MsmSig" = "8:_UNDEFINED"
         }
         "Entry"
@@ -177,12 +189,6 @@
         }
         "Entry"
         {
-        "MsmKey" = "8:_38F97AE7E9CB4853B8351B4782057091"
-        "OwnerKey" = "8:_UNDEFINED"
-        "MsmSig" = "8:_UNDEFINED"
-        }
-        "Entry"
-        {
         "MsmKey" = "8:_3A32D743CBC5596A59CFA133ADFFDCB6"
         "OwnerKey" = "8:_C9EEA3568B034A749A285F51A834D2EF"
         "MsmSig" = "8:_UNDEFINED"
@@ -279,13 +285,7 @@
         }
         "Entry"
         {
-        "MsmKey" = "8:_5113C49E88B84A0BB7D84C03BFC19C03"
-        "OwnerKey" = "8:_UNDEFINED"
-        "MsmSig" = "8:_UNDEFINED"
-        }
-        "Entry"
-        {
-        "MsmKey" = "8:_54F41B2A728E42949F7EF0F17B50C2EF"
+        "MsmKey" = "8:_518C49D8EFA24742A84B65169F9EB6F1"
         "OwnerKey" = "8:_UNDEFINED"
         "MsmSig" = "8:_UNDEFINED"
         }
@@ -323,6 +323,12 @@
         {
         "MsmKey" = "8:_5F58F2A3D4891B3268885A6289464B69"
         "OwnerKey" = "8:_C9EEA3568B034A749A285F51A834D2EF"
+        "MsmSig" = "8:_UNDEFINED"
+        }
+        "Entry"
+        {
+        "MsmKey" = "8:_6096344046FD41ADBD37E1ADE470A758"
+        "OwnerKey" = "8:_UNDEFINED"
         "MsmSig" = "8:_UNDEFINED"
         }
         "Entry"
@@ -489,6 +495,12 @@
         }
         "Entry"
         {
+        "MsmKey" = "8:_7848DC4B6CA6400997F9F8D531E85879"
+        "OwnerKey" = "8:_UNDEFINED"
+        "MsmSig" = "8:_UNDEFINED"
+        }
+        "Entry"
+        {
         "MsmKey" = "8:_7850BBE1E15B93041845A1588BCEC2D4"
         "OwnerKey" = "8:_C9EEA3568B034A749A285F51A834D2EF"
         "MsmSig" = "8:_UNDEFINED"
@@ -549,6 +561,12 @@
         }
         "Entry"
         {
+        "MsmKey" = "8:_8739F84FEBD4426CBACB2FE03427AF79"
+        "OwnerKey" = "8:_UNDEFINED"
+        "MsmSig" = "8:_UNDEFINED"
+        }
+        "Entry"
+        {
         "MsmKey" = "8:_8AFC8B0ED5609D55BADC245D4F16CC69"
         "OwnerKey" = "8:_C9EEA3568B034A749A285F51A834D2EF"
         "MsmSig" = "8:_UNDEFINED"
@@ -563,12 +581,6 @@
         {
         "MsmKey" = "8:_8C839CBEBA44B7C17A243313376F1E82"
         "OwnerKey" = "8:_C9EEA3568B034A749A285F51A834D2EF"
-        "MsmSig" = "8:_UNDEFINED"
-        }
-        "Entry"
-        {
-        "MsmKey" = "8:_8CD4BA8478DC4E7BB9B37723A4E926F2"
-        "OwnerKey" = "8:_UNDEFINED"
         "MsmSig" = "8:_UNDEFINED"
         }
         "Entry"
@@ -635,12 +647,6 @@
         {
         "MsmKey" = "8:_9C16159855DB27708E06CCDE5AE95165"
         "OwnerKey" = "8:_C9EEA3568B034A749A285F51A834D2EF"
-        "MsmSig" = "8:_UNDEFINED"
-        }
-        "Entry"
-        {
-        "MsmKey" = "8:_9C245354822E4CA5A89FFA6B0D44D509"
-        "OwnerKey" = "8:_UNDEFINED"
         "MsmSig" = "8:_UNDEFINED"
         }
         "Entry"
@@ -717,12 +723,6 @@
         }
         "Entry"
         {
-        "MsmKey" = "8:_A154854440264F758260436036DCF8ED"
-        "OwnerKey" = "8:_UNDEFINED"
-        "MsmSig" = "8:_UNDEFINED"
-        }
-        "Entry"
-        {
         "MsmKey" = "8:_A1ED2407EFD3E5969C7A8EA72B33405C"
         "OwnerKey" = "8:_AD928260A05E449CBD473D5230185CC5"
         "MsmSig" = "8:_UNDEFINED"
@@ -771,20 +771,8 @@
         }
         "Entry"
         {
-        "MsmKey" = "8:_B11528F89383465090445C91A8A01638"
-        "OwnerKey" = "8:_UNDEFINED"
-        "MsmSig" = "8:_UNDEFINED"
-        }
-        "Entry"
-        {
         "MsmKey" = "8:_B14454BC6E57A4A48A2743834CC01519"
         "OwnerKey" = "8:_C9EEA3568B034A749A285F51A834D2EF"
-        "MsmSig" = "8:_UNDEFINED"
-        }
-        "Entry"
-        {
-        "MsmKey" = "8:_B4CF2879A4834D6A850B7C42E6CCFDF4"
-        "OwnerKey" = "8:_UNDEFINED"
         "MsmSig" = "8:_UNDEFINED"
         }
         "Entry"
@@ -815,6 +803,12 @@
         {
         "MsmKey" = "8:_BB93C535F58D16E623AF884CD6AA5E8B"
         "OwnerKey" = "8:_C9EEA3568B034A749A285F51A834D2EF"
+        "MsmSig" = "8:_UNDEFINED"
+        }
+        "Entry"
+        {
+        "MsmKey" = "8:_BD472BA7225D4B79968A20C617D262F3"
+        "OwnerKey" = "8:_UNDEFINED"
         "MsmSig" = "8:_UNDEFINED"
         }
         "Entry"
@@ -863,12 +857,6 @@
         {
         "MsmKey" = "8:_BDA7E413BAF7803A68E39D95D78C0FEA"
         "OwnerKey" = "8:_C9EEA3568B034A749A285F51A834D2EF"
-        "MsmSig" = "8:_UNDEFINED"
-        }
-        "Entry"
-        {
-        "MsmKey" = "8:_C221E2DF2B11416390001AC039C1FD4D"
-        "OwnerKey" = "8:_UNDEFINED"
         "MsmSig" = "8:_UNDEFINED"
         }
         "Entry"
@@ -941,6 +929,12 @@
         {
         "MsmKey" = "8:_CDA742D92325F02D3CDA8899343AABC4"
         "OwnerKey" = "8:_C9EEA3568B034A749A285F51A834D2EF"
+        "MsmSig" = "8:_UNDEFINED"
+        }
+        "Entry"
+        {
+        "MsmKey" = "8:_D312340681C740F0A0D0CEFA5B10FEAB"
+        "OwnerKey" = "8:_UNDEFINED"
         "MsmSig" = "8:_UNDEFINED"
         }
         "Entry"
@@ -1083,6 +1077,12 @@
         }
         "Entry"
         {
+        "MsmKey" = "8:_F4EF57EB741640278360E71E2CB85C75"
+        "OwnerKey" = "8:_UNDEFINED"
+        "MsmSig" = "8:_UNDEFINED"
+        }
+        "Entry"
+        {
         "MsmKey" = "8:_F53E920E3029CEDCFCAEC0DBDE3FC56C"
         "OwnerKey" = "8:_C9EEA3568B034A749A285F51A834D2EF"
         "MsmSig" = "8:_UNDEFINED"
@@ -1103,6 +1103,12 @@
         {
         "MsmKey" = "8:_F6FE74DE6FE962192E3845507634FF74"
         "OwnerKey" = "8:_C9EEA3568B034A749A285F51A834D2EF"
+        "MsmSig" = "8:_UNDEFINED"
+        }
+        "Entry"
+        {
+        "MsmKey" = "8:_F74BB612AF5BBBF5252FB95F45BA6F38"
+        "OwnerKey" = "8:_1C0018677F9E4C5CA3B0E8FB76F7A660"
         "MsmSig" = "8:_UNDEFINED"
         }
         "Entry"
@@ -1155,8 +1161,26 @@
         }
         "Entry"
         {
+        "MsmKey" = "8:_FF25008AA34D4FA093AF8D4C7FBA52A8"
+        "OwnerKey" = "8:_UNDEFINED"
+        "MsmSig" = "8:_UNDEFINED"
+        }
+        "Entry"
+        {
         "MsmKey" = "8:_UNDEFINED"
         "OwnerKey" = "8:_C9EEA3568B034A749A285F51A834D2EF"
+        "MsmSig" = "8:_UNDEFINED"
+        }
+        "Entry"
+        {
+        "MsmKey" = "8:_UNDEFINED"
+        "OwnerKey" = "8:_1C0018677F9E4C5CA3B0E8FB76F7A660"
+        "MsmSig" = "8:_UNDEFINED"
+        }
+        "Entry"
+        {
+        "MsmKey" = "8:_UNDEFINED"
+        "OwnerKey" = "8:_F74BB612AF5BBBF5252FB95F45BA6F38"
         "MsmSig" = "8:_UNDEFINED"
         }
         "Entry"
@@ -2157,6 +2181,26 @@
             "IsDependency" = "11:TRUE"
             "IsolateTo" = "8:"
             }
+            "{1FB2D0AE-D3B9-43D4-B9DD-F88EC61E35DE}:_137331EBE6544DD2BDD76DE8BBCB2E76"
+            {
+            "SourcePath" = "8:..\\ArtifactDetectorService\\bin\\x64\\Release\\x64\\msvcp140_1.dll"
+            "TargetName" = "8:msvcp140_1.dll"
+            "Tag" = "8:"
+            "Folder" = "8:_ABDD876FC1534CF6A60C9AF41AABAF86"
+            "Condition" = "8:"
+            "Transitive" = "11:FALSE"
+            "Vital" = "11:TRUE"
+            "ReadOnly" = "11:FALSE"
+            "Hidden" = "11:FALSE"
+            "System" = "11:FALSE"
+            "Permanent" = "11:FALSE"
+            "SharedLegacy" = "11:FALSE"
+            "PackageAs" = "3:1"
+            "Register" = "3:1"
+            "Exclude" = "11:FALSE"
+            "IsDependency" = "11:FALSE"
+            "IsolateTo" = "8:"
+            }
             "{9F6F8455-1EF1-4B85-886A-4223BCC8E7F7}:_13F80DC56CF9F476099FD9741130D935"
             {
             "AssemblyRegister" = "3:1"
@@ -2651,26 +2695,6 @@
             "Register" = "3:1"
             "Exclude" = "11:FALSE"
             "IsDependency" = "11:TRUE"
-            "IsolateTo" = "8:"
-            }
-            "{1FB2D0AE-D3B9-43D4-B9DD-F88EC61E35DE}:_38F97AE7E9CB4853B8351B4782057091"
-            {
-            "SourcePath" = "8:..\\ArtifactDetector\\bin\\x64\\Release\\x64\\cvextern.dll"
-            "TargetName" = "8:cvextern.dll"
-            "Tag" = "8:"
-            "Folder" = "8:_ABDD876FC1534CF6A60C9AF41AABAF86"
-            "Condition" = "8:"
-            "Transitive" = "11:FALSE"
-            "Vital" = "11:TRUE"
-            "ReadOnly" = "11:FALSE"
-            "Hidden" = "11:FALSE"
-            "System" = "11:FALSE"
-            "Permanent" = "11:FALSE"
-            "SharedLegacy" = "11:FALSE"
-            "PackageAs" = "3:1"
-            "Register" = "3:1"
-            "Exclude" = "11:FALSE"
-            "IsDependency" = "11:FALSE"
             "IsolateTo" = "8:"
             }
             "{9F6F8455-1EF1-4B85-886A-4223BCC8E7F7}:_3A32D743CBC5596A59CFA133ADFFDCB6"
@@ -3169,30 +3193,10 @@
             "IsDependency" = "11:TRUE"
             "IsolateTo" = "8:"
             }
-            "{1FB2D0AE-D3B9-43D4-B9DD-F88EC61E35DE}:_5113C49E88B84A0BB7D84C03BFC19C03"
+            "{1FB2D0AE-D3B9-43D4-B9DD-F88EC61E35DE}:_518C49D8EFA24742A84B65169F9EB6F1"
             {
-            "SourcePath" = "8:..\\ArtifactDetector\\bin\\x64\\Release\\x64\\opencv_videoio_ffmpeg420_64.dll"
-            "TargetName" = "8:opencv_videoio_ffmpeg420_64.dll"
-            "Tag" = "8:"
-            "Folder" = "8:_ABDD876FC1534CF6A60C9AF41AABAF86"
-            "Condition" = "8:"
-            "Transitive" = "11:FALSE"
-            "Vital" = "11:TRUE"
-            "ReadOnly" = "11:FALSE"
-            "Hidden" = "11:FALSE"
-            "System" = "11:FALSE"
-            "Permanent" = "11:FALSE"
-            "SharedLegacy" = "11:FALSE"
-            "PackageAs" = "3:1"
-            "Register" = "3:1"
-            "Exclude" = "11:FALSE"
-            "IsDependency" = "11:FALSE"
-            "IsolateTo" = "8:"
-            }
-            "{1FB2D0AE-D3B9-43D4-B9DD-F88EC61E35DE}:_54F41B2A728E42949F7EF0F17B50C2EF"
-            {
-            "SourcePath" = "8:..\\ArtifactDetector\\bin\\x64\\Release\\x64\\concrt140.dll"
-            "TargetName" = "8:concrt140.dll"
+            "SourcePath" = "8:..\\ArtifactDetectorService\\bin\\x64\\Release\\x64\\vcruntime140_1.dll"
+            "TargetName" = "8:vcruntime140_1.dll"
             "Tag" = "8:"
             "Folder" = "8:_ABDD876FC1534CF6A60C9AF41AABAF86"
             "Condition" = "8:"
@@ -3393,6 +3397,26 @@
             "Register" = "3:1"
             "Exclude" = "11:FALSE"
             "IsDependency" = "11:TRUE"
+            "IsolateTo" = "8:"
+            }
+            "{1FB2D0AE-D3B9-43D4-B9DD-F88EC61E35DE}:_6096344046FD41ADBD37E1ADE470A758"
+            {
+            "SourcePath" = "8:..\\ArtifactDetectorService\\bin\\x64\\Release\\x64\\msvcp140.dll"
+            "TargetName" = "8:msvcp140.dll"
+            "Tag" = "8:"
+            "Folder" = "8:_ABDD876FC1534CF6A60C9AF41AABAF86"
+            "Condition" = "8:"
+            "Transitive" = "11:FALSE"
+            "Vital" = "11:TRUE"
+            "ReadOnly" = "11:FALSE"
+            "Hidden" = "11:FALSE"
+            "System" = "11:FALSE"
+            "Permanent" = "11:FALSE"
+            "SharedLegacy" = "11:FALSE"
+            "PackageAs" = "3:1"
+            "Register" = "3:1"
+            "Exclude" = "11:FALSE"
+            "IsDependency" = "11:FALSE"
             "IsolateTo" = "8:"
             }
             "{9F6F8455-1EF1-4B85-886A-4223BCC8E7F7}:_634549574F3B2C685B6B95F3F0DC9C48"
@@ -3860,6 +3884,26 @@
             "IsDependency" = "11:TRUE"
             "IsolateTo" = "8:"
             }
+            "{1FB2D0AE-D3B9-43D4-B9DD-F88EC61E35DE}:_7848DC4B6CA6400997F9F8D531E85879"
+            {
+            "SourcePath" = "8:..\\ArtifactDetectorService\\bin\\x64\\Release\\x64\\opencv_videoio_ffmpeg420_64.dll"
+            "TargetName" = "8:opencv_videoio_ffmpeg420_64.dll"
+            "Tag" = "8:"
+            "Folder" = "8:_ABDD876FC1534CF6A60C9AF41AABAF86"
+            "Condition" = "8:"
+            "Transitive" = "11:FALSE"
+            "Vital" = "11:TRUE"
+            "ReadOnly" = "11:FALSE"
+            "Hidden" = "11:FALSE"
+            "System" = "11:FALSE"
+            "Permanent" = "11:FALSE"
+            "SharedLegacy" = "11:FALSE"
+            "PackageAs" = "3:1"
+            "Register" = "3:1"
+            "Exclude" = "11:FALSE"
+            "IsDependency" = "11:FALSE"
+            "IsolateTo" = "8:"
+            }
             "{9F6F8455-1EF1-4B85-886A-4223BCC8E7F7}:_7850BBE1E15B93041845A1588BCEC2D4"
             {
             "AssemblyRegister" = "3:1"
@@ -4170,6 +4214,26 @@
             "IsDependency" = "11:TRUE"
             "IsolateTo" = "8:"
             }
+            "{1FB2D0AE-D3B9-43D4-B9DD-F88EC61E35DE}:_8739F84FEBD4426CBACB2FE03427AF79"
+            {
+            "SourcePath" = "8:..\\ArtifactDetectorService\\bin\\x64\\Release\\x64\\msvcp140_2.dll"
+            "TargetName" = "8:msvcp140_2.dll"
+            "Tag" = "8:"
+            "Folder" = "8:_ABDD876FC1534CF6A60C9AF41AABAF86"
+            "Condition" = "8:"
+            "Transitive" = "11:FALSE"
+            "Vital" = "11:TRUE"
+            "ReadOnly" = "11:FALSE"
+            "Hidden" = "11:FALSE"
+            "System" = "11:FALSE"
+            "Permanent" = "11:FALSE"
+            "SharedLegacy" = "11:FALSE"
+            "PackageAs" = "3:1"
+            "Register" = "3:1"
+            "Exclude" = "11:FALSE"
+            "IsDependency" = "11:FALSE"
+            "IsolateTo" = "8:"
+            }
             "{9F6F8455-1EF1-4B85-886A-4223BCC8E7F7}:_8AFC8B0ED5609D55BADC245D4F16CC69"
             {
             "AssemblyRegister" = "3:1"
@@ -4261,26 +4325,6 @@
             "Register" = "3:1"
             "Exclude" = "11:FALSE"
             "IsDependency" = "11:TRUE"
-            "IsolateTo" = "8:"
-            }
-            "{1FB2D0AE-D3B9-43D4-B9DD-F88EC61E35DE}:_8CD4BA8478DC4E7BB9B37723A4E926F2"
-            {
-            "SourcePath" = "8:..\\ArtifactDetector\\bin\\x64\\Release\\x64\\msvcp140_codecvt_ids.dll"
-            "TargetName" = "8:msvcp140_codecvt_ids.dll"
-            "Tag" = "8:"
-            "Folder" = "8:_ABDD876FC1534CF6A60C9AF41AABAF86"
-            "Condition" = "8:"
-            "Transitive" = "11:FALSE"
-            "Vital" = "11:TRUE"
-            "ReadOnly" = "11:FALSE"
-            "Hidden" = "11:FALSE"
-            "System" = "11:FALSE"
-            "Permanent" = "11:FALSE"
-            "SharedLegacy" = "11:FALSE"
-            "PackageAs" = "3:1"
-            "Register" = "3:1"
-            "Exclude" = "11:FALSE"
-            "IsDependency" = "11:FALSE"
             "IsolateTo" = "8:"
             }
             "{9F6F8455-1EF1-4B85-886A-4223BCC8E7F7}:_8CDC97D9AB86387E2F6E371A70C8EF29"
@@ -4593,26 +4637,6 @@
             "IsDependency" = "11:TRUE"
             "IsolateTo" = "8:"
             }
-            "{1FB2D0AE-D3B9-43D4-B9DD-F88EC61E35DE}:_9C245354822E4CA5A89FFA6B0D44D509"
-            {
-            "SourcePath" = "8:..\\ArtifactDetector\\bin\\x64\\Release\\x64\\msvcp140_1.dll"
-            "TargetName" = "8:msvcp140_1.dll"
-            "Tag" = "8:"
-            "Folder" = "8:_ABDD876FC1534CF6A60C9AF41AABAF86"
-            "Condition" = "8:"
-            "Transitive" = "11:FALSE"
-            "Vital" = "11:TRUE"
-            "ReadOnly" = "11:FALSE"
-            "Hidden" = "11:FALSE"
-            "System" = "11:FALSE"
-            "Permanent" = "11:FALSE"
-            "SharedLegacy" = "11:FALSE"
-            "PackageAs" = "3:1"
-            "Register" = "3:1"
-            "Exclude" = "11:FALSE"
-            "IsDependency" = "11:FALSE"
-            "IsolateTo" = "8:"
-            }
             "{9F6F8455-1EF1-4B85-886A-4223BCC8E7F7}:_9C432CD2A27F5BB98E4A42CA92FE7715"
             {
             "AssemblyRegister" = "3:1"
@@ -4797,26 +4821,6 @@
             "Register" = "3:1"
             "Exclude" = "11:FALSE"
             "IsDependency" = "11:TRUE"
-            "IsolateTo" = "8:"
-            }
-            "{1FB2D0AE-D3B9-43D4-B9DD-F88EC61E35DE}:_A154854440264F758260436036DCF8ED"
-            {
-            "SourcePath" = "8:..\\ArtifactDetector\\bin\\x64\\Release\\x64\\msvcp140_2.dll"
-            "TargetName" = "8:msvcp140_2.dll"
-            "Tag" = "8:"
-            "Folder" = "8:_ABDD876FC1534CF6A60C9AF41AABAF86"
-            "Condition" = "8:"
-            "Transitive" = "11:FALSE"
-            "Vital" = "11:TRUE"
-            "ReadOnly" = "11:FALSE"
-            "Hidden" = "11:FALSE"
-            "System" = "11:FALSE"
-            "Permanent" = "11:FALSE"
-            "SharedLegacy" = "11:FALSE"
-            "PackageAs" = "3:1"
-            "Register" = "3:1"
-            "Exclude" = "11:FALSE"
-            "IsDependency" = "11:FALSE"
             "IsolateTo" = "8:"
             }
             "{9F6F8455-1EF1-4B85-886A-4223BCC8E7F7}:_A1ED2407EFD3E5969C7A8EA72B33405C"
@@ -5005,26 +5009,6 @@
             "IsDependency" = "11:TRUE"
             "IsolateTo" = "8:"
             }
-            "{1FB2D0AE-D3B9-43D4-B9DD-F88EC61E35DE}:_B11528F89383465090445C91A8A01638"
-            {
-            "SourcePath" = "8:..\\ArtifactDetector\\bin\\x64\\Release\\x64\\vcruntime140.dll"
-            "TargetName" = "8:vcruntime140.dll"
-            "Tag" = "8:"
-            "Folder" = "8:_ABDD876FC1534CF6A60C9AF41AABAF86"
-            "Condition" = "8:"
-            "Transitive" = "11:FALSE"
-            "Vital" = "11:TRUE"
-            "ReadOnly" = "11:FALSE"
-            "Hidden" = "11:FALSE"
-            "System" = "11:FALSE"
-            "Permanent" = "11:FALSE"
-            "SharedLegacy" = "11:FALSE"
-            "PackageAs" = "3:1"
-            "Register" = "3:1"
-            "Exclude" = "11:FALSE"
-            "IsDependency" = "11:FALSE"
-            "IsolateTo" = "8:"
-            }
             "{9F6F8455-1EF1-4B85-886A-4223BCC8E7F7}:_B14454BC6E57A4A48A2743834CC01519"
             {
             "AssemblyRegister" = "3:1"
@@ -5054,26 +5038,6 @@
             "Register" = "3:1"
             "Exclude" = "11:FALSE"
             "IsDependency" = "11:TRUE"
-            "IsolateTo" = "8:"
-            }
-            "{1FB2D0AE-D3B9-43D4-B9DD-F88EC61E35DE}:_B4CF2879A4834D6A850B7C42E6CCFDF4"
-            {
-            "SourcePath" = "8:..\\ArtifactDetector\\bin\\x64\\Release\\x64\\msvcp140.dll"
-            "TargetName" = "8:msvcp140.dll"
-            "Tag" = "8:"
-            "Folder" = "8:_ABDD876FC1534CF6A60C9AF41AABAF86"
-            "Condition" = "8:"
-            "Transitive" = "11:FALSE"
-            "Vital" = "11:TRUE"
-            "ReadOnly" = "11:FALSE"
-            "Hidden" = "11:FALSE"
-            "System" = "11:FALSE"
-            "Permanent" = "11:FALSE"
-            "SharedLegacy" = "11:FALSE"
-            "PackageAs" = "3:1"
-            "Register" = "3:1"
-            "Exclude" = "11:FALSE"
-            "IsDependency" = "11:FALSE"
             "IsolateTo" = "8:"
             }
             "{9F6F8455-1EF1-4B85-886A-4223BCC8E7F7}:_B6023406723A745338322960561CE7BD"
@@ -5200,6 +5164,26 @@
             "IsDependency" = "11:TRUE"
             "IsolateTo" = "8:"
             }
+            "{1FB2D0AE-D3B9-43D4-B9DD-F88EC61E35DE}:_BD472BA7225D4B79968A20C617D262F3"
+            {
+            "SourcePath" = "8:..\\ArtifactDetectorService\\bin\\x64\\Release\\x64\\msvcp140_codecvt_ids.dll"
+            "TargetName" = "8:msvcp140_codecvt_ids.dll"
+            "Tag" = "8:"
+            "Folder" = "8:_ABDD876FC1534CF6A60C9AF41AABAF86"
+            "Condition" = "8:"
+            "Transitive" = "11:FALSE"
+            "Vital" = "11:TRUE"
+            "ReadOnly" = "11:FALSE"
+            "Hidden" = "11:FALSE"
+            "System" = "11:FALSE"
+            "Permanent" = "11:FALSE"
+            "SharedLegacy" = "11:FALSE"
+            "PackageAs" = "3:1"
+            "Register" = "3:1"
+            "Exclude" = "11:FALSE"
+            "IsDependency" = "11:FALSE"
+            "IsolateTo" = "8:"
+            }
             "{9F6F8455-1EF1-4B85-886A-4223BCC8E7F7}:_BD4FB494F6E717B4C0A47F4FFDBADA81"
             {
             "AssemblyRegister" = "3:1"
@@ -5291,26 +5275,6 @@
             "Register" = "3:1"
             "Exclude" = "11:FALSE"
             "IsDependency" = "11:TRUE"
-            "IsolateTo" = "8:"
-            }
-            "{1FB2D0AE-D3B9-43D4-B9DD-F88EC61E35DE}:_C221E2DF2B11416390001AC039C1FD4D"
-            {
-            "SourcePath" = "8:..\\ArtifactDetector\\bin\\x64\\Release\\x64\\vcruntime140_1.dll"
-            "TargetName" = "8:vcruntime140_1.dll"
-            "Tag" = "8:"
-            "Folder" = "8:_ABDD876FC1534CF6A60C9AF41AABAF86"
-            "Condition" = "8:"
-            "Transitive" = "11:FALSE"
-            "Vital" = "11:TRUE"
-            "ReadOnly" = "11:FALSE"
-            "Hidden" = "11:FALSE"
-            "System" = "11:FALSE"
-            "Permanent" = "11:FALSE"
-            "SharedLegacy" = "11:FALSE"
-            "PackageAs" = "3:1"
-            "Register" = "3:1"
-            "Exclude" = "11:FALSE"
-            "IsDependency" = "11:FALSE"
             "IsolateTo" = "8:"
             }
             "{9F6F8455-1EF1-4B85-886A-4223BCC8E7F7}:_C6AC5A791E4797E3423F42C49CE9E735"
@@ -5528,6 +5492,26 @@
             "Register" = "3:1"
             "Exclude" = "11:FALSE"
             "IsDependency" = "11:TRUE"
+            "IsolateTo" = "8:"
+            }
+            "{1FB2D0AE-D3B9-43D4-B9DD-F88EC61E35DE}:_D312340681C740F0A0D0CEFA5B10FEAB"
+            {
+            "SourcePath" = "8:..\\ArtifactDetectorService\\bin\\x64\\Release\\x64\\vcruntime140.dll"
+            "TargetName" = "8:vcruntime140.dll"
+            "Tag" = "8:"
+            "Folder" = "8:_ABDD876FC1534CF6A60C9AF41AABAF86"
+            "Condition" = "8:"
+            "Transitive" = "11:FALSE"
+            "Vital" = "11:TRUE"
+            "ReadOnly" = "11:FALSE"
+            "Hidden" = "11:FALSE"
+            "System" = "11:FALSE"
+            "Permanent" = "11:FALSE"
+            "SharedLegacy" = "11:FALSE"
+            "PackageAs" = "3:1"
+            "Register" = "3:1"
+            "Exclude" = "11:FALSE"
+            "IsDependency" = "11:FALSE"
             "IsolateTo" = "8:"
             }
             "{9F6F8455-1EF1-4B85-886A-4223BCC8E7F7}:_D3546D53429CA6BB7CAD0B81D6B49723"
@@ -6088,6 +6072,26 @@
             "IsDependency" = "11:TRUE"
             "IsolateTo" = "8:"
             }
+            "{1FB2D0AE-D3B9-43D4-B9DD-F88EC61E35DE}:_F4EF57EB741640278360E71E2CB85C75"
+            {
+            "SourcePath" = "8:..\\ArtifactDetectorService\\bin\\x64\\Release\\x64\\cvextern.dll"
+            "TargetName" = "8:cvextern.dll"
+            "Tag" = "8:"
+            "Folder" = "8:_ABDD876FC1534CF6A60C9AF41AABAF86"
+            "Condition" = "8:"
+            "Transitive" = "11:FALSE"
+            "Vital" = "11:TRUE"
+            "ReadOnly" = "11:FALSE"
+            "Hidden" = "11:FALSE"
+            "System" = "11:FALSE"
+            "Permanent" = "11:FALSE"
+            "SharedLegacy" = "11:FALSE"
+            "PackageAs" = "3:1"
+            "Register" = "3:1"
+            "Exclude" = "11:FALSE"
+            "IsDependency" = "11:FALSE"
+            "IsolateTo" = "8:"
+            }
             "{9F6F8455-1EF1-4B85-886A-4223BCC8E7F7}:_F53E920E3029CEDCFCAEC0DBDE3FC56C"
             {
             "AssemblyRegister" = "3:1"
@@ -6195,6 +6199,37 @@
                     }
                 }
             "SourcePath" = "8:System.IO.FileSystem.dll"
+            "TargetName" = "8:"
+            "Tag" = "8:"
+            "Folder" = "8:_ABDD876FC1534CF6A60C9AF41AABAF86"
+            "Condition" = "8:"
+            "Transitive" = "11:FALSE"
+            "Vital" = "11:TRUE"
+            "ReadOnly" = "11:FALSE"
+            "Hidden" = "11:FALSE"
+            "System" = "11:FALSE"
+            "Permanent" = "11:FALSE"
+            "SharedLegacy" = "11:FALSE"
+            "PackageAs" = "3:1"
+            "Register" = "3:1"
+            "Exclude" = "11:FALSE"
+            "IsDependency" = "11:TRUE"
+            "IsolateTo" = "8:"
+            }
+            "{9F6F8455-1EF1-4B85-886A-4223BCC8E7F7}:_F74BB612AF5BBBF5252FB95F45BA6F38"
+            {
+            "AssemblyRegister" = "3:1"
+            "AssemblyIsInGAC" = "11:FALSE"
+            "AssemblyAsmDisplayName" = "8:System.Net.Http, Version=4.2.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a"
+                "ScatterAssemblies"
+                {
+                    "_F74BB612AF5BBBF5252FB95F45BA6F38"
+                    {
+                    "Name" = "8:System.Net.Http.dll"
+                    "Attributes" = "3:512"
+                    }
+                }
+            "SourcePath" = "8:System.Net.Http.dll"
             "TargetName" = "8:"
             "Tag" = "8:"
             "Folder" = "8:_ABDD876FC1534CF6A60C9AF41AABAF86"
@@ -6398,6 +6433,26 @@
             "IsDependency" = "11:TRUE"
             "IsolateTo" = "8:"
             }
+            "{1FB2D0AE-D3B9-43D4-B9DD-F88EC61E35DE}:_FF25008AA34D4FA093AF8D4C7FBA52A8"
+            {
+            "SourcePath" = "8:..\\ArtifactDetectorService\\bin\\x64\\Release\\x64\\concrt140.dll"
+            "TargetName" = "8:concrt140.dll"
+            "Tag" = "8:"
+            "Folder" = "8:_ABDD876FC1534CF6A60C9AF41AABAF86"
+            "Condition" = "8:"
+            "Transitive" = "11:FALSE"
+            "Vital" = "11:TRUE"
+            "ReadOnly" = "11:FALSE"
+            "Hidden" = "11:FALSE"
+            "System" = "11:FALSE"
+            "Permanent" = "11:FALSE"
+            "SharedLegacy" = "11:FALSE"
+            "PackageAs" = "3:1"
+            "Register" = "3:1"
+            "Exclude" = "11:FALSE"
+            "IsDependency" = "11:FALSE"
+            "IsolateTo" = "8:"
+            }
         }
         "FileType"
         {
@@ -6455,7 +6510,7 @@
         "Name" = "8:Microsoft Visual Studio"
         "ProductName" = "8:Artifact Detector"
         "ProductCode" = "8:{B562ACD3-EE6C-42B0-A302-6C42346AEBB3}"
-        "PackageCode" = "8:{46FCA77F-CC5E-4B97-A17A-C0B88E4B2568}"
+        "PackageCode" = "8:{C154C734-7EA7-4DD4-94CF-A76935A5F97A}"
         "UpgradeCode" = "8:{3D92DF20-0269-4610-AFBF-AFF1FCF44660}"
         "AspNetVersion" = "8:4.0.30319.0"
         "RestartWWWService" = "11:FALSE"
@@ -6974,9 +7029,37 @@
         }
         "ProjectOutput"
         {
+            "{5259A561-127C-4D43-A0A1-72F10C7B3BF8}:_1C0018677F9E4C5CA3B0E8FB76F7A660"
+            {
+            "SourcePath" = "8:..\\OpenWindowDetector\\obj\\Debug\\ArtifactDetector.exe"
+            "TargetName" = "8:"
+            "Tag" = "8:"
+            "Folder" = "8:_ABDD876FC1534CF6A60C9AF41AABAF86"
+            "Condition" = "8:"
+            "Transitive" = "11:FALSE"
+            "Vital" = "11:TRUE"
+            "ReadOnly" = "11:FALSE"
+            "Hidden" = "11:FALSE"
+            "System" = "11:FALSE"
+            "Permanent" = "11:FALSE"
+            "SharedLegacy" = "11:FALSE"
+            "PackageAs" = "3:1"
+            "Register" = "3:1"
+            "Exclude" = "11:FALSE"
+            "IsDependency" = "11:FALSE"
+            "IsolateTo" = "8:"
+            "ProjectOutputGroupRegister" = "3:1"
+            "OutputConfiguration" = "8:"
+            "OutputGroupCanonicalName" = "8:Built"
+            "OutputProjectGuid" = "8:{AFF75345-8D35-4B4E-A0E9-CA5B91BB0861}"
+            "ShowKeyOutput" = "11:TRUE"
+                "ExcludeFilters"
+                {
+                }
+            }
             "{5259A561-127C-4D43-A0A1-72F10C7B3BF8}:_C9EEA3568B034A749A285F51A834D2EF"
             {
-            "SourcePath" = "8:..\\ArtifactDetector\\obj\\x64\\Release\\ArtifactDetector.exe"
+            "SourcePath" = "8:..\\ArtifactDetectorService\\obj\\x64\\Debug\\ArtifactDetector.exe"
             "TargetName" = "8:"
             "Tag" = "8:"
             "Folder" = "8:_ABDD876FC1534CF6A60C9AF41AABAF86"
