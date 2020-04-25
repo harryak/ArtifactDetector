@@ -5,13 +5,13 @@ namespace ItsApe.ArtifactDetector.DebugUtilities
     /// <summary>
     /// Parent class to all debuggable classes of the ArtifactDetector.
     /// </summary>
-    internal abstract class Debuggable
+    internal abstract class HasLogger
     {
         /// <summary>
         /// Debuggable classes have a logger and a stopwatch.
         /// </summary>
         /// <param name="setup">The current execution's setup.</param>
-        internal Debuggable()
+        internal HasLogger()
         {
             Logger = ApplicationSetup.GetInstance().GetLogger(GetType().Name);
         }

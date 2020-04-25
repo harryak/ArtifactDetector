@@ -81,15 +81,15 @@ namespace ItsApe.ArtifactDetector.Utilities
         [DllImport("Wtsapi32.dll")]
         internal static extern void WTSFreeMemory(IntPtr pointer);
 
-        [DllImport("Kernel32.dll")]
+        [DllImport("Kernel32.dll", SetLastError = true)]
+        [return: MarshalAs(UnmanagedType.U4)]
         internal static extern int WTSGetActiveConsoleSessionId();
-
-        [DllImport("Wtsapi32.dll")]
-        [return: MarshalAs(UnmanagedType.Bool)]
-        internal static extern bool WTSQuerySessionInformation(IntPtr hServer, int sessionId, WtsInfoClass wtsInfoClass, out IntPtr ppBuffer, out uint pBytesReturned);
 
         [DllImport("wtsapi32.dll", SetLastError = true)]
         internal static extern bool WTSQueryUserToken(uint sessionId, out IntPtr Token);
+
+        [DllImport("wtsapi32.dll", SetLastError = true)]
+        internal static extern int WTSEnumerateSessions(IntPtr hServer, int Reserved, int Version, ref IntPtr ppSessionInfo, ref int pCount);
 
         #region enums
 

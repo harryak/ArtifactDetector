@@ -1,8 +1,6 @@
 ﻿using System;
 using System.IO;
 using System.Reflection;
-using System.Windows.Forms;
-using ItsApe.ArtifactDetector.DebugUtilities;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.EventLog;
 using NLog.Extensions.Logging;
@@ -26,9 +24,6 @@ namespace ItsApe.ArtifactDetector
             // Parse the command line.
             Logger.LogDebug("Getting the configuration.");
 
-            ShouldCache = ApplicationConfiguration.Cache;
-            ShouldEvaluate = ApplicationConfiguration.Evaluate;
-
             WorkingDirectory = GetExecutingDirectory();
 # if DEBUG
             // Setup display of images if being in debug mode.
@@ -37,20 +32,15 @@ namespace ItsApe.ArtifactDetector
 #endif
         }
 
+        ~ApplicationSetup()
+        {
+            NLog.LogManager.Shutdown();
+        }
+
         /// <summary>
         /// Factory for loggers.
         /// </summary>
         public ILoggerFactory LoggerFactoryInstance { get; private set; }
-
-        /// <summary>
-        /// Flag for determining whether the program should cache its data for next runs.
-        /// </summary>
-        public bool ShouldCache { get; } = false;
-
-        /// <summary>
-        /// Flag for determining whether this run should be evaluated.
-        /// </summary>
-        public bool ShouldEvaluate { get; } = false;
 
         /// <summary>
         /// The working directory.
@@ -121,11 +111,6 @@ namespace ItsApe.ArtifactDetector
                 builder.AddProvider(new NLogLoggerProvider())
                     .AddEventLog(eventLogSettings);
             });
-        }
-
-        ~ApplicationSetup()
-        {
-            NLog.LogManager.Shutdown();
         }
     }
 }

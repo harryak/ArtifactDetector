@@ -1,9 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.IO;
+using System.IO.MemoryMappedFiles;
 using System.Linq;
 using System.Runtime.InteropServices;
+using System.Security.AccessControl;
+using System.Security.Principal;
 using System.ServiceModel;
 using System.ServiceProcess;
 using System.Threading;
@@ -11,8 +13,8 @@ using System.Threading.Tasks;
 using System.Timers;
 using ItsApe.ArtifactDetector.Converters;
 using ItsApe.ArtifactDetector.Models;
-using ItsApe.ArtifactDetector.Utilities;
 using Microsoft.Extensions.Logging;
+using Microsoft.Win32.SafeHandles;
 using Newtonsoft.Json;
 
 namespace ItsApe.ArtifactDetector.Services
@@ -21,7 +23,7 @@ namespace ItsApe.ArtifactDetector.Services
     /// Detector service class that waits for another process to call "StartWatch", then tries to detect
     /// the configured artifact until "StopWatch" is called.
     /// </summary>
-    partial class DetectorService : ServiceBase, IDetectorService
+    partial class DetectorService : ServiceBase, IDetectorService, IDisposable
     {
         /// <summary>
         /// File name of the configuration file.
@@ -31,27 +33,32 @@ namespace ItsApe.ArtifactDetector.Services
         /// <summary>
         /// Timer to call detection in interval.
         /// </summary>
-        private static System.Timers.Timer detectionTimer = null;
-
-        /// <summary>
-        /// Mutex for detector response list.
-        /// </summary>
-        private static Mutex detectorResponsesAccess = new Mutex();
-
-        /// <summary>
-        /// Variables describing the current state of the service, to be serialized and saved in the configuration file.
-        /// </summary>
-        private static ServiceState serviceState;
-
-        /// <summary>
-        /// List of all responses during the watch task.
-        /// </summary>
-        private StreamWriter detectorResponses;
+        private System.Timers.Timer detectionTimer = null;
 
         /// <summary>
         /// Host for this service to be callable.
         /// </summary>
         private ServiceHost serviceHost = null;
+
+        /// <summary>
+        /// Variables describing the current state of the service, to be serialized and saved in the configuration file.
+        /// </summary>
+        private ServiceState serviceState;
+
+        /// <summary>
+        /// Manager instance for user sessions.
+        /// </summary>
+        private SessionManager sessionManager;
+
+        /// <summary>
+        /// Memory region for sharing data with other processes.
+        /// </summary>
+        private SafeMemoryMappedFileHandle sharedMemoryHandle;
+
+        /// <summary>
+        /// Mutex for sharedMemory, used across processes.
+        /// </summary>
+        private Mutex sharedMemoryMutex;
 
         /// <summary>
         /// Instantiate service with setup.
@@ -62,14 +69,15 @@ namespace ItsApe.ArtifactDetector.Services
             InitializeComponent();
 
             // Get setup of service for the first time.
-            try
-            {
-                Setup = ApplicationSetup.GetInstance();
-            }
-            catch (ApplicationSetupError)
-            {
-                return;
-            }
+            Setup = ApplicationSetup.GetInstance();
+
+            // Get service state from file.
+            EnsureServiceState();
+
+            // Get an initial status of active sessions.
+            detectionLogWriter = new DetectionLogWriter(
+                Setup.WorkingDirectory.FullName, serviceState.ArtifactConfiguration.RuntimeInformation.ArtifactName);
+            sessionManager = new SessionManager();
 
             Logger = Setup.GetLogger("DetectorService");
             Logger.LogInformation("Detector service initialized.");
@@ -85,70 +93,59 @@ namespace ItsApe.ArtifactDetector.Services
         /// </summary>
         private ApplicationSetup Setup { get; }
 
-        public List<string> GetPossibleWindowTitleSubstrings()
-        {
-            return serviceState.ArtifactConfiguration.RuntimeInformation.PossibleWindowTitleSubstrings;
-        }
-
         /// <summary>
         /// Start watching an artifact in an interval of configured length.
         /// </summary>
         /// <param name="jsonEncodedParameters">Optional paramaters, JSON encoded. Only optional if called in OnStart!</param>
         public bool StartWatch(string jsonEncodedParameters = "")
         {
-            // Get the state as fields are not persisted.
-            GetServiceState();
+            // Get the state as fields might not be persisted.
+            EnsureServiceState();
 
-            // Set flag of this to "isRunning" early to only start one watch task at a time.
-            if (!serviceState.IsRunning)
-            {
-                serviceState.IsRunning = true;
-            }
-            else
+            // Test the current service state to be sure.
+            if (serviceState.IsRunning)
             {
                 Logger.LogError("Can't start watch since it is already running.");
                 return false;
             }
+
+            // Set flag of this to "isRunning" early to only start one watch task at a time.
+            serviceState.IsRunning = true;
+            PersistServiceState();
 
             // Check parameters for validity.
             if ((jsonEncodedParameters == null || jsonEncodedParameters == "") && serviceState.ArtifactConfiguration == null)
             {
                 Logger.LogError("Invalid or empty argument for StartWatch. Not going to execute watch task.");
                 serviceState.IsRunning = false;
-
-                // Stop execution.
+                PersistServiceState();
                 return false;
             }
-            else
+
+            // Only have to do this if we got parameters.
+            try
             {
-                // Only have to do this if we got parameters.
-                try
-                {
-                    serviceState.ArtifactConfiguration = JsonConvert.DeserializeObject<ArtifactConfiguration>(jsonEncodedParameters);
-                }
-                catch (Exception e)
-                {
-                    Logger.LogError("Exception while deserializing JSON parameters: {0}.", e.Message);
-                    serviceState.IsRunning = false;
-
-                    // Stop execution.
-                    return false;
-                }
-
-                SetupFilePath(serviceState.ArtifactConfiguration.RuntimeInformation.ArtifactName);
+                serviceState.ArtifactConfiguration = JsonConvert.DeserializeObject<ArtifactConfiguration>(jsonEncodedParameters);
             }
+            catch (Exception e)
+            {
+                Logger.LogError("Exception while deserializing JSON parameters: {0}.", e.Message);
+                serviceState.IsRunning = false;
+                PersistServiceState();
+                return false;
+            }
+            
+            SetupSharedMemory();
 
             // Start detection loop.
             Logger.LogInformation("Starting watch task now with interval of {0}ms.", serviceState.ArtifactConfiguration.DetectionInterval);
-
             detectionTimer = new System.Timers.Timer
             {
                 Interval = serviceState.ArtifactConfiguration.DetectionInterval,
             };
             detectionTimer.Elapsed += DetectionEventHandler;
-
             detectionTimer.Start();
-            SaveServiceState();
+            PersistServiceState();
 
             return true;
         }
@@ -159,7 +156,7 @@ namespace ItsApe.ArtifactDetector.Services
         public string StopWatch(string jsonEncodedParameters)
         {
             // Get the state as fields are not persisted.
-            GetServiceState();
+            EnsureServiceState();
 
             if (!serviceState.IsRunning)
             {
@@ -169,22 +166,14 @@ namespace ItsApe.ArtifactDetector.Services
             // Stop detection loop, wait for finishing and collect results.
             detectionTimer.Stop();
 
-            // Wait for writing stream to finish via mutex and release both them to be safe.
-            if (detectorResponsesAccess != null
-                && !detectorResponsesAccess.SafeWaitHandle.IsClosed
-                && detectorResponsesAccess.WaitOne())
-            {
-                detectorResponsesAccess.Dispose();
-            }
+            //TODO: Wait for writing stream to finish via mutex and release both them to be safe.
 
-            if (detectorResponses != null)
+            if (sharedMemoryHandle != null)
             {
-                detectorResponses.Dispose();
+                sharedMemoryHandle.Dispose();
             }
 
             var parameters = JsonConvert.DeserializeObject<StopWatchParameters>(jsonEncodedParameters);
-
-            CompileResponses(parameters.ErrorWindowSize);
 
             // Set configuration to null to be empty on next run.
             serviceState.ArtifactConfiguration = null;
@@ -192,9 +181,76 @@ namespace ItsApe.ArtifactDetector.Services
             // Make ready for next watch task.
             serviceState.IsRunning = false;
 
-            SaveServiceState();
+            PersistServiceState();
 
-            return serviceState.CompiledResponsesPath;
+            return detectionLogWriter.CompileResponses(parameters.ErrorWindowSize);
+        }
+
+        protected override void OnContinue()
+        {
+            RestartSavedState();
+            Logger.LogInformation("Detector service continued.");
+        }
+
+        protected override void OnPause()
+        {
+            PauseCurrentState();
+        }
+
+        protected override bool OnPowerEvent(PowerBroadcastStatus powerStatus)
+        {
+            switch (powerStatus)
+            {
+                case PowerBroadcastStatus.QuerySuspend:
+                    PauseCurrentState();
+                    break;
+
+                case PowerBroadcastStatus.QuerySuspendFailed:
+                    RestartSavedState();
+                    break;
+
+                case PowerBroadcastStatus.ResumeAutomatic:
+                case PowerBroadcastStatus.ResumeCritical:
+                case PowerBroadcastStatus.ResumeSuspend:
+                    RestartSavedState();
+                    break;
+            }
+
+            return base.OnPowerEvent(powerStatus);
+        }
+
+        /// <summary>
+        /// Method is called by system whenever a session is changed.
+        /// </summary>
+        /// <param name="changeDescription">Struct with further info about the change.</param>
+        protected override void OnSessionChange(SessionChangeDescription changeDescription)
+        {
+            // Either count up for a session or count down.
+            switch (changeDescription.Reason)
+            {
+                case SessionChangeReason.ConsoleConnect:
+                case SessionChangeReason.RemoteConnect:
+                case SessionChangeReason.SessionLogon:
+                case SessionChangeReason.SessionUnlock:
+                    sessionManager.IncreaseSessionCounter(changeDescription.SessionId);
+                    break;
+
+                case SessionChangeReason.ConsoleDisconnect:
+                case SessionChangeReason.RemoteDisconnect:
+                case SessionChangeReason.SessionLock:
+                case SessionChangeReason.SessionLogoff:
+                    sessionManager.DecreaseSessionCounter(changeDescription.SessionId);
+                    break;
+            }
+            base.OnSessionChange(changeDescription);
+        }
+
+        /// <summary>
+        /// Handle shutdown of service by system.
+        /// </summary>
+        protected override void OnShutdown()
+        {
+            PauseCurrentState();
         }
 
         /// <summary>
@@ -206,28 +262,8 @@ namespace ItsApe.ArtifactDetector.Services
             // Uncomment this to debug.
             //Debugger.Launch();
 
-            if (serviceHost != null)
-            {
-                Logger.LogWarning("Service host was still running.");
-                serviceHost.Close();
-            }
-
-            serviceHost = new ServiceHost(typeof(DetectorService));
-            serviceHost.Open();
-
-            // Restore configuration from file, if present.
-            GetServiceState();
+            RestartSavedState();
             Logger.LogInformation("Detector service started.");
-
-            // Check if the detection must be started.
-            if (serviceState.IsRunning)
-            {
-                Logger.LogInformation("Watch task should be running, start it.");
-                serviceState.IsRunning = false;
-                Task.Run(() => StartWatch());
-            }
-
-            SaveServiceState();
         }
 
         /// <summary>
@@ -242,7 +278,7 @@ namespace ItsApe.ArtifactDetector.Services
             }
 
             // Save configuration to file.
-            SaveServiceState();
+            PersistServiceState();
 
             // Dispose detection timer just in case.
             if (detectionTimer != null)
@@ -251,48 +287,6 @@ namespace ItsApe.ArtifactDetector.Services
             }
 
             Logger.LogInformation("Detector service stopped. Bye bye!");
-        }
-
-        /// <summary>
-        /// Compile all responses previously written to file at responsesPath and write to compiledResponsesPath.
-        /// </summary>
-        /// <param name="errorWindowSize">Make sure this is an odd integer.</param>
-        private void CompileResponses(int errorWindowSize)
-        {
-            // Buffer the values inside the current error window.
-            var errorWindowValues = new SortedDictionary<long, int>();
-            int currentMajority = -1, previousMajority = -1;
-            long changeTimestamp = 0;
-
-            using (var reader = new StreamReader(serviceState.ResponsesPath))
-            using (var writer = new StreamWriter(serviceState.CompiledResponsesPath, true))
-            {
-                string[] currentValues;
-
-                while (!reader.EndOfStream)
-                {
-                    // First: Keep window at right size. We add one value now, so greater equal is the right choice here.
-                    if (errorWindowValues.Count >= errorWindowSize)
-                    {
-                        errorWindowValues.Remove(errorWindowValues.Keys.First());
-                    }
-
-                    // Then: Add next value to window.
-                    currentValues = reader.ReadLine().Split(',');
-                    errorWindowValues.Add(Convert.ToInt64(currentValues[1]), Convert.ToInt32(currentValues[2]));
-
-                    // See if the average of the window changes.
-                    currentMajority = GetMajorityItem(ref errorWindowValues);
-
-                    if (currentMajority != previousMajority)
-                    {
-                        // Artifact detection changed.
-                        changeTimestamp = errorWindowValues.SkipWhile(entry => entry.Value != currentMajority).First().Key;
-                        writer.WriteLine("{0},{1}", changeTimestamp, currentMajority);
-                        previousMajority = currentMajority;
-                    }
-                }
-            }
         }
 
         /// <summary>
@@ -308,38 +302,17 @@ namespace ItsApe.ArtifactDetector.Services
         }
 
         /// <summary>
-        /// Boyer-Moore majority vote algorithm.
-        /// </summary>
-        /// <param name="dictionary">Get majority of this dictionaries entries.</param>
-        private int GetMajorityItem([In] ref SortedDictionary<long, int> dictionary)
-        {
-            int majorityItem = -1, counter = 0;
-
-            foreach (var entry in dictionary.Values)
-            {
-                if (counter == 0)
-                {
-                    majorityItem = entry;
-                    counter++;
-                }
-                else if (entry == majorityItem)
-                {
-                    counter++;
-                }
-                else
-                {
-                    counter--;
-                }
-            }
-
-            return majorityItem;
-        }
-
-        /// <summary>
         /// Get state of the service, either from file or new object.
         /// </summary>
-        private void GetServiceState()
+        private void EnsureServiceState()
         {
+            // Do not do unnecessary work.
+            if (serviceState != null)
+            {
+                return;
+            }
+
+            // Get file and read from it, if exists.
             string fileName = Uri.UnescapeDataString(
                 Path.Combine(Setup.WorkingDirectory.FullName, ConfigurationFile));
             var configurationFileInfo = new FileInfo(fileName);
@@ -359,18 +332,57 @@ namespace ItsApe.ArtifactDetector.Services
         }
 
         /// <summary>
+        /// Get security identifier for a memory mapped file which allows authenticated local users full control.
+        /// </summary>
+        /// <param name="fileSecurity">The security object.</param>
+        private void GetSecurityIdentifier(out MemoryMappedFileSecurity fileSecurity)
+        {
+            fileSecurity = new MemoryMappedFileSecurity();
+            fileSecurity.AddAccessRule(
+                new AccessRule<MemoryMappedFileRights>(new SecurityIdentifier(WellKnownSidType.AuthenticatedUserSid, null).Translate(typeof(NTAccount)),
+                MemoryMappedFileRights.FullControl,
+                AccessControlType.Allow));
+        }
+
+        /// <summary>
+        /// "Pause" the service state: Either temporarily or for a shutdown etc.
+        /// </summary>
+        private void PauseCurrentState()
+        {
+            // Close service host to not receive any new tasks.
+            if (serviceHost != null)
+            {
+                serviceHost.Close();
+                serviceHost = null;
+            }
+
+            // Dispose detection timer.
+            if (detectionTimer != null)
+            {
+                detectionTimer.Dispose();
+                detectionTimer = null;
+            }
+
+            serviceState.IsRunning = false;
+
+            // Save configuration to file.
+            PersistServiceState();
+            Logger.LogInformation("Detector service stopped. Bye bye!");
+        }
+
+        /// <summary>
         /// Save service state to file.
         /// </summary>
-        private void SaveServiceState()
+        private void PersistServiceState()
         {
             // Save configuration to file.
             string jsonEncodedConfig = JsonConvert.SerializeObject(
-                serviceState,
-                new ArtifactRuntimeInformationConverter(),
-                new DetectorConverter());
+            serviceState,
+            new ArtifactRuntimeInformationConverter(),
+            new DetectorConverter());
 
             string fileName = Uri.UnescapeDataString(
-                Path.Combine(Setup.WorkingDirectory.FullName, ConfigurationFile));
+            Path.Combine(Setup.WorkingDirectory.FullName, ConfigurationFile));
             using (var writer = new StreamWriter(fileName))
             {
                 Logger.LogInformation("Saving configuration to file");
@@ -378,42 +390,69 @@ namespace ItsApe.ArtifactDetector.Services
             }
         }
 
-        /// <summary>
-        /// Create directory for artifact, ignore if it exists.
-        /// </summary>
-        /// <param name="artifactName"></param>
-        /// <returns>The full path of the (new) directory.</returns>
-        private string SetupFilePath(string artifactName)
+        private void RestartSavedState()
         {
-            var filePath = Directory.CreateDirectory(
-                Uri.UnescapeDataString(
-                    Path.Combine(Setup.WorkingDirectory.FullName,
-                    serviceState.ArtifactConfiguration.RuntimeInformation.ArtifactName)
-                    )
-                ).FullName;
-            var timestamp = DateTime.Now.ToString("yyyyMMddHHmmss");
+            // First: Make sure we have the service state.
+            EnsureServiceState();
 
-            serviceState.ResponsesPath = Path.Combine(
-                filePath,
-                "raw-" + timestamp + ".csv");
-            serviceState.CompiledResponsesPath = Path.Combine(
-                filePath,
-                "results-" + timestamp + ".csv");
+            // The service host should be null, otherwise there is something wrong. Better close it and start new one.
+            if (serviceHost == null)
+            {
+                Logger.LogWarning("Service host was still running.");
+                serviceHost.Close();
+            }
 
-            File.Create(serviceState.ResponsesPath).Close();
-            File.Create(serviceState.CompiledResponsesPath).Close();
+            serviceHost = new ServiceHost(typeof(DetectorService));
+            serviceHost.Open();
 
-            return filePath;
+            // Check in which state the service was paused.
+            if (serviceState.IsRunning)
+            {
+                Logger.LogInformation("Watch task should be running, start it.");
+                serviceState.IsRunning = false;
+                StartWatch();
+            }
+        }
+
+        private void SetupSharedMemory()
+        {
+            // Prepare shared memory via memory mapped file.
+            if (sharedMemoryHandle == null)
+            {
+                GetSecurityIdentifier(out var fileSecurity);
+
+                var sharedMemory = MemoryMappedFile.CreateOrOpen(
+                   @"Global\" + ApplicationConfiguration.MemoryMappedFileName,
+                   2048,
+                   MemoryMappedFileAccess.ReadWrite,
+                   MemoryMappedFileOptions.None,
+                   fileSecurity, HandleInheritability.Inheritable);
+
+                sharedMemoryHandle = sharedMemory.SafeMemoryMappedFileHandle;
+            }
+
+            if (sharedMemoryMutex == null)
+            {
+                sharedMemoryMutex = new Mutex(false, ApplicationConfiguration.MemoryMappedMutexName);
+            }
         }
 
         /// <summary>
-        /// Method to detect the currently given artifact and write the response to the responses dictionary with time.
+        /// Method to detect the currently given artifact and write the response to the responses log file.
         /// </summary>
         private void TriggerDetection()
         {
+            var queryTime = DateTime.Now;
+            if (!sessionManager.HasActiveSessions())
+            {
+                // No active user sessions, no artifacts can be present.
+                detectionLogWriter.LogDetectionResult(
+                    queryTime, queryTime, new DetectorResponse { ArtifactPresent = DetectorResponse.ArtifactPresence.Impossible });
+                return;
+            }
+
             // Call artifact detector (may be a compound detector) from artifact configuration.
             var artifactRuntimeInformation = (ArtifactRuntimeInformation) serviceState.ArtifactConfiguration.RuntimeInformation.Clone();
-            var queryTime = DateTime.Now;
             DetectorResponse detectorResponse = null;
 
             try
@@ -422,34 +461,13 @@ namespace ItsApe.ArtifactDetector.Services
             }
             catch (Exception e)
             {
-                Logger.LogError("Huston, we had a problem: {0}.", e.Message);
+                Logger.LogError("Problem calling the detector: {0}.", e.Message);
             }
             var responseTime = DateTime.Now;
 
-            WriteDetectionResult(queryTime, responseTime, detectorResponse);
+            detectionLogWriter.LogDetectionResult(queryTime, responseTime, detectorResponse);
         }
 
-        private void WriteDetectionResult(DateTime queryTime, DateTime responseTime, DetectorResponse detectorResponse)
-        {
-            if (detectorResponsesAccess == null || detectorResponsesAccess.SafeWaitHandle.IsClosed)
-            {
-                detectorResponsesAccess = new Mutex();
-            }
-
-            // Save response to timetable.
-            if (detectorResponsesAccess.WaitOne())
-            {
-                // Write response prepended with time to responses file and flush.
-                // Use sortable and tenth-millisecond-precise timestamp for entry.
-                using (detectorResponses = new StreamWriter(serviceState.ResponsesPath, true))
-                {
-                    detectorResponses.WriteLine("{0:yyMMddHHmmssffff},{1:yyMMddHHmmssffff},{2}", queryTime, responseTime, (int)detectorResponse.ArtifactPresent);
-                    detectorResponses.Flush();
-                }
-
-                // Release mutex and finish.
-                detectorResponsesAccess.ReleaseMutex();
-            }
-        }
+        private DetectionLogWriter detectionLogWriter;
     }
 }

@@ -3,7 +3,7 @@ using System.Runtime.InteropServices;
 using System.Text;
 using ItsApe.ArtifactDetector.Models;
 
-namespace ItsApe.OpenWindowDetector.Utilities
+namespace ItsApe.ArtifactDetectorProcess.Utilities
 {
     internal class NativeMethods
     {

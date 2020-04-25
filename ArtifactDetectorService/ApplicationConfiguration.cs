@@ -9,28 +9,6 @@ namespace ItsApe.ArtifactDetector
     internal class ApplicationConfiguration
     {
         /// <summary>
-        /// Flag to tell whether the processed images should be cached for the next run.
-        /// </summary>
-        public static bool Cache
-        {
-            get
-            {
-                return Convert.ToBoolean(ConfigurationManager.AppSettings.Get("Cache"));
-            }
-        }
-
-        /// <summary>
-        /// Flag to tell whether this run should be evaluated.
-        /// </summary>
-        public static bool Evaluate
-        {
-            get
-            {
-                return Convert.ToBoolean(ConfigurationManager.AppSettings.Get("Evaluate"));
-            }
-        }
-
-        /// <summary>
         /// Name of the feature extractor to use.
         /// </summary>
         public static string FeatureExtractorSelection
@@ -75,6 +53,28 @@ namespace ItsApe.ArtifactDetector
         }
 
         /// <summary>
+        /// Name of the memory mapped file used across processes.
+        /// </summary>
+        public static string MemoryMappedFileName
+        {
+            get
+            {
+                return Convert.ToString(ConfigurationManager.AppSettings.Get("MemoryMappedFileName"));
+            }
+        }
+
+        /// <summary>
+        /// Name of the mutex (used across processes) to access the memory mapped file.
+        /// </summary>
+        public static string MemoryMappedMutexName
+        {
+            get
+            {
+                return Convert.ToString(ConfigurationManager.AppSettings.Get("MemoryMappedMutexName"));
+            }
+        }
+
+        /// <summary>
         /// Feature extraction setting: Absolute count of matches needed for a match.
         /// </summary>
         public static int MinimumMatchesRequired
@@ -85,19 +85,14 @@ namespace ItsApe.ArtifactDetector
             }
         }
 
-        public static string OpenWindowDetectorExe
+        /// <summary>
+        /// The name of the application runnign in the user session.
+        /// </summary>
+        public static string UserSessionApplicationName
         {
             get
             {
-                return Convert.ToString(ConfigurationManager.AppSettings.Get("OpenWindowDetectorExe"));
-            }
-        }
-
-        public static string MemoryMappedFileName
-        {
-            get
-            {
-                return Convert.ToString(ConfigurationManager.AppSettings.Get("MemoryMappedFileName"));
+                return Convert.ToString(ConfigurationManager.AppSettings.Get("UserSessionApplicationName"));
             }
         }
     }

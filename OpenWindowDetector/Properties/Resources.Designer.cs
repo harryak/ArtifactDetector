@@ -8,7 +8,7 @@
 // </auto-generated>
 //------------------------------------------------------------------------------
 
-namespace ItsApe.OpenWindowDetector.Properties {
+namespace ItsApe.ArtifactDetectorProcess.Properties {
     using System;
     
     

@@ -244,6 +244,7 @@
     <Compile Include="ProjectInstaller.Designer.cs">
       <DependentUpon>ProjectInstaller.cs</DependentUpon>
     </Compile>
+    <Compile Include="Services\DetectionLogWriter.cs" />
     <Compile Include="Services\DetectorService.cs">
       <SubType>Component</SubType>
     </Compile>
@@ -267,8 +268,8 @@
     <Compile Include="Models\InstalledProgram.cs" />
     <Compile Include="Detectors\OpenWindowDetector.cs" />
     <Compile Include="Detectors\IDetector.cs" />
+    <Compile Include="Services\SessionManager.cs" />
     <Compile Include="Utilities\DefaultApplicationFinder.cs" />
-    <Compile Include="Utilities\LoginUserUtility.cs" />
     <Compile Include="Utilities\NativeMethods.cs" />
     <Compile Include="Utilities\VisualCapturer.cs" />
     <Compile Include="Models\DetectorConditions\DetectorConditionSet.cs" />
@@ -301,6 +302,9 @@
   <ItemGroup>
     <EmbeddedResource Include="ProjectInstaller.resx">
       <DependentUpon>ProjectInstaller.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Services\DetectorService.resx">
+      <DependentUpon>DetectorService.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="Viewers\ImageViewer.resx">
       <DependentUpon>ImageViewer.cs</DependentUpon>

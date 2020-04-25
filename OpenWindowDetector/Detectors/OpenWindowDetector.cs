@@ -5,9 +5,9 @@ using System.Text;
 using ItsApe.ArtifactDetector.Helpers;
 using ItsApe.ArtifactDetector.Models;
 using ItsApe.ArtifactDetector.Utilities;
-using ItsApe.OpenWindowDetector.Utilities;
+using ItsApe.ArtifactDetectorProcess.Utilities;
 
-namespace ItsApe.OpenWindowDetector.Detectors
+namespace ItsApe.ArtifactDetectorProcess.Detectors
 {
     /// <summary>
     /// Detector to detect if a window is opened and visible.

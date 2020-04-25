@@ -1,4 +1,5 @@
-﻿using ItsApe.ArtifactDetector.Converters;
+﻿using Emgu.CV;
+using ItsApe.ArtifactDetector.Converters;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;

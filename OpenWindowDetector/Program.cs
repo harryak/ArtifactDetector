@@ -4,7 +4,7 @@ using System.IO.MemoryMappedFiles;
 using System.Runtime.Serialization.Formatters.Binary;
 using ItsApe.ArtifactDetector.Models;
 
-namespace ArtifactDetector.OpenWindowDetector
+namespace ItsApe.ArtifactDetectorProcess
 {
     internal static class Program
     {
@@ -14,7 +14,7 @@ namespace ArtifactDetector.OpenWindowDetector
         [STAThread]
         private static void Main()
         {
-            var detector = new ItsApe.OpenWindowDetector.Detectors.OpenWindowDetector();
+            var detector = new Detectors.OpenWindowDetector();
             var binaryFormatter = new BinaryFormatter();
             ArtifactRuntimeInformation runtimeInformation;
             // Get runtime information from memory mapped file from external process.

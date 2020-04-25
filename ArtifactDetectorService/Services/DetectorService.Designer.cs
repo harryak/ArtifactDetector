@@ -18,19 +18,6 @@
                 components.Dispose();
             }
 
-            if (detectorResponses != null)
-            {
-                detectorResponses.Dispose();
-            }
-            if (detectorResponsesAccess != null)
-            {
-                detectorResponsesAccess.Dispose();
-            }
-            if (serviceHost != null)
-            {
-                serviceHost.Close();
-            }
-
             base.Dispose(disposing);
         }
 
@@ -42,8 +29,15 @@
         /// </summary>
         private void InitializeComponent()
         {
-            components = new System.ComponentModel.Container();
-            this.ServiceName = "DetectorService";
+            // 
+            // DetectorService
+            // 
+            this.CanHandlePowerEvent = true;
+            this.CanHandleSessionChangeEvent = true;
+            this.CanPauseAndContinue = true;
+            this.CanShutdown = true;
+            this.ServiceName = "ITS.APE DetectorService";
+
         }
 
         #endregion
