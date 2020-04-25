@@ -26,7 +26,7 @@ namespace ItsApe.ArtifactDetector.Detectors
 
         protected override Rectangle GetAbsoluteIconRectangle(int iconIndex)
         {
-            var rect = new NativeMethods.RectangularOutline();
+            var rect = new NativeStructures.RectangularOutline();
             NativeMethods.GetWindowRect(WindowHandle, ref rect);
             return new Rectangle(rect);
         }

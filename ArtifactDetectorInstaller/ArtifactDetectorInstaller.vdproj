@@ -69,12 +69,6 @@
         }
         "Entry"
         {
-        "MsmKey" = "8:_1C0018677F9E4C5CA3B0E8FB76F7A660"
-        "OwnerKey" = "8:_UNDEFINED"
-        "MsmSig" = "8:_UNDEFINED"
-        }
-        "Entry"
-        {
         "MsmKey" = "8:_1F0F51A1045DFC5FA87641A76AD7FAF1"
         "OwnerKey" = "8:_C9EEA3568B034A749A285F51A834D2EF"
         "MsmSig" = "8:_UNDEFINED"
@@ -89,6 +83,12 @@
         {
         "MsmKey" = "8:_2145EE626C9DAC2FE348EB4C13B9DD23"
         "OwnerKey" = "8:_C9EEA3568B034A749A285F51A834D2EF"
+        "MsmSig" = "8:_UNDEFINED"
+        }
+        "Entry"
+        {
+        "MsmKey" = "8:_2228BA7BD89E49B7A139137362B6DB39"
+        "OwnerKey" = "8:_UNDEFINED"
         "MsmSig" = "8:_UNDEFINED"
         }
         "Entry"
@@ -1108,7 +1108,7 @@
         "Entry"
         {
         "MsmKey" = "8:_F74BB612AF5BBBF5252FB95F45BA6F38"
-        "OwnerKey" = "8:_1C0018677F9E4C5CA3B0E8FB76F7A660"
+        "OwnerKey" = "8:_2228BA7BD89E49B7A139137362B6DB39"
         "MsmSig" = "8:_UNDEFINED"
         }
         "Entry"
@@ -1174,7 +1174,7 @@
         "Entry"
         {
         "MsmKey" = "8:_UNDEFINED"
-        "OwnerKey" = "8:_1C0018677F9E4C5CA3B0E8FB76F7A660"
+        "OwnerKey" = "8:_2228BA7BD89E49B7A139137362B6DB39"
         "MsmSig" = "8:_UNDEFINED"
         }
         "Entry"
@@ -6510,7 +6510,7 @@
         "Name" = "8:Microsoft Visual Studio"
         "ProductName" = "8:Artifact Detector"
         "ProductCode" = "8:{B562ACD3-EE6C-42B0-A302-6C42346AEBB3}"
-        "PackageCode" = "8:{C154C734-7EA7-4DD4-94CF-A76935A5F97A}"
+        "PackageCode" = "8:{830A6D3B-6A2B-430D-988A-A50218B1025C}"
         "UpgradeCode" = "8:{3D92DF20-0269-4610-AFBF-AFF1FCF44660}"
         "AspNetVersion" = "8:4.0.30319.0"
         "RestartWWWService" = "11:FALSE"
@@ -7029,9 +7029,9 @@
         }
         "ProjectOutput"
         {
-            "{5259A561-127C-4D43-A0A1-72F10C7B3BF8}:_1C0018677F9E4C5CA3B0E8FB76F7A660"
+            "{5259A561-127C-4D43-A0A1-72F10C7B3BF8}:_2228BA7BD89E49B7A139137362B6DB39"
             {
-            "SourcePath" = "8:..\\OpenWindowDetector\\obj\\Debug\\ArtifactDetector.exe"
+            "SourcePath" = "8:..\\OpenWindowDetector\\obj\\Debug\\OpenWindowDetector.exe"
             "TargetName" = "8:"
             "Tag" = "8:"
             "Folder" = "8:_ABDD876FC1534CF6A60C9AF41AABAF86"

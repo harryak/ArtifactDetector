@@ -9,6 +9,8 @@ Project("{54435603-DBB4-11D2-8724-00A0C9A8B90C}") = "ArtifactDetectorInstaller",
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OpenWindowDetector", "OpenWindowDetector\OpenWindowDetector.csproj", "{AFF75345-8D35-4B4E-A0E9-CA5B91BB0861}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ArtifactDetectorModels", "ArtifactDetectorModels\ArtifactDetectorModels.csproj", "{77283536-8F37-4179-A38F-112B79C790DA}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -55,6 +57,18 @@ Global
 		{AFF75345-8D35-4B4E-A0E9-CA5B91BB0861}.Release|x64.Build.0 = Debug|Any CPU
 		{AFF75345-8D35-4B4E-A0E9-CA5B91BB0861}.Release|x86.ActiveCfg = Release|Any CPU
 		{AFF75345-8D35-4B4E-A0E9-CA5B91BB0861}.Release|x86.Build.0 = Release|Any CPU
+		{77283536-8F37-4179-A38F-112B79C790DA}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{77283536-8F37-4179-A38F-112B79C790DA}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{77283536-8F37-4179-A38F-112B79C790DA}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{77283536-8F37-4179-A38F-112B79C790DA}.Debug|x64.Build.0 = Debug|Any CPU
+		{77283536-8F37-4179-A38F-112B79C790DA}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{77283536-8F37-4179-A38F-112B79C790DA}.Debug|x86.Build.0 = Debug|Any CPU
+		{77283536-8F37-4179-A38F-112B79C790DA}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{77283536-8F37-4179-A38F-112B79C790DA}.Release|Any CPU.Build.0 = Release|Any CPU
+		{77283536-8F37-4179-A38F-112B79C790DA}.Release|x64.ActiveCfg = Release|Any CPU
+		{77283536-8F37-4179-A38F-112B79C790DA}.Release|x64.Build.0 = Release|Any CPU
+		{77283536-8F37-4179-A38F-112B79C790DA}.Release|x86.ActiveCfg = Release|Any CPU
+		{77283536-8F37-4179-A38F-112B79C790DA}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

@@ -189,12 +189,16 @@ namespace ItsApe.ArtifactDetector.Detectors
             int processId = -1;
             try
             {
-                var securityAttributes = new NativeMethods.SecurityAttributes();
+                var securityAttributes = new NativeMethods.SecurityAttributes
+                {
+                    bInheritHandle = false,
+                    lpSecurityDescriptor = IntPtr.Zero
+                };
                 securityAttributes.Length = Marshal.SizeOf(securityAttributes);
 
                 if (!NativeMethods.DuplicateTokenEx(
                       userToken,
-                      NativeMethods.GenericAllAccess,
+                      NativeMethods.TokenGeneralAccess,
                       ref securityAttributes,
                       NativeMethods.SecurityImpersionationLevel.SecurityIdentification,
                       NativeMethods.TokenType.TokenPrimary,
@@ -211,9 +215,9 @@ namespace ItsApe.ArtifactDetector.Detectors
                 };
                 startupInformation.cb = Marshal.SizeOf(startupInformation);
 
-                if (!NativeMethods.CreateProcessAsUser(
-                    userTokenDuplicate, executablePath, null, ref securityAttributes,
-                    ref securityAttributes, false, 0, IntPtr.Zero, null,
+                if (!NativeMethods.CreateProcessAsUserW(
+                    userTokenDuplicate, null, executablePath, ref securityAttributes,
+                    ref securityAttributes, false, 0x00000010, IntPtr.Zero, null,
                     ref startupInformation, ref processInformation))
                 {
                     error = Marshal.GetLastWin32Error();
@@ -227,6 +231,11 @@ namespace ItsApe.ArtifactDetector.Detectors
             {
                 Logger.LogError("Could not create process.");
                 return -1;
+            }
+            finally
+            {
+                NativeMethods.CloseHandle(userToken);
+                NativeMethods.CloseHandle(userTokenDuplicate);
             }
 
             Logger.LogDebug("Created process with ID {0}.", processId);

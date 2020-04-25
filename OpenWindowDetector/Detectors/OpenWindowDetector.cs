@@ -2,8 +2,9 @@
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
 using System.Text;
-using ItsApe.OpenWindowDetector.Helpers;
-using ItsApe.OpenWindowDetector.Models;
+using ItsApe.ArtifactDetector.Helpers;
+using ItsApe.ArtifactDetector.Models;
+using ItsApe.ArtifactDetector.Utilities;
 using ItsApe.OpenWindowDetector.Utilities;
 
 namespace ItsApe.OpenWindowDetector.Detectors

@@ -2,6 +2,8 @@
 using System.IO;
 using System.IO.MemoryMappedFiles;
 using System.Runtime.Serialization.Formatters.Binary;
+using System.Threading;
+using ItsApe.ArtifactDetector.Models;
 using ItsApe.OpenWindowDetector.Models;
 
 namespace ArtifactDetector.OpenWindowDetector
@@ -12,7 +14,7 @@ namespace ArtifactDetector.OpenWindowDetector
         /// The main entry point for the application.
         /// </summary>
         [STAThread]
-        public static void Main(string[] arguments)
+        private static void Main()
         {
             using (var writer = new StreamWriter(@"C:\Users\Felix\Desktop\lel.lol", true))
             {
@@ -21,7 +23,7 @@ namespace ArtifactDetector.OpenWindowDetector
                 // Get runtime information from memory mapped file from external process.
                 try
                 {
-                    using (var memoryMappedFile = MemoryMappedFile.OpenExisting("AD-runtimeInfo"))
+                    using (var memoryMappedFile = MemoryMappedFile.OpenExisting(@"Global\AD-runtimeInfo", MemoryMappedFileRights.ReadWrite))
                     {
                         using (var memoryStream = memoryMappedFile.CreateViewStream())
                         {

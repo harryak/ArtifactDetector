@@ -2,9 +2,7 @@
 using Emgu.CV.CvEnum;
 using Emgu.CV.Features2D;
 using Emgu.CV.Structure;
-using Emgu.CV.UI;
 using Emgu.CV.Util;
-using ItsApe.ArtifactDetector.DebugUtilities;
 using ItsApe.ArtifactDetector.Detectors.VisualFeatureExtractor.VisualMatchFilter;
 using ItsApe.ArtifactDetector.Models;
 using Microsoft.Extensions.Logging;
@@ -12,14 +10,13 @@ using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.IO;
-using System.Windows.Forms;
 
 namespace ItsApe.ArtifactDetector.Detectors.VisualFeatureExtractor
 {
     /// <summary>
     /// Feature extraction base class doing most of the work but missing the EmguCV.Feature2D feature detector instantiation.
     /// </summary>
-    internal abstract class BaseVisualFeatureExtractor : Debuggable, IVisualFeatureExtractor
+    internal abstract class BaseVisualFeatureExtractor : IVisualFeatureExtractor
     {
         /// <summary>
         /// Map for selecting a feature match filter by its name.
@@ -35,9 +32,14 @@ namespace ItsApe.ArtifactDetector.Detectors.VisualFeatureExtractor
         /// Constructor setting up the match filter.
         /// </summary>
         /// <param name="setup">The current excecution's setup.</param>
-        public BaseVisualFeatureExtractor()
+        public BaseVisualFeatureExtractor(double matchDistanceThreshold, double matchUniquenessThreshold, int minimumMatchesRequired, string matchFilterSelection, ILogger logger)
         {
-            SetupMatchFilter();
+            MatchDistanceThreshold = matchDistanceThreshold;
+            MatchUniquenessThreshold = matchUniquenessThreshold;
+            MinimumMatchesRequired = minimumMatchesRequired;
+
+            Logger = logger;
+            SetupMatchFilter(matchFilterSelection);
         }
 
         /// <summary>
@@ -51,9 +53,29 @@ namespace ItsApe.ArtifactDetector.Detectors.VisualFeatureExtractor
         protected Feature2D FeatureDetector { get; set; }
 
         /// <summary>
+        /// Logging instance to write messages to.
+        /// </summary>
+        protected ILogger Logger { get; set; }
+
+        /// <summary>
+        /// Maximum distance to consider matches.
+        /// </summary>
+        protected double MatchDistanceThreshold { get; set; }
+
+        /// <summary>
         /// The filter used for matching the feature sets of two images.
         /// </summary>
         protected IMatchFilter MatchFilter { get; set; }
+
+        /// <summary>
+        /// Maximum uniqueness to consider matches.
+        /// </summary>
+        protected double MatchUniquenessThreshold { get; set; }
+
+        /// <summary>
+        /// Minimum threshold as to what matches count.
+        /// </summary>
+        protected int MinimumMatchesRequired { get; set; }
 
         /// <summary>
         /// Extract features of the given image using an OpenCV feature extractor.
@@ -136,66 +158,8 @@ namespace ItsApe.ArtifactDetector.Detectors.VisualFeatureExtractor
                 out matchCount
             );
 
-#if DEBUG
-            if (homography != null)
-                drawingResult = Draw(observedImage, matchedArtifact, matches, matchesMask, homography);
-#endif
             return homography != null;
         }
-
-#if DEBUG
-
-        /// <summary>
-        /// Helper function for debug purposes.
-        /// </summary>
-        /// <param name="observedImage">The observed image.</param>
-        /// <param name="artifactImage">The matched artifact image containing visual information.</param>
-        /// <param name="matches">Reference to a match vector.</param>
-        /// <param name="matchesMask">Reference to the used result mask.</param>
-        /// <param name="homography">Reference to a possible homography.</param>
-        /// <returns>The result of DrawMatches.</returns>
-        private Mat Draw(ProcessedImage observedImage, ProcessedImage artifactImage, VectorOfVectorOfDMatch matches, Mat matchesMask, Matrix<float> homography)
-        {
-            //Draw the matched keypoints
-            var resultingImage = new Mat();
-
-            Features2DToolbox.DrawMatches(
-                artifactImage.Image,
-                artifactImage.KeyPoints,
-                observedImage.Image,
-                observedImage.KeyPoints,
-                matches,
-                resultingImage,
-                new MCvScalar(0, 128, 0),
-                new MCvScalar(0, 128, 255),
-                matchesMask
-            );
-
-            if (homography != null)
-            {
-                // Draw a rectangle along the projected model.
-                var rect = new System.Drawing.Rectangle(Point.Empty, artifactImage.Image.Size);
-                // Set corner points of rectangle and transform them according to homography.
-                PointF[] pointFs = new PointF[]
-                {
-                    new PointF(rect.Left, rect.Bottom),
-                    new PointF(rect.Right, rect.Bottom),
-                    new PointF(rect.Right, rect.Top),
-                    new PointF(rect.Left, rect.Top)
-                };
-                pointFs = Transform(pointFs, homography);
-
-                // Draw the outlines using rounded coordinates of previously calculated points.
-                using (var pointVector = new VectorOfPoint(Array.ConvertAll(pointFs, Point.Round)))
-                {
-                    CvInvoke.Polylines(resultingImage, pointVector, true, new MCvScalar(0, 0, 255, 255), 8);
-                }
-            }
-
-            return resultingImage;
-        }
-
-#endif
 
         /// <summary>
         /// Matching function using the DescriptorMatcher and voting/filtering the matches.
@@ -208,10 +172,6 @@ namespace ItsApe.ArtifactDetector.Detectors.VisualFeatureExtractor
         /// <returns>A matched artifact image, if available.</returns>
         private ProcessedImage FindMatch(ProcessedImage observedImage, ICollection<ProcessedImage> referenceImages, out VectorOfVectorOfDMatch goodMatches, out Mat matchesMask, out Matrix<float> homography, out int matchCount)
         {
-            int minMatches = ApplicationConfiguration.MinimumMatchesRequired;
-            double uniquenessThreshold = ApplicationConfiguration.MatchUniquenessThreshold;
-            double distanceThreshold = ApplicationConfiguration.MatchDistanceThreshold;
-
             ProcessedImage matchingArtifact = null;
 
             // Initialize out variables.
@@ -243,7 +203,7 @@ namespace ItsApe.ArtifactDetector.Detectors.VisualFeatureExtractor
                     // FLANN does not always output two matching points.
                     if (match.Length > 1)
                     {
-                        if (match[0].Distance < distanceThreshold)
+                        if (match[0].Distance < MatchDistanceThreshold)
                         {
                             if (match[0].Distance < 0.7 * match[1].Distance)
                             {
@@ -259,14 +219,14 @@ namespace ItsApe.ArtifactDetector.Detectors.VisualFeatureExtractor
                 matchesMask.SetTo(new MCvScalar(255));
 
                 // Check the matches, only take unique ones.
-                Features2DToolbox.VoteForUniqueness(goodMatches, uniquenessThreshold, matchesMask);
+                Features2DToolbox.VoteForUniqueness(goodMatches, MatchUniquenessThreshold, matchesMask);
 
                 // Do we have a minimum amount of unique matches?
                 int nonZeroCount = CvInvoke.CountNonZero(matchesMask);
                 // Calculate the ratio between the reference image and the current artifact image to rule out influence of feature density.
                 double sizeRatio = GetSizeRatio(observedImage.Dimensions, currentArtifactImage.Dimensions);
 
-                if (nonZeroCount >= minMatches / sizeRatio)
+                if (nonZeroCount >= MinimumMatchesRequired / sizeRatio)
                 {
                     // Filter further for size and orientation of the matches.
                     try
@@ -280,7 +240,7 @@ namespace ItsApe.ArtifactDetector.Detectors.VisualFeatureExtractor
                     }
 
                     // Still enough matches?
-                    if (nonZeroCount >= minMatches / sizeRatio)
+                    if (nonZeroCount >= MinimumMatchesRequired / sizeRatio)
                     {
                         // Can we find a homography? Then it's a match.
                         homography = MatchFilter.GetRanSaCTransformationMatrix(currentArtifactImage.KeyPoints, observedImage.KeyPoints, goodMatches, ref matchesMask, 1000, 0.85, 5);
@@ -363,15 +323,15 @@ namespace ItsApe.ArtifactDetector.Detectors.VisualFeatureExtractor
         /// Simple setup of the match filter by getting the right instance from the map.
         /// </summary>
         /// <param name="setup">The current excecution's setup.</param>
-        private void SetupMatchFilter()
+        private void SetupMatchFilter(string matchFilterSelection)
         {
-            if (!visualFilterSelectionMap.ContainsKey(ApplicationConfiguration.MatchFilterSelection))
+            if (!visualFilterSelectionMap.ContainsKey(matchFilterSelection))
             {
-                throw new ArgumentNullException("Could not get match filter type: { 0 }", ApplicationConfiguration.MatchFilterSelection);
+                throw new ArgumentNullException("Could not get match filter type: { 0 }", matchFilterSelection);
             }
 
-            Logger.LogInformation("Using match filter {filterSelection}.", ApplicationConfiguration.MatchFilterSelection);
-            MatchFilter = visualFilterSelectionMap[ApplicationConfiguration.MatchFilterSelection]();
+            Logger.LogInformation("Using match filter {filterSelection}.", matchFilterSelection);
+            MatchFilter = visualFilterSelectionMap[matchFilterSelection]();
         }
 
         /// <summary>

@@ -1,11 +1,12 @@
 ﻿using System;
 using System.Runtime.InteropServices;
+using static ItsApe.ArtifactDetector.Utilities.NativeStructures;
 
 namespace ItsApe.ArtifactDetector.Utilities
 {
     internal static class NativeMethods
     {
-        internal const int GenericAllAccess = 0x10000000;
+        internal const int TokenGeneralAccess = 0x10000000;
         internal const int WtsCurrentSession = -1;
 
         internal enum SecurityImpersionationLevel
@@ -26,9 +27,9 @@ namespace ItsApe.ArtifactDetector.Utilities
         internal static extern bool CloseHandle(IntPtr handle);
 
         [DllImport("advapi32.dll", EntryPoint = "CreateProcessAsUser", SetLastError = true,
-                CharSet = CharSet.Unicode, CallingConvention = CallingConvention.StdCall)]
+                CharSet = CharSet.Ansi, CallingConvention = CallingConvention.StdCall)]
         [return: MarshalAs(UnmanagedType.Bool)]
-        internal static extern bool CreateProcessAsUser(
+        internal static extern bool CreateProcessAsUserW(
             IntPtr hToken, string lpApplicationName, string lpCommandLine,
             ref SecurityAttributes lpProcessAttributes, ref SecurityAttributes lpThreadAttributes,
             bool bInheritHandle, uint dwCreationFlags, IntPtr lpEnvrionment,
@@ -164,19 +165,19 @@ namespace ItsApe.ArtifactDetector.Utilities
         [StructLayout(LayoutKind.Sequential)]
         public struct Startupinfo
         {
-            public Int32 cb;
+            public int cb;
             public string lpReserved;
             public string lpDesktop;
             public string lpTitle;
-            public Int32 dwX;
-            public Int32 dwY;
-            public Int32 dwXSize;
-            public Int32 dwXCountChars;
-            public Int32 dwYCountChars;
-            public Int32 dwFillAttribute;
-            public Int32 dwFlags;
-            public Int16 wShowWindow;
-            public Int16 cbReserved2;
+            public int dwX;
+            public int dwY;
+            public int dwXSize;
+            public int dwXCountChars;
+            public int dwYCountChars;
+            public int dwFillAttribute;
+            public int dwFlags;
+            public short wShowWindow;
+            public short cbReserved2;
             public IntPtr lpReserved2;
             public IntPtr hStdInput;
             public IntPtr hStdOutput;
@@ -295,15 +296,6 @@ namespace ItsApe.ArtifactDetector.Utilities
             /// A pointer to an array of column indices, specifying which columns are displayed for this item, and the order of those columns.
             /// </summary>
             public UIntPtr puColumns;
-        }
-
-        [StructLayout(LayoutKind.Sequential)]
-        internal struct RectangularOutline
-        {
-            public int left;
-            public int top;
-            public int right;
-            public int bottom;
         }
 
         [StructLayout(LayoutKind.Sequential)]

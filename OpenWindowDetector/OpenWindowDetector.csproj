@@ -35,6 +35,9 @@
   <PropertyGroup>
     <StartupObject>ArtifactDetector.OpenWindowDetector.Program</StartupObject>
   </PropertyGroup>
+  <PropertyGroup>
+    <ApplicationIcon>face-monkey.ico</ApplicationIcon>
+  </PropertyGroup>
   <ItemGroup>
     <Reference Include="System" />
     <Reference Include="System.Core" />
@@ -51,15 +54,9 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Detectors\OpenWindowDetector.cs" />
-    <Compile Include="Extensions\StringExtensions.cs" />
-    <Compile Include="Models\ArtifactRuntimeInformation.cs" />
-    <Compile Include="Models\Rectangle.cs" />
-    <Compile Include="Models\SegmentTree.cs" />
-    <Compile Include="Models\WindowInformation.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Utilities\NativeMethods.cs" />
-    <Compile Include="Utilities\RectangleUnionCalculator.cs" />
     <EmbeddedResource Include="Properties\Resources.resx">
       <Generator>ResXFileCodeGenerator</Generator>
       <LastGenOutput>Resources.Designer.cs</LastGenOutput>
@@ -83,6 +80,15 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="face-monkey.ico" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\ArtifactDetectorModels\ArtifactDetectorModels.csproj">
+      <Project>{77283536-8f37-4179-a38f-112b79c790da}</Project>
+      <Name>ArtifactDetectorModels</Name>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

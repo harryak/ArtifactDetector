@@ -7,7 +7,7 @@ using ItsApe.ArtifactDetector.Helpers;
 using ItsApe.ArtifactDetector.Models;
 using Microsoft.Extensions.Logging;
 
-namespace ItsApe.ArtifactDetector.Detectors
+namespace ItsApe.ArtifactDetector.Models
 {
     /// <summary>
     /// This class manages type info of artifacts.
@@ -15,7 +15,7 @@ namespace ItsApe.ArtifactDetector.Detectors
     /// from a binary data file.
     /// </summary>
     [Serializable]
-    internal class ArtifactReferenceImageCache
+    public class ArtifactReferenceImageCache
     {
         /// <summary>
         /// The name of the artifact type this cache is for.
@@ -50,18 +50,18 @@ namespace ItsApe.ArtifactDetector.Detectors
         /// Needs a file path to operate in and an artifact artifactDetector.
         /// </summary>
         /// <param name="artifactType">Name of the artifact type this cache is for.</param>
-        /// <param name="setup">Setup of this application.</param>
+        /// <param name="workingDirectoryPath">Where to work in.</param>
         /// <param name="visualFeatureExtrator">A visual feature extractor instance to get features from images.</param>
         /// <param name="logger">Logger to use for logging.</param>
         /// <param name="stopwatch">Optional, stopwatch for evaluation.</param>
-        private ArtifactReferenceImageCache(string artifactType, ApplicationSetup setup, IVisualFeatureExtractor visualFeatureExtrator, ILogger logger)
+        private ArtifactReferenceImageCache(string artifactType, string workingDirectoryPath, IVisualFeatureExtractor visualFeatureExtrator, ILogger logger)
         {
             _artifactType = artifactType;
 
             VisualFeatureExtractor = visualFeatureExtrator ?? throw new ArgumentNullException(nameof(visualFeatureExtrator));
 
             // Make sure the path is set right.
-            PersistentFilePath = new FileInfo(Path.Combine(setup.WorkingDirectory.FullName, ArtifactType + PersistentFileExtension));
+            PersistentFilePath = new FileInfo(Path.Combine(workingDirectoryPath, ArtifactType + PersistentFileExtension));
 
             // Instantiate library.
             ProcessedImages = new Dictionary<string, ProcessedImage>();
@@ -108,9 +108,8 @@ namespace ItsApe.ArtifactDetector.Detectors
         /// <param name="setup"></param>
         /// <param name="artifactDetector"></param>
         /// <returns></returns>
-        public static ArtifactReferenceImageCache FromFile(string fileName, ApplicationSetup setup, IVisualFeatureExtractor artifactDetector)
+        public static ArtifactReferenceImageCache FromFile(string fileName, ILogger logger, IVisualFeatureExtractor artifactDetector)
         {
-            var logger = setup.GetLogger("ReferenceImageCache");
             ArtifactReferenceImageCache artifactLibrary = null;
 
             using (Stream stream = File.Open(fileName, FileMode.Open))
@@ -138,13 +137,11 @@ namespace ItsApe.ArtifactDetector.Detectors
         /// <param name="logger">Logger to use for logging.</param>
         /// <param name="stopwatch">Optional, stopwatch for evaluation.</param>
         /// <returns>A cached or new instance of the cache.</returns>
-        public static ArtifactReferenceImageCache GetInstance(string artifactType, ApplicationSetup setup, IVisualFeatureExtractor artifactDetector)
+        public static ArtifactReferenceImageCache GetInstance(string artifactType, ILogger logger, string workingDirectoryName, IVisualFeatureExtractor artifactDetector)
         {
-            var logger = setup.GetLogger("ReferenceImageCache");
-
             // Build filename from working directory and artifact target.
             string fileName = Uri.UnescapeDataString(
-                Path.Combine(setup.WorkingDirectory.FullName,
+                Path.Combine(workingDirectoryName,
                 artifactType + PersistentFileExtension));
 
             // New instance of this class to be filled.
@@ -153,14 +150,14 @@ namespace ItsApe.ArtifactDetector.Detectors
             // Try to read from file, fail if it doesn't exist or we don't have access rights.
             try
             {
-                artifactLibrary = FromFile(fileName, setup, artifactDetector);
+                artifactLibrary = FromFile(fileName, logger, artifactDetector);
             }
             catch (Exception exception)
             {
                 if (exception is FileNotFoundException || exception is DirectoryNotFoundException || exception is UnauthorizedAccessException)
                 {
                     logger.LogInformation("No processed image cache existing or not accessible, creating new instance.");
-                    artifactLibrary = new ArtifactReferenceImageCache(artifactType, setup, artifactDetector, logger)
+                    artifactLibrary = new ArtifactReferenceImageCache(artifactType, workingDirectoryName, artifactDetector, logger)
                     {
                         DataChanged = true
                     };

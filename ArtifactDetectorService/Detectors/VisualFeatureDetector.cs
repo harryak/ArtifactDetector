@@ -25,7 +25,13 @@ namespace ItsApe.ArtifactDetector.Detectors
         /// </summary>
         public VisualFeatureDetector()
         {
-            FeatureExtractor = VisualFeatureExtractorFactory.GetFeatureExtractor();
+            FeatureExtractor = VisualFeatureExtractorFactory.GetFeatureExtractor(
+                ApplicationConfiguration.FeatureExtractorSelection,
+                ApplicationConfiguration.MatchDistanceThreshold,
+                ApplicationConfiguration.MatchUniquenessThreshold,
+                ApplicationConfiguration.MinimumMatchesRequired,
+                ApplicationConfiguration.MatchFilterSelection,
+                ApplicationSetup.GetInstance().GetLogger("Feature extractor"));
         }
 
         /// <summary>

@@ -1,11 +1,12 @@
 ﻿using System;
 
-namespace ItsApe.OpenWindowDetector.Models
+namespace ItsApe.ArtifactDetector.Models
 {
     /// <summary>
     /// Data class to contain a Windows windows' information.
     /// </summary>
-    internal class WindowInformation
+    [Serializable]
+    public class WindowInformation
     {
         /// <summary>
         /// Rectangle of the window.

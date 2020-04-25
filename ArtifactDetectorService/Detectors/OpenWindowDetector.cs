@@ -1,9 +1,12 @@
 ﻿using System;
 using System.Diagnostics;
+using System.DirectoryServices.ActiveDirectory;
 using System.IO;
 using System.IO.MemoryMappedFiles;
 using System.Runtime.InteropServices;
 using System.Runtime.Serialization.Formatters.Binary;
+using System.Security.AccessControl;
+using System.Security.Principal;
 using ItsApe.ArtifactDetector.Models;
 using ItsApe.ArtifactDetector.Utilities;
 using Microsoft.Extensions.Logging;
@@ -31,7 +34,7 @@ namespace ItsApe.ArtifactDetector.Detectors
         public override DetectorResponse FindArtifact(ref ArtifactRuntimeInformation runtimeInformation)
         {
             var ProcessDirectory = ApplicationSetup.GetInstance().GetExecutingDirectory().FullName;
-            var ProcessName = Uri.UnescapeDataString(Path.Combine(ProcessDirectory, ApplicationConfiguration.OpenWindowDetectorExe));
+            var ProcessName = "\"" + Uri.UnescapeDataString(Path.Combine(ProcessDirectory, ApplicationConfiguration.OpenWindowDetectorExe)) + "\"";
 
             // Get runtime information into memory mapped file for external process.
             byte[] serializedRuntimeInformation;
@@ -41,7 +44,9 @@ namespace ItsApe.ArtifactDetector.Detectors
                 binaryFormatter.Serialize(memoryStream, runtimeInformation);
                 serializedRuntimeInformation = memoryStream.ToArray();
             }
-            using (var memoryMappedFile = MemoryMappedFile.CreateOrOpen(ApplicationConfiguration.MemoryMappedFileName, serializedRuntimeInformation.LongLength))
+            var security = new MemoryMappedFileSecurity();
+            security.AddAccessRule(new AccessRule<MemoryMappedFileRights>(new SecurityIdentifier(WellKnownSidType.AuthenticatedUserSid, null).Translate(typeof(NTAccount)), MemoryMappedFileRights.FullControl, AccessControlType.Allow));
+            using (var memoryMappedFile = MemoryMappedFile.CreateOrOpen(@"Global\" + ApplicationConfiguration.MemoryMappedFileName, serializedRuntimeInformation.LongLength, MemoryMappedFileAccess.ReadWrite, MemoryMappedFileOptions.None, security, HandleInheritability.Inheritable))
             {
                 using (var memoryStream = memoryMappedFile.CreateViewStream())
                 {
@@ -56,6 +61,7 @@ namespace ItsApe.ArtifactDetector.Detectors
                 }
 
                 var process = Process.GetProcessById(processId);
+                var exec = process.StartInfo.FileName;
                 process.WaitForExit();
 
                 // Get runtime information back from memory mapped file from external process.

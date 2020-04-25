@@ -1,13 +1,15 @@
-﻿using System.Runtime.InteropServices;
-using ItsApe.OpenWindowDetector.Utilities;
+﻿using System;
+using System.Runtime.InteropServices;
+using ItsApe.ArtifactDetector.Utilities;
 
-namespace ItsApe.OpenWindowDetector.Models
+namespace ItsApe.ArtifactDetector.Models
 {
     /// <summary>
     /// Rectangle mainly used for Windows' windows boundaries and DLL calls.
     /// </summary>
+    [Serializable]
     [StructLayout(LayoutKind.Sequential)]
-    internal struct Rectangle
+    public struct Rectangle
     {
         public int Left, Top, Right, Bottom;
 
@@ -27,7 +29,7 @@ namespace ItsApe.OpenWindowDetector.Models
         {
         }
 
-        public Rectangle(NativeMethods.RectangularOutline rectStruct) : this(rectStruct.left, rectStruct.top, rectStruct.right, rectStruct.bottom)
+        public Rectangle(NativeStructures.RectangularOutline rectStruct) : this(rectStruct.left, rectStruct.top, rectStruct.right, rectStruct.bottom)
         {
         }
 

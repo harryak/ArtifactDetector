@@ -3,7 +3,7 @@
     /// <summary>
     /// Implementation of a segment tree for union of rectangles sweep line algorithm.
     /// </summary>
-    internal class SegmentTree
+    public class SegmentTree
     {
         /// <summary>
         /// Encapsulation of TreeNode data type for access control.

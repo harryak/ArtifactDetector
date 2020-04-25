@@ -333,7 +333,7 @@ namespace ItsApe.ArtifactDetector.Detectors
         /// <param name="rectangle"></param>
         private void OffsetIconRectangleByParent(ref Rectangle rectangle)
         {
-            var rect = new NativeMethods.RectangularOutline();
+            var rect = new NativeStructures.RectangularOutline();
             NativeMethods.GetWindowRect(WindowHandle, ref rect);
             rectangle.Left += rect.left;
             rectangle.Right += rect.left;

@@ -3,14 +3,13 @@ using System.Drawing;
 using Emgu.CV;
 using Emgu.CV.Structure;
 using Emgu.CV.Util;
-using ItsApe.ArtifactDetector.DebugUtilities;
 
 namespace ItsApe.ArtifactDetector.Detectors.VisualFeatureExtractor.VisualMatchFilter
 {
     /// <summary>
     /// Base class for match filters implementing most of the ground features.
     /// </summary>
-    internal abstract class BaseMatchFilter : Debuggable, IMatchFilter
+    internal abstract class BaseMatchFilter : IMatchFilter
     {
         /// <summary>
         /// Core function: Has to be implemented by the deriving classes.

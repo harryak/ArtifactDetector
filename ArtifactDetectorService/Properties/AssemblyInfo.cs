@@ -9,7 +9,7 @@ using System.Runtime.InteropServices;
 [assembly: AssemblyDescription("Arbitrary artifact detector for the ITS.APE.")]
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("ITS.APE")]
-[assembly: AssemblyProduct("Artifact Detector")]
+[assembly: AssemblyProduct("Artifact Detector Service")]
 [assembly: AssemblyCopyright("Copyright © 2020")]
 [assembly: AssemblyTrademark("Felix Rossmann")]
 [assembly: AssemblyCulture("")]

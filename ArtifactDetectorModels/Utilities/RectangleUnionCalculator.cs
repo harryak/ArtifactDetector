@@ -1,14 +1,14 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using ItsApe.OpenWindowDetector.Models;
+using ItsApe.ArtifactDetector.Models;
 
-namespace ItsApe.OpenWindowDetector.Utilities
+namespace ItsApe.ArtifactDetector.Utilities
 {
     /// <summary>
     /// Class to perform a sweep line algorithm to find the union of rectilinear rectangles.
     /// </summary>
-    internal class RectangleUnionCalculator
+    public class RectangleUnionCalculator
     {
         /// <summary>
         /// Events of this sweep line calculator.

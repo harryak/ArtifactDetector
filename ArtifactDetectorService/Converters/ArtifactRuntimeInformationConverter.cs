@@ -1,8 +1,8 @@
 ﻿using System;
 using System.IO;
-using ItsApe.ArtifactDetector.Detectors;
 using ItsApe.ArtifactDetector.Detectors.VisualFeatureExtractor;
 using ItsApe.ArtifactDetector.Models;
+using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
@@ -34,10 +34,18 @@ namespace ItsApe.ArtifactDetector.Converters
 
             if (jObject.TryGetValue("reference_images_path", out var referenceImagePath))
             {
+                ApplicationSetup.GetInstance().GetLogger("Feature extractor").LogWarning("Just testing");
                 outputInformation.ReferenceImages = ArtifactReferenceImageCache.GetInstance(
                     outputInformation.ArtifactName,
-                    ApplicationSetup.GetInstance(),
-                    VisualFeatureExtractorFactory.GetFeatureExtractor());
+                    ApplicationSetup.GetInstance().GetLogger("Image Cache"),
+                    ApplicationSetup.GetInstance().WorkingDirectory.FullName,
+                    VisualFeatureExtractorFactory.GetFeatureExtractor(
+                        ApplicationConfiguration.FeatureExtractorSelection,
+                        ApplicationConfiguration.MatchDistanceThreshold,
+                        ApplicationConfiguration.MatchUniquenessThreshold,
+                        ApplicationConfiguration.MinimumMatchesRequired,
+                        ApplicationConfiguration.MatchFilterSelection,
+                        ApplicationSetup.GetInstance().GetLogger("Feature extractor")));
 
                 var filePath = new DirectoryInfo(referenceImagePath.Value<string>());
                 outputInformation.ReferenceImages.ProcessImagesInPath(filePath);
@@ -46,8 +54,14 @@ namespace ItsApe.ArtifactDetector.Converters
             {
                 outputInformation.ReferenceImages = ArtifactReferenceImageCache.FromFile(
                     Uri.UnescapeDataString(referenceImageCacheFile.Value<string>()),
-                    ApplicationSetup.GetInstance(),
-                    VisualFeatureExtractorFactory.GetFeatureExtractor());
+                    ApplicationSetup.GetInstance().GetLogger("Image Cache"),
+                    VisualFeatureExtractorFactory.GetFeatureExtractor(
+                        ApplicationConfiguration.FeatureExtractorSelection,
+                        ApplicationConfiguration.MatchDistanceThreshold,
+                        ApplicationConfiguration.MatchUniquenessThreshold,
+                        ApplicationConfiguration.MinimumMatchesRequired,
+                        ApplicationConfiguration.MatchFilterSelection,
+                        ApplicationSetup.GetInstance().GetLogger("Feature extractor")));
             }
 
             return outputInformation;

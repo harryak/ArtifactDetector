@@ -8,7 +8,7 @@ namespace ItsApe.ArtifactDetector.Converters
     /// <summary>
     /// Converter from a JSON-string to Systems.Collection.Generic.List<string>.
     /// </summary>
-    internal class StringToListConverter : JsonConverter<List<string>>
+    public class StringToListConverter : JsonConverter<List<string>>
     {
         /// <summary>
         /// Read json and parse it into a List of strings.

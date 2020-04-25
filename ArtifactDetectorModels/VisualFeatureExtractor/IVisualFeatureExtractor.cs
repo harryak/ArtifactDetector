@@ -7,7 +7,7 @@ namespace ItsApe.ArtifactDetector.Detectors.VisualFeatureExtractor
     /// <summary>
     /// Interface for visual featrue extraction from images.
     /// </summary>
-    internal interface IVisualFeatureExtractor
+    public interface IVisualFeatureExtractor
     {
         /// <summary>
         /// Extract features of the given image using an OpenCV feature extractor.
