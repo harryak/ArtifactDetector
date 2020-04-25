@@ -2,9 +2,7 @@
 using System.IO;
 using System.IO.MemoryMappedFiles;
 using System.Runtime.Serialization.Formatters.Binary;
-using System.Threading;
 using ItsApe.ArtifactDetector.Models;
-using ItsApe.OpenWindowDetector.Models;
 
 namespace ArtifactDetector.OpenWindowDetector
 {
@@ -16,35 +14,20 @@ namespace ArtifactDetector.OpenWindowDetector
         [STAThread]
         private static void Main()
         {
-            using (var writer = new StreamWriter(@"C:\Users\Felix\Desktop\lel.lol", true))
+            var detector = new ItsApe.OpenWindowDetector.Detectors.OpenWindowDetector();
+            var binaryFormatter = new BinaryFormatter();
+            ArtifactRuntimeInformation runtimeInformation;
+            // Get runtime information from memory mapped file from external process.
+            using (var memoryMappedFile = MemoryMappedFile.OpenExisting(@"Global\AD-runtimeInfo", MemoryMappedFileRights.ReadWrite))
             {
-                var binaryFormatter = new BinaryFormatter();
-                ArtifactRuntimeInformation runtimeInformation;
-                // Get runtime information from memory mapped file from external process.
-                try
+                using (var memoryStream = memoryMappedFile.CreateViewStream())
                 {
-                    using (var memoryMappedFile = MemoryMappedFile.OpenExisting(@"Global\AD-runtimeInfo", MemoryMappedFileRights.ReadWrite))
-                    {
-                        using (var memoryStream = memoryMappedFile.CreateViewStream())
-                        {
-                            writer.WriteLine("Rausholen");
-                            runtimeInformation = (ArtifactRuntimeInformation)binaryFormatter.Deserialize(memoryStream);
+                    runtimeInformation = (ArtifactRuntimeInformation)binaryFormatter.Deserialize(memoryStream);
 
-                            writer.WriteLine("Schreiben");
-                            runtimeInformation.CountOpenWindows = 50;
+                    detector.FindArtifact(ref runtimeInformation);
 
-                            writer.WriteLine("Reinlegen");
-                            binaryFormatter.Serialize(memoryStream, runtimeInformation);
-                        }
-                    }
-                }
-                catch (FileNotFoundException)
-                {
-                    writer.WriteLine("Nicht gefunden 1");
-                }
-                catch (Exception e)
-                {
-                    writer.WriteLine("Unspezifizierter Fehler {0}.", e.Message);
+                    memoryStream.Position = 0;
+                    binaryFormatter.Serialize(memoryStream, runtimeInformation);
                 }
             }
         }

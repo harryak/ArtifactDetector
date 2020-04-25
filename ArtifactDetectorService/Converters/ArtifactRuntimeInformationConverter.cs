@@ -34,7 +34,6 @@ namespace ItsApe.ArtifactDetector.Converters
 
             if (jObject.TryGetValue("reference_images_path", out var referenceImagePath))
             {
-                ApplicationSetup.GetInstance().GetLogger("Feature extractor").LogWarning("Just testing");
                 outputInformation.ReferenceImages = ArtifactReferenceImageCache.GetInstance(
                     outputInformation.ArtifactName,
                     ApplicationSetup.GetInstance().GetLogger("Image Cache"),

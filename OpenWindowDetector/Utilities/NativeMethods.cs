@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Runtime.InteropServices;
 using System.Text;
-using ItsApe.OpenWindowDetector.Models;
+using ItsApe.ArtifactDetector.Models;
 
 namespace ItsApe.OpenWindowDetector.Utilities
 {

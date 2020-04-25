@@ -33,26 +33,30 @@ namespace ItsApe.ArtifactDetector.Detectors
         /// <returns>A response object containing information whether the artifact has been found.</returns>
         public override DetectorResponse FindArtifact(ref ArtifactRuntimeInformation runtimeInformation)
         {
-            var ProcessDirectory = ApplicationSetup.GetInstance().GetExecutingDirectory().FullName;
-            var ProcessName = "\"" + Uri.UnescapeDataString(Path.Combine(ProcessDirectory, ApplicationConfiguration.OpenWindowDetectorExe)) + "\"";
+            // Backup non-serialized property.
+            var referenceImageBackup = runtimeInformation.ReferenceImages;
 
             // Get runtime information into memory mapped file for external process.
-            byte[] serializedRuntimeInformation;
+            var ProcessName = GetExternalProcessName();
             var binaryFormatter = new BinaryFormatter();
-            using (var memoryStream = new MemoryStream())
+            GetSerializedObjectLength(ref runtimeInformation, ref binaryFormatter, out long serializedObjectLength);
+            GetSecurityIdentifier(out var fileSecurity);
+
+            // Open a memory mapped file to exchange data with the external process.
+            using (var memoryMappedFile = MemoryMappedFile.CreateOrOpen(
+                @"Global\" + ApplicationConfiguration.MemoryMappedFileName,
+                serializedObjectLength * 2,
+                MemoryMappedFileAccess.ReadWrite,
+                MemoryMappedFileOptions.None,
+                fileSecurity, HandleInheritability.Inheritable))
             {
-                binaryFormatter.Serialize(memoryStream, runtimeInformation);
-                serializedRuntimeInformation = memoryStream.ToArray();
-            }
-            var security = new MemoryMappedFileSecurity();
-            security.AddAccessRule(new AccessRule<MemoryMappedFileRights>(new SecurityIdentifier(WellKnownSidType.AuthenticatedUserSid, null).Translate(typeof(NTAccount)), MemoryMappedFileRights.FullControl, AccessControlType.Allow));
-            using (var memoryMappedFile = MemoryMappedFile.CreateOrOpen(@"Global\" + ApplicationConfiguration.MemoryMappedFileName, serializedRuntimeInformation.LongLength, MemoryMappedFileAccess.ReadWrite, MemoryMappedFileOptions.None, security, HandleInheritability.Inheritable))
-            {
+                // Get the runtime information into the memory mapped file.
                 using (var memoryStream = memoryMappedFile.CreateViewStream())
                 {
                     binaryFormatter.Serialize(memoryStream, runtimeInformation);
                 }
 
+                // Start external executable in user session.
                 int processId = CreateProcessAsUser(ProcessName);
                 if (processId < 0)
                 {
@@ -60,8 +64,8 @@ namespace ItsApe.ArtifactDetector.Detectors
                     return new DetectorResponse { ArtifactPresent = DetectorResponse.ArtifactPresence.Possible };
                 }
 
+                // Wait for process to end.
                 var process = Process.GetProcessById(processId);
-                var exec = process.StartInfo.FileName;
                 process.WaitForExit();
 
                 // Get runtime information back from memory mapped file from external process.
@@ -71,20 +75,58 @@ namespace ItsApe.ArtifactDetector.Detectors
                 }
             }
 
-            return new DetectorResponse { ArtifactPresent = DetectorResponse.ArtifactPresence.Possible };
+            // Restore backed up non-serialized property.
+            runtimeInformation.ReferenceImages = referenceImageBackup;
 
-            /*
-            // Check whether we have enough data to detect the artifact.
-            if (runtimeInformation.WindowHandles.Count < 1 && runtimeInformation.PossibleWindowTitleSubstrings.Count < 1)
+            if (runtimeInformation.PossibleWindowTitleSubstrings.Count < 1 && runtimeInformation.PossibleWindowTitleSubstrings.Count < 1)
             {
-                Logger.LogInformation("No matching windows or possible window titles given for detector. Only getting visible windows now.");
-                return FindArtifactLight(ref runtimeInformation);
+                return new DetectorResponse { ArtifactPresent = DetectorResponse.ArtifactPresence.Possible };
+            }
+            else if (runtimeInformation.CountOpenWindows > 0)
+            {
+                return new DetectorResponse { ArtifactPresent = DetectorResponse.ArtifactPresence.Certain };
             }
 
-            InitializeDetection(ref runtimeInformation);
-            AnalyzeVisibleWindows(ref runtimeInformation);
+            return new DetectorResponse { ArtifactPresent = DetectorResponse.ArtifactPresence.Impossible };
+        }
 
-            return PrepareResponse(ref runtimeInformation);*/
+        /// <summary>
+        /// Get the full executable path (in quotes for space characters) of the external process to start.
+        /// </summary>
+        /// <returns>The full path.</returns>
+        private string GetExternalProcessName()
+        {
+            var ProcessDirectory = ApplicationSetup.GetInstance().GetExecutingDirectory().FullName;
+            return "\"" + Uri.UnescapeDataString(Path.Combine(ProcessDirectory, ApplicationConfiguration.OpenWindowDetectorExe)) + "\"";
+        }
+
+        /// <summary>
+        /// Get the serialized object's length by ... well serializing it.
+        /// </summary>
+        /// <param name="runtimeInformation">Object to serialize</param>
+        /// <param name="binaryFormatter">Formatter instance to use.</param>
+        /// <param name="serializedObjectLength">Out parameter of instance.</param>
+        private void GetSerializedObjectLength(ref ArtifactRuntimeInformation runtimeInformation, ref BinaryFormatter binaryFormatter, out long serializedObjectLength)
+        {
+            serializedObjectLength = 0;
+            using (var memoryStream = new MemoryStream())
+            {
+                binaryFormatter.Serialize(memoryStream, runtimeInformation);
+                serializedObjectLength = memoryStream.Length;
+            }
+        }
+
+        /// <summary>
+        /// Get security identifier for a memory mapped file which allows authenticated local users full control.
+        /// </summary>
+        /// <param name="fileSecurity">The security object.</param>
+        private void GetSecurityIdentifier(out MemoryMappedFileSecurity fileSecurity)
+        {
+            fileSecurity = new MemoryMappedFileSecurity();
+            fileSecurity.AddAccessRule(
+                new AccessRule<MemoryMappedFileRights>(new SecurityIdentifier(WellKnownSidType.AuthenticatedUserSid, null).Translate(typeof(NTAccount)),
+                MemoryMappedFileRights.FullControl,
+                AccessControlType.Allow));
         }
     }
 }

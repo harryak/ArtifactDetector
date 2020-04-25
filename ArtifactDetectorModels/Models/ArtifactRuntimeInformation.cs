@@ -1,9 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Runtime.Serialization;
-using Emgu.CV;
-using ItsApe.ArtifactDetector.Converters;
+﻿using ItsApe.ArtifactDetector.Converters;
 using Newtonsoft.Json;
+using System;
+using System.Collections.Generic;
 
 namespace ItsApe.ArtifactDetector.Models
 {
@@ -13,6 +11,10 @@ namespace ItsApe.ArtifactDetector.Models
     [Serializable]
     public class ArtifactRuntimeInformation : ICloneable
     {
+        [JsonIgnore]
+        [NonSerialized]
+        private ArtifactReferenceImageCache _referenceImages;
+
         /// <summary>
         /// Empty constructor for setting the properties later on.
         /// </summary>
@@ -123,15 +125,7 @@ namespace ItsApe.ArtifactDetector.Models
         /// Image cache for reference image.
         /// </summary>
         [JsonIgnore]
-        [IgnoreDataMember]
-        public ArtifactReferenceImageCache ReferenceImages { get; set; }
-
-        /// <summary>
-        /// Screenshots of the matching windows.
-        /// </summary
-        [JsonIgnore]
-        [IgnoreDataMember]
-        public Dictionary<int, Mat> Screenshots { get; set; } = new Dictionary<int, Mat>();
+        public ArtifactReferenceImageCache ReferenceImages { get => _referenceImages; set => _referenceImages = value; }
 
         /// <summary>
         /// Can hold currently visible windows.

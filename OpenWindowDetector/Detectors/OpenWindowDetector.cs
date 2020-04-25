@@ -17,35 +17,25 @@ namespace ItsApe.OpenWindowDetector.Detectors
     /// </summary>
     internal class OpenWindowDetector
     {
-        private int foundMatches = 0;
-
-        private float maxWindowVisibilityPercentage = 0.0f;
-
-        private List<IntPtr> FoundWindowHandles { get; set; }
-
         /// <summary>
         /// Special window handle to "desktop window".
         /// </summary>
         private IntPtr ProgramManagerWindowHandle { get; set; }
-
-        private Dictionary<int, Rectangle> VisibleWindowOutlines { get; set; }
-
-        private List<WindowInformation> WindowsInformation { get; set; }
 
         /// <summary>
         /// Find the artifact defined in the artifactConfiguration given some runtime information and a previous detector's response.
         /// </summary>
         /// <param name="runtimeInformation">Information about the artifact.</param>
         /// <returns>A response object containing information whether the artifact has been found.</returns>
-        public int FindArtifact(ref List<string> possibleWindowTitleSubstrings)
+        public void FindArtifact(ref ArtifactRuntimeInformation runtimeInformation)
         {
             // Check whether we have enough data to detect the artifact.
-            if (possibleWindowTitleSubstrings.Count < 1)
+            if (runtimeInformation.PossibleWindowTitleSubstrings.Count < 1 && runtimeInformation.PossibleWindowTitleSubstrings.Count < 1)
             {
-                return AnalyzeVisibleWindowsLight(ref possibleWindowTitleSubstrings);
+                AnalyzeVisibleWindowsLight(ref runtimeInformation);
             }
 
-            return AnalyzeVisibleWindows(ref possibleWindowTitleSubstrings);
+            AnalyzeVisibleWindows(ref runtimeInformation);
         }
 
         /// <summary>
@@ -96,43 +86,43 @@ namespace ItsApe.OpenWindowDetector.Detectors
             NativeMethods.GetWindowInfo(windowHandle, ref visualInformation);
 
             var handle = GCHandle.FromIntPtr(lParam);
-            var possibleWindowTitleSubstrings = (List<string>)handle.Target;
+            var runtimeInformation = (ArtifactRuntimeInformation)handle.Target;
 
             // If it is one of the windows we want to find: Add to that list.
-            if (WindowMatchesConstraints(windowTitle, windowHandle, ref possibleWindowTitleSubstrings))
+            if (WindowMatchesConstraints(windowTitle, windowHandle, ref runtimeInformation))
             {
                 float visibility = CalculateWindowVisibility(
                             visualInformation.rcClient,
-                            VisibleWindowOutlines.Values);
-                WindowsInformation.Add(
+                            runtimeInformation.VisibleWindowOutlines.Values);
+                runtimeInformation.WindowsInformation.Add(
                     new WindowInformation()
                     {
                         BoundingArea = visualInformation.rcWindow,
                         Handle = windowHandle,
                         Title = windowTitle,
                         Visibility = visibility,
-                        ZIndex = VisibleWindowOutlines.Count + 1
+                        ZIndex = runtimeInformation.VisibleWindowOutlines.Count + 1
                     });
-                foundMatches++;
+                runtimeInformation.CountOpenWindows++;
 
-                if (maxWindowVisibilityPercentage < visibility)
+                if (runtimeInformation.MaxWindowVisibilityPercentage < visibility)
                 {
-                    maxWindowVisibilityPercentage = visibility;
+                    runtimeInformation.MaxWindowVisibilityPercentage = visibility;
                 }
             }
 
             // Add the current window to all windows now.
-            VisibleWindowOutlines.Add(
-                VisibleWindowOutlines.Count + 1,
+            runtimeInformation.VisibleWindowOutlines.Add(
+                runtimeInformation.VisibleWindowOutlines.Count + 1,
                 visualInformation.rcClient);
 
             return true;
         }
 
-        private int AnalyzeVisibleWindows(ref List<string> possibleWindowSubstrings)
+        private void AnalyzeVisibleWindows(ref ArtifactRuntimeInformation runtimeInformation)
         {
             // Access all open windows and analyze each of them.
-            var windowStringsHandle = GCHandle.Alloc(possibleWindowSubstrings);
+            var windowStringsHandle = GCHandle.Alloc(runtimeInformation);
             try
             {
                 NativeMethods.EnumWindows(
@@ -143,13 +133,22 @@ namespace ItsApe.OpenWindowDetector.Detectors
             {
                 windowStringsHandle.Free();
             }
-
-            return foundMatches > 0 ? 2 : 0;
         }
 
-        private int AnalyzeVisibleWindowsLight(ref List<string> possibleWindowTitleSubstrings)
+        private void AnalyzeVisibleWindowsLight(ref ArtifactRuntimeInformation runtimeInformation)
         {
-            throw new NotImplementedException();
+            // Access all open windows and analyze each of them.
+            var windowStringsHandle = GCHandle.Alloc(runtimeInformation);
+            try
+            {
+                NativeMethods.EnumWindows(
+                    GetVisibleWindowDelegate,
+                    GCHandle.ToIntPtr(windowStringsHandle));
+            }
+            finally
+            {
+                windowStringsHandle.Free();
+            }
         }
 
         /// <summary>
@@ -182,9 +181,12 @@ namespace ItsApe.OpenWindowDetector.Detectors
             var visualInformation = new NativeMethods.WindowVisualInformation();
             NativeMethods.GetWindowInfo(windowHandle, ref visualInformation);
 
+            var handle = GCHandle.FromIntPtr(lParam);
+            var runtimeInformation = (ArtifactRuntimeInformation)handle.Target;
+
             // Add the current window to all windows now.
-            VisibleWindowOutlines.Add(
-                VisibleWindowOutlines.Count + 1,
+            runtimeInformation.VisibleWindowOutlines.Add(
+                runtimeInformation.VisibleWindowOutlines.Count + 1,
                 visualInformation.rcClient);
 
             return true;
@@ -231,10 +233,10 @@ namespace ItsApe.OpenWindowDetector.Detectors
         /// <param name="windowTitle">Obvious.</param>
         /// <param name="windowHandle">Internal IntPtr for window.</param>
         /// <returns>True if the window matches.</returns>
-        private bool WindowMatchesConstraints(string windowTitle, IntPtr windowHandle, ref List<string> possibleWindowTitleSubstrings)
+        private bool WindowMatchesConstraints(string windowTitle, IntPtr windowHandle, ref ArtifactRuntimeInformation runtimeInformation)
         {
-            //return runtimeInformation.WindowHandles.Contains(windowHandle)
-            return windowTitle.ContainsAny(possibleWindowTitleSubstrings);
+            return runtimeInformation.WindowHandles.Contains(windowHandle)
+                || windowTitle.ContainsAny(runtimeInformation.PossibleWindowTitleSubstrings);
         }
     }
 }

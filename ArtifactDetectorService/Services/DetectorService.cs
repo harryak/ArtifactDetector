@@ -204,7 +204,7 @@ namespace ItsApe.ArtifactDetector.Services
         protected override void OnStart(string[] args)
         {
             // Uncomment this to debug.
-            Debugger.Launch();
+            //Debugger.Launch();
 
             if (serviceHost != null)
             {
