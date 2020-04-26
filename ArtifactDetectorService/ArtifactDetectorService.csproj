@@ -245,6 +245,7 @@
       <DependentUpon>ProjectInstaller.cs</DependentUpon>
     </Compile>
     <Compile Include="Services\DetectionLogWriter.cs" />
+    <Compile Include="Services\DetectorProcessEndpoint.cs" />
     <Compile Include="Services\DetectorService.cs">
       <SubType>Component</SubType>
     </Compile>

@@ -51,16 +51,6 @@ namespace ItsApe.ArtifactDetector.Services
         private SessionManager sessionManager;
 
         /// <summary>
-        /// Memory region for sharing data with other processes.
-        /// </summary>
-        private SafeMemoryMappedFileHandle sharedMemoryHandle;
-
-        /// <summary>
-        /// Mutex for sharedMemory, used across processes.
-        /// </summary>
-        private Mutex sharedMemoryMutex;
-
-        /// <summary>
         /// Instantiate service with setup.
         /// </summary>
         /// <param name="setup">Setup of this application.</param>
@@ -134,8 +124,6 @@ namespace ItsApe.ArtifactDetector.Services
                 PersistServiceState();
                 return false;
             }
-            
-            SetupSharedMemory();
 
             // Start detection loop.
             Logger.LogInformation("Starting watch task now with interval of {0}ms.", serviceState.ArtifactConfiguration.DetectionInterval);
@@ -167,11 +155,6 @@ namespace ItsApe.ArtifactDetector.Services
             detectionTimer.Stop();
 
             //TODO: Wait for writing stream to finish via mutex and release both them to be safe.
-
-            if (sharedMemoryHandle != null)
-            {
-                sharedMemoryHandle.Dispose();
-            }
 
             var parameters = JsonConvert.DeserializeObject<StopWatchParameters>(jsonEncodedParameters);
 
@@ -332,19 +315,6 @@ namespace ItsApe.ArtifactDetector.Services
         }
 
         /// <summary>
-        /// Get security identifier for a memory mapped file which allows authenticated local users full control.
-        /// </summary>
-        /// <param name="fileSecurity">The security object.</param>
-        private void GetSecurityIdentifier(out MemoryMappedFileSecurity fileSecurity)
-        {
-            fileSecurity = new MemoryMappedFileSecurity();
-            fileSecurity.AddAccessRule(
-                new AccessRule<MemoryMappedFileRights>(new SecurityIdentifier(WellKnownSidType.AuthenticatedUserSid, null).Translate(typeof(NTAccount)),
-                MemoryMappedFileRights.FullControl,
-                AccessControlType.Allow));
-        }
-
-        /// <summary>
         /// "Pause" the service state: Either temporarily or for a shutdown etc.
         /// </summary>
         private void PauseCurrentState()
@@ -411,29 +381,6 @@ namespace ItsApe.ArtifactDetector.Services
                 Logger.LogInformation("Watch task should be running, start it.");
                 serviceState.IsRunning = false;
                 StartWatch();
-            }
-        }
-
-        private void SetupSharedMemory()
-        {
-            // Prepare shared memory via memory mapped file.
-            if (sharedMemoryHandle == null)
-            {
-                GetSecurityIdentifier(out var fileSecurity);
-
-                var sharedMemory = MemoryMappedFile.CreateOrOpen(
-                   @"Global\" + ApplicationConfiguration.MemoryMappedFileName,
-                   2048,
-                   MemoryMappedFileAccess.ReadWrite,
-                   MemoryMappedFileOptions.None,
-                   fileSecurity, HandleInheritability.Inheritable);
-
-                sharedMemoryHandle = sharedMemory.SafeMemoryMappedFileHandle;
-            }
-
-            if (sharedMemoryMutex == null)
-            {
-                sharedMemoryMutex = new Mutex(false, ApplicationConfiguration.MemoryMappedMutexName);
             }
         }
 
