@@ -1,4 +1,4 @@
-﻿
+
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 15
 VisualStudioVersion = 15.0.28307.136
@@ -10,7 +10,7 @@ Project("{54435603-DBB4-11D2-8724-00A0C9A8B90C}") = "ArtifactDetectorInstaller",
 		{77283536-8F37-4179-A38F-112B79C790DA} = {77283536-8F37-4179-A38F-112B79C790DA}
 	EndProjectSection
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ArtifactDetectorProcess", "OpenWindowDetector\ArtifactDetectorProcess.csproj", "{AFF75345-8D35-4B4E-A0E9-CA5B91BB0861}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ArtifactDetectorProcess", "ArtifactDetectorProcess\ArtifactDetectorProcess.csproj", "{AFF75345-8D35-4B4E-A0E9-CA5B91BB0861}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ArtifactDetectorModels", "ArtifactDetectorModels\ArtifactDetectorModels.csproj", "{77283536-8F37-4179-A38F-112B79C790DA}"
 EndProject
