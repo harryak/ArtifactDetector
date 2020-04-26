@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Runtime.InteropServices;
 using ItsApe.ArtifactDetector.Utilities;
+using MessagePack;
 
 namespace ItsApe.ArtifactDetector.Models
 {
@@ -8,10 +9,18 @@ namespace ItsApe.ArtifactDetector.Models
     /// Rectangle mainly used for Windows' windows boundaries and DLL calls.
     /// </summary>
     [Serializable]
+    [MessagePackObject]
     [StructLayout(LayoutKind.Sequential)]
     public struct Rectangle
     {
-        public int Left, Top, Right, Bottom;
+        [Key(0)]
+        public int Left;
+        [Key(1)]
+        public int Top;
+        [Key(2)]
+        public int Right;
+        [Key(3)]
+        public int Bottom;
 
         public Rectangle(int left, int top, int right, int bottom)
         {
@@ -36,6 +45,7 @@ namespace ItsApe.ArtifactDetector.Models
         /// <summary>
         /// Accessor for the height.
         /// </summary>
+        [Key(4)]
         public int Height
         {
             get { return Bottom - Top; }
@@ -45,6 +55,7 @@ namespace ItsApe.ArtifactDetector.Models
         /// <summary>
         /// Accessor for the width.
         /// </summary>
+        [Key(5)]
         public int Width
         {
             get { return Right - Left; }
@@ -54,11 +65,13 @@ namespace ItsApe.ArtifactDetector.Models
         /// <summary>
         /// Accessor for the total area.
         /// </summary>
+        [Key(6)]
         public int Area
         {
             get { return Width * Height; }
         }
 
+        [Key(7)]
         public System.Drawing.Size Size
         {
             get { return new System.Drawing.Size(Width, Height); }

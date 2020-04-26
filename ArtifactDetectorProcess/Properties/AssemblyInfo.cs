@@ -6,10 +6,10 @@ using System.Runtime.InteropServices;
 // General Information about an assembly is controlled through the following
 // set of attributes. Change these attribute values to modify the information
 // associated with an assembly.
-[assembly: AssemblyTitle("OpenWindowDetector")]
-[assembly: AssemblyDescription("")]
+[assembly: AssemblyTitle("ArtifactDetector Process")]
+[assembly: AssemblyDescription("Process belonging to the ITS.APE Artifact Detector")]
 [assembly: AssemblyConfiguration("")]
-[assembly: AssemblyCompany("")]
+[assembly: AssemblyCompany("ITS.APE")]
 [assembly: AssemblyProduct("ArtifactDetector")]
 [assembly: AssemblyCopyright("Copyright ©  2020")]
 [assembly: AssemblyTrademark("")]

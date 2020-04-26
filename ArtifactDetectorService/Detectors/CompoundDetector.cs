@@ -39,13 +39,8 @@ namespace ItsApe.ArtifactDetector.Detectors
         /// </summary>
         /// <param name="runtimeInformation">Information about the artifact.</param>
         /// <returns>A response object containing information whether the artifact has been found.</returns>
-        public override DetectorResponse FindArtifact(ref ArtifactRuntimeInformation runtimeInformation)
+        public override DetectorResponse FindArtifact(ref ArtifactRuntimeInformation runtimeInformation, int sessionId)
         {
-            if (!IsScreenActive(ref runtimeInformation))
-            {
-                Logger.LogInformation("Not detecting, screen is locked.");
-                return new DetectorResponse { ArtifactPresent = DetectorResponse.ArtifactPresence.Impossible };
-            }
             Logger.LogInformation("Compound detector started.");
 
             DetectorResponse previousResponse = null;
@@ -60,7 +55,7 @@ namespace ItsApe.ArtifactDetector.Detectors
                 }
 
                 // Get the new chain element's response.
-                entry.Value.FindArtifact(ref runtimeInformation);
+                entry.Value.FindArtifact(ref runtimeInformation, sessionId);
 
                 // If there is an artifact or there is none with 100% certainty, break.
                 if (entry.Value.HasTargetConditions() && !entry.Value.TargetConditionsMatch(ref response))

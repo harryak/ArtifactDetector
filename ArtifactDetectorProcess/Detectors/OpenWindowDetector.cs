@@ -15,7 +15,7 @@ namespace ItsApe.ArtifactDetectorProcess.Detectors
     /// Needs:  WindowHandle _or_ WindowTitle
     /// Yields: WindowHandle, WindowTitle
     /// </summary>
-    internal class OpenWindowDetector
+    internal class OpenWindowDetector : IDetector
     {
         /// <summary>
         /// Special window handle to "desktop window".

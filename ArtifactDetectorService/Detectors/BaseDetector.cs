@@ -30,7 +30,7 @@ namespace ItsApe.ArtifactDetector.Detectors
         /// <param name="runtimeInformation">Information about the artifact.</param>
         ///
         /// <returns>A response object containing information whether the artifact has been found.</returns>
-        public abstract DetectorResponse FindArtifact(ref ArtifactRuntimeInformation runtimeInformation);
+        public abstract DetectorResponse FindArtifact(ref ArtifactRuntimeInformation runtimeInformation, int sessionId);
 
         /// <summary>
         /// Tells whether this detector has preconditions.

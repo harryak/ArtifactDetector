@@ -6,9 +6,10 @@ using System.Security.AccessControl;
 using System.Security.Principal;
 using System.Threading;
 using ItsApe.ArtifactDetector.DebugUtilities;
+using ItsApe.ArtifactDetector.Models;
 using ItsApe.ArtifactDetector.Utilities;
+using MessagePack;
 using Microsoft.Extensions.Logging;
-using Microsoft.Win32.SafeHandles;
 
 namespace ItsApe.ArtifactDetector.Services
 {
@@ -37,7 +38,7 @@ namespace ItsApe.ArtifactDetector.Services
         /// <summary>
         /// Memory region for sharing data with other processes.
         /// </summary>
-        private SafeMemoryMappedFileHandle sharedMemoryHandle;
+        private MemoryMappedFile sharedMemory;
 
         /// <summary>
         /// Mutex for sharedMemory, used across processes.
@@ -52,10 +53,59 @@ namespace ItsApe.ArtifactDetector.Services
         {
             sessionId = _sessionId;
             mmfName = @"Global\" + ApplicationConfiguration.MemoryMappedFileName + sessionId;
-            mutexName = ApplicationConfiguration.MemoryMappedFileName + "Access" + sessionId;
+            mutexName = @"Global\" + ApplicationConfiguration.MemoryMappedFileName + "-Access-" + sessionId;
 
             SetupMemoryMappedFile();
-            StartSessionProcess();
+
+            if (!StartSessionProcess())
+            {
+                throw new Exception("Could not start process in session " + sessionId + ".");
+            }
+        }
+
+        /// <summary>
+        /// Call external process with runtime information.
+        /// </summary>
+        /// <param name="runtimeInformation">The runtime information to pass to and get from the process.</param>
+        /// <returns>True on success.</returns>
+        public bool CallProcess(ref ArtifactRuntimeInformation runtimeInformation)
+        {
+            // Backup non-serialized property.
+            var referenceImageBackup = runtimeInformation.ReferenceImages;
+
+            // Use memory stream to call process.
+            using (var memoryStream = sharedMemory.CreateViewStream())
+            {
+                MessagePackSerializer.Serialize(memoryStream, runtimeInformation);
+
+                // Release mutex for short time to let process get it.
+                try
+                {
+                    sharedMemoryMutex.ReleaseMutex();
+                }
+                catch (Exception e)
+                {
+                    var type = e.GetType();
+                }
+
+                // Wait for Mutex but do not release it.
+                try
+                {
+                    if (sharedMemoryMutex.WaitOne())
+                    {
+                        memoryStream.Position = 0;
+                        runtimeInformation = MessagePackSerializer.Deserialize<ArtifactRuntimeInformation>(memoryStream);
+                    }
+                }
+                catch (Exception e)
+                {
+                    var type = e.GetType();
+                }
+            }
+
+            // Restore backed up non-serialized property.
+            runtimeInformation.ReferenceImages = referenceImageBackup;
+            return true;
         }
 
         /// <summary>
@@ -68,6 +118,18 @@ namespace ItsApe.ArtifactDetector.Services
             fileSecurity.AddAccessRule(
                 new AccessRule<MemoryMappedFileRights>(new SecurityIdentifier(WellKnownSidType.AuthenticatedUserSid, null).Translate(typeof(NTAccount)),
                 MemoryMappedFileRights.FullControl,
+                AccessControlType.Allow));
+        }
+
+        /// <summary>
+        /// Get security identifier for a mutex which allows authenticated local users full control.
+        /// </summary>
+        /// <param name="mutexSecurity">The security object.</param>
+        private void FillMutexSecurityIdentifier(out MutexSecurity mutexSecurity)
+        {
+            mutexSecurity = new MutexSecurity();
+            mutexSecurity.AddAccessRule(new MutexAccessRule(new SecurityIdentifier(WellKnownSidType.AuthenticatedUserSid, null).Translate(typeof(NTAccount)),
+                MutexRights.FullControl,
                 AccessControlType.Allow));
         }
 
@@ -106,7 +168,7 @@ namespace ItsApe.ArtifactDetector.Services
         private string GetDetectorProcessName()
         {
             var ProcessDirectory = ApplicationSetup.GetInstance().GetExecutingDirectory().FullName;
-            return "\"" + Uri.UnescapeDataString(Path.Combine(ProcessDirectory, ApplicationConfiguration.UserSessionApplicationName)) + "\" " + mmfName;
+            return "\"" + Uri.UnescapeDataString(Path.Combine(ProcessDirectory, ApplicationConfiguration.UserSessionApplicationName)) + "\" " + mmfName + " " + mutexName;
         }
 
         /// <summary>
@@ -134,25 +196,28 @@ namespace ItsApe.ArtifactDetector.Services
         /// </summary>
         private void SetupMemoryMappedFile()
         {
+            if (sharedMemoryMutex == null)
+            {
+                // Grab this mutex directly to make process wait for its release.
+                FillMutexSecurityIdentifier(out var mutexSecurity);
+                sharedMemoryMutex = new Mutex(true, mutexName, out bool createdNew, mutexSecurity);
+
+                if (!createdNew)
+                {
+                    Logger.LogDebug("Mutex existed.");
+                    sharedMemoryMutex.WaitOne();
+                }
+            }
             // Prepare shared memory via memory mapped file.
-            if (sharedMemoryHandle == null)
+            if (sharedMemory == null)
             {
                 FillMMFSecurityIdentifier(out var fileSecurity);
 
-                var sharedMemory = MemoryMappedFile.CreateOrOpen(
-                   mmfName,
-                   2048,
+                sharedMemory = MemoryMappedFile.CreateOrOpen(
+                   mmfName, 2048,
                    MemoryMappedFileAccess.ReadWrite,
                    MemoryMappedFileOptions.None,
                    fileSecurity, HandleInheritability.Inheritable);
-
-                sharedMemoryHandle = sharedMemory.SafeMemoryMappedFileHandle;
-            }
-
-            if (sharedMemoryMutex == null)
-            {
-                // Own this mutex initially to make process wait for its release.
-                sharedMemoryMutex = new Mutex(true, mutexName);
             }
         }
 
@@ -222,11 +287,8 @@ namespace ItsApe.ArtifactDetector.Services
             {
                 if (disposing)
                 {
-                    if (sharedMemoryMutex.WaitOne())
-                    {
-                        sharedMemoryMutex.Close();
-                        sharedMemoryHandle.Close();
-                    }
+                    sharedMemoryMutex.Close();
+                    sharedMemory.Dispose();
                 }
 
                 // No need for disposing the process, it gets killed automatically when the session terminates.

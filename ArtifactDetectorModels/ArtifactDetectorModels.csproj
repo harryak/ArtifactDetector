@@ -40,6 +40,12 @@
     <Reference Include="Emgu.CV.World.NetStandard, Version=1.0.0.0, Culture=neutral, PublicKeyToken=7281126722ab4438, processorArchitecture=MSIL">
       <HintPath>..\packages\Emgu.CV.4.2.0.3662\lib\netstandard2.0\Emgu.CV.World.NetStandard.dll</HintPath>
     </Reference>
+    <Reference Include="MessagePack, Version=2.1.0.0, Culture=neutral, PublicKeyToken=b4a0369545f0a1be, processorArchitecture=MSIL">
+      <HintPath>..\packages\MessagePack.2.1.115\lib\netstandard2.0\MessagePack.dll</HintPath>
+    </Reference>
+    <Reference Include="MessagePack.Annotations, Version=2.1.0.0, Culture=neutral, PublicKeyToken=b4a0369545f0a1be, processorArchitecture=MSIL">
+      <HintPath>..\packages\MessagePack.Annotations.2.1.115\lib\netstandard2.0\MessagePack.Annotations.dll</HintPath>
+    </Reference>
     <Reference Include="Microsoft.Bcl.AsyncInterfaces, Version=1.0.0.0, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51, processorArchitecture=MSIL">
       <HintPath>..\packages\Microsoft.Bcl.AsyncInterfaces.1.1.0\lib\net461\Microsoft.Bcl.AsyncInterfaces.dll</HintPath>
     </Reference>
@@ -109,13 +115,15 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Converters\IntPtrFormatter.cs" />
+    <Compile Include="Converters\IntPtrListFormatter.cs" />
     <Compile Include="Converters\StringToListConverter.cs" />
     <Compile Include="Helpers\FileHelper.cs" />
     <Compile Include="Helpers\StringExtensions.cs" />
     <Compile Include="Models\ArtifactReferenceImageCache.cs" />
     <Compile Include="Models\ArtifactRuntimeInformation.cs" />
+    <Compile Include="Models\ExternalDetector.cs" />
     <Compile Include="Models\ProcessedImage.cs" />
-    <Compile Include="Models\RuntimeInformationSpan.cs" />
     <Compile Include="Models\SegmentTree.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Models\Rectangle.cs" />

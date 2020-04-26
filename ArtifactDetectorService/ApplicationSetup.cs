@@ -1,6 +1,7 @@
 ﻿using System;
 using System.IO;
 using System.Reflection;
+using System.Windows.Forms;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.EventLog;
 using NLog.Extensions.Logging;
@@ -21,15 +22,13 @@ namespace ItsApe.ArtifactDetector
         {
             Logger = GetLogger("Setup");
 
-            // Parse the command line.
-            Logger.LogDebug("Getting the configuration.");
-
             WorkingDirectory = GetExecutingDirectory();
 # if DEBUG
             // Setup display of images if being in debug mode.
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
 #endif
+            Logger.LogDebug("Setup complete");
         }
 
         ~ApplicationSetup()

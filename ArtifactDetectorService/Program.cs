@@ -22,7 +22,7 @@ namespace ItsApe.ArtifactDetector
             {
                 new DetectorService()
                 {
-                    ServiceName = "ITS.APE Detector Service"
+                    ServiceName = "ITS.APE Artifact Detector Service"
                 }
             };
 

@@ -1,11 +1,11 @@
-﻿using System;
+﻿using ItsApe.ArtifactDetector.Detectors.VisualFeatureExtractor;
+using ItsApe.ArtifactDetector.Helpers;
+using MessagePack;
+using Microsoft.Extensions.Logging;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Runtime.Serialization.Formatters.Binary;
-using ItsApe.ArtifactDetector.Detectors.VisualFeatureExtractor;
-using ItsApe.ArtifactDetector.Helpers;
-using ItsApe.ArtifactDetector.Models;
-using Microsoft.Extensions.Logging;
 
 namespace ItsApe.ArtifactDetector.Models
 {
@@ -26,24 +26,28 @@ namespace ItsApe.ArtifactDetector.Models
         /// Configuration: File extension for persistence file.
         /// </summary>
         [NonSerialized]
+        [IgnoreMember]
         private const string PersistentFileExtension = ".bin";
 
         /// <summary>
         /// Logger for telling what is done.
         /// </summary>
         [NonSerialized]
+        [IgnoreMember]
         private ILogger _logger;
 
         /// <summary>
         /// File path to get raw images from.
         /// </summary>
         [NonSerialized]
+        [IgnoreMember]
         private FileInfo _persistentFilePath;
 
         /// <summary>
         /// Instance of a feature extractor to process the raw images.
         /// </summary>
         [NonSerialized]
+        [IgnoreMember]
         private IVisualFeatureExtractor _visualFeatureExtractor;
 
         /// <summary>
@@ -116,7 +120,7 @@ namespace ItsApe.ArtifactDetector.Models
             {
                 var binaryFormatter = new BinaryFormatter();
 
-                artifactLibrary = (ArtifactReferenceImageCache)binaryFormatter.Deserialize(stream);
+                artifactLibrary = (ArtifactReferenceImageCache) binaryFormatter.Deserialize(stream);
                 artifactLibrary.PersistentFilePath = new FileInfo(fileName);
                 artifactLibrary.VisualFeatureExtractor = artifactDetector;
                 artifactLibrary.Logger = logger;

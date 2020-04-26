@@ -8,6 +8,7 @@ using System.Runtime.Serialization.Formatters.Binary;
 using System.Security.AccessControl;
 using System.Security.Principal;
 using ItsApe.ArtifactDetector.Models;
+using ItsApe.ArtifactDetector.Services;
 using ItsApe.ArtifactDetector.Utilities;
 using Microsoft.Extensions.Logging;
 
@@ -31,50 +32,13 @@ namespace ItsApe.ArtifactDetector.Detectors
         /// </summary>
         /// <param name="runtimeInformation">Information about the artifact.</param>
         /// <returns>A response object containing information whether the artifact has been found.</returns>
-        public override DetectorResponse FindArtifact(ref ArtifactRuntimeInformation runtimeInformation)
+        public override DetectorResponse FindArtifact(ref ArtifactRuntimeInformation runtimeInformation, int sessionId)
         {
             var startTime = DateTime.Now;
-            DateTime inMemoryTime, processEndTime;
-            // Backup non-serialized property.
-            var referenceImageBackup = runtimeInformation.ReferenceImages;
-
-            // Get runtime information into memory mapped file for external process.
-            var binaryFormatter = new BinaryFormatter();
-            GetSerializedObjectLength(ref runtimeInformation, ref binaryFormatter, out long serializedObjectLength);
-            
-            var preparationTime = DateTime.Now;
-
-            // Open a memory mapped file to exchange data with the external process.
-            using (var memoryMappedFile = MemoryMappedFile.CreateOrOpen(
-                @"Global\" + ApplicationConfiguration.MemoryMappedFileName,
-                serializedObjectLength * 2,
-                MemoryMappedFileAccess.ReadWrite,
-                MemoryMappedFileOptions.None,
-                null, HandleInheritability.Inheritable))
-            {
-                // Get the runtime information into the memory mapped file.
-                using (var memoryStream = memoryMappedFile.CreateViewStream())
-                {
-                    binaryFormatter.Serialize(memoryStream, runtimeInformation);
-                }
-                inMemoryTime = DateTime.Now;
-
-                // Start external executable in user session.
-
-                processEndTime = DateTime.Now;
-
-                // Get runtime information back from memory mapped file from external process.
-                using (var memoryStream = memoryMappedFile.CreateViewStream())
-                {
-                    runtimeInformation = (ArtifactRuntimeInformation) binaryFormatter.Deserialize(memoryStream);
-                }
-            }
+            SessionManager.GetInstance().CallDetectorProcess(sessionId, ref runtimeInformation);
             var fromMemoryTime = DateTime.Now;
 
-            Logger.LogDebug("Timings were: {0:mmssffff},{1:mmssffff},{2:mmssffff},{3:mmssffff},{4:mmssffff}", startTime, preparationTime, inMemoryTime, processEndTime, fromMemoryTime);
-
-            // Restore backed up non-serialized property.
-            runtimeInformation.ReferenceImages = referenceImageBackup;
+            Logger.LogDebug("Timings were: {0:mmssffff},{1:mmssffff}", startTime, fromMemoryTime);
 
             if (runtimeInformation.PossibleWindowTitleSubstrings.Count < 1 && runtimeInformation.PossibleWindowTitleSubstrings.Count < 1)
             {

@@ -1,20 +1,15 @@
 ﻿using System;
-using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
-using System.IO.MemoryMappedFiles;
-using System.Linq;
-using System.Runtime.InteropServices;
-using System.Security.AccessControl;
-using System.Security.Principal;
 using System.ServiceModel;
 using System.ServiceProcess;
-using System.Threading;
 using System.Threading.Tasks;
 using System.Timers;
 using ItsApe.ArtifactDetector.Converters;
+using ItsApe.ArtifactDetector.DebugUtilities;
+using ItsApe.ArtifactDetector.Detectors;
 using ItsApe.ArtifactDetector.Models;
 using Microsoft.Extensions.Logging;
-using Microsoft.Win32.SafeHandles;
 using Newtonsoft.Json;
 
 namespace ItsApe.ArtifactDetector.Services
@@ -31,9 +26,14 @@ namespace ItsApe.ArtifactDetector.Services
         private const string ConfigurationFile = "config.json";
 
         /// <summary>
+        /// A log writer for detection results.
+        /// </summary>
+        private DetectionLogWriter detectionLogWriter;
+
+        /// <summary>
         /// Timer to call detection in interval.
         /// </summary>
-        private System.Timers.Timer detectionTimer = null;
+        private Timer detectionTimer = null;
 
         /// <summary>
         /// Host for this service to be callable.
@@ -51,25 +51,15 @@ namespace ItsApe.ArtifactDetector.Services
         private SessionManager sessionManager;
 
         /// <summary>
-        /// Instantiate service with setup.
+        /// Instantiate service.
         /// </summary>
-        /// <param name="setup">Setup of this application.</param>
         public DetectorService()
         {
             InitializeComponent();
 
             // Get setup of service for the first time.
             Setup = ApplicationSetup.GetInstance();
-
-            // Get service state from file.
-            EnsureServiceState();
-
-            // Get an initial status of active sessions.
-            detectionLogWriter = new DetectionLogWriter(
-                Setup.WorkingDirectory.FullName, serviceState.ArtifactConfiguration.RuntimeInformation.ArtifactName);
-            sessionManager = new SessionManager();
-
-            Logger = Setup.GetLogger("DetectorService");
+            Logger = Setup.GetLogger("ArtifactDetectorService");
             Logger.LogInformation("Detector service initialized.");
         }
 
@@ -125,6 +115,10 @@ namespace ItsApe.ArtifactDetector.Services
                 return false;
             }
 
+            Logger.LogDebug("Creating new detection log writer.");
+            detectionLogWriter = new DetectionLogWriter(
+                Setup.WorkingDirectory.FullName, serviceState.ArtifactConfiguration.RuntimeInformation.ArtifactName);
+
             // Start detection loop.
             Logger.LogInformation("Starting watch task now with interval of {0}ms.", serviceState.ArtifactConfiguration.DetectionInterval);
             detectionTimer = new System.Timers.Timer
@@ -169,33 +163,48 @@ namespace ItsApe.ArtifactDetector.Services
             return detectionLogWriter.CompileResponses(parameters.ErrorWindowSize);
         }
 
+        /// <summary>
+        /// Continueing when the service was paused by the OS.
+        /// </summary>
         protected override void OnContinue()
         {
             RestartSavedState();
             Logger.LogInformation("Detector service continued.");
         }
 
+        /// <summary>
+        /// Pause signal from the OS.
+        /// </summary>
         protected override void OnPause()
         {
             PauseCurrentState();
+            Logger.LogInformation("Detector service paused.");
         }
 
+        /// <summary>
+        /// Power event from the OS.
+        /// </summary>
+        /// <param name="powerStatus">Information about the new status.</param>
+        /// <returns>base return value.</returns>
         protected override bool OnPowerEvent(PowerBroadcastStatus powerStatus)
         {
             switch (powerStatus)
             {
                 case PowerBroadcastStatus.QuerySuspend:
                     PauseCurrentState();
+                    Logger.LogInformation("Received suspend signal, paused service state.");
                     break;
 
                 case PowerBroadcastStatus.QuerySuspendFailed:
                     RestartSavedState();
+                    Logger.LogInformation("Received suspend signal failed, restarted saved service state.");
                     break;
 
                 case PowerBroadcastStatus.ResumeAutomatic:
                 case PowerBroadcastStatus.ResumeCritical:
                 case PowerBroadcastStatus.ResumeSuspend:
                     RestartSavedState();
+                    Logger.LogInformation("Received resume signal, restarted saved service state.");
                     break;
             }
 
@@ -243,7 +252,15 @@ namespace ItsApe.ArtifactDetector.Services
         protected override void OnStart(string[] args)
         {
             // Uncomment this to debug.
-            //Debugger.Launch();
+            Debugger.Launch();
+            
+            // Get service state from file.
+            Logger.LogDebug("Retrieving saved service state.");
+            EnsureServiceState();
+
+            // Get an initial status of active sessions.
+            Logger.LogDebug("Get session manager.");
+            sessionManager = SessionManager.GetInstance();
 
             RestartSavedState();
             Logger.LogInformation("Detector service started.");
@@ -279,8 +296,13 @@ namespace ItsApe.ArtifactDetector.Services
         /// <param name="eventArgs"></param>
         private void DetectionEventHandler(object source, ElapsedEventArgs eventArgs)
         {
-            // Fire detection and forget the task.
-            Task.Factory.StartNew(() => TriggerDetection());
+            // Fire detection with a new runtime information copy to work with and forget the task.
+            Task.Factory.StartNew(() => TriggerDetection(
+                serviceState.ArtifactConfiguration.Detector,
+                (ArtifactRuntimeInformation)serviceState.ArtifactConfiguration.RuntimeInformation.Clone(),
+                ref detectionLogWriter));
+
+            //TODO: Remove
             detectionTimer.Elapsed -= DetectionEventHandler;
         }
 
@@ -366,7 +388,7 @@ namespace ItsApe.ArtifactDetector.Services
             EnsureServiceState();
 
             // The service host should be null, otherwise there is something wrong. Better close it and start new one.
-            if (serviceHost == null)
+            if (serviceHost != null)
             {
                 Logger.LogWarning("Service host was still running.");
                 serviceHost.Close();
@@ -386,9 +408,13 @@ namespace ItsApe.ArtifactDetector.Services
 
         /// <summary>
         /// Method to detect the currently given artifact and write the response to the responses log file.
+        /// 
+        /// WARNING: This gets executed in a new instance!
         /// </summary>
-        private void TriggerDetection()
+        private void TriggerDetection(IDetector detector, ArtifactRuntimeInformation runtimeInformation, ref DetectionLogWriter detectionLogWriter)
         {
+            sessionManager = SessionManager.GetInstance();
+
             var queryTime = DateTime.Now;
             if (!sessionManager.HasActiveSessions())
             {
@@ -398,23 +424,24 @@ namespace ItsApe.ArtifactDetector.Services
                 return;
             }
 
-            // Call artifact detector (may be a compound detector) from artifact configuration.
-            var artifactRuntimeInformation = (ArtifactRuntimeInformation) serviceState.ArtifactConfiguration.RuntimeInformation.Clone();
+            // Loop through all active sessions and detect separately.
             DetectorResponse detectorResponse = null;
-
-            try
+            foreach (var sessionEntry in sessionManager.DetectorProcesses)
             {
-                detectorResponse = serviceState.ArtifactConfiguration.Detector.FindArtifact(ref artifactRuntimeInformation);
-            }
-            catch (Exception e)
-            {
-                Logger.LogError("Problem calling the detector: {0}.", e.Message);
-            }
-            var responseTime = DateTime.Now;
+                queryTime = DateTime.Now;
 
-            detectionLogWriter.LogDetectionResult(queryTime, responseTime, detectorResponse);
+                try
+                {
+                    detectorResponse = detector.FindArtifact(ref runtimeInformation, sessionEntry.Key);
+                }
+                catch (Exception e)
+                {
+                    Logger.LogError("Problem calling a detector in session {1}: \"{0}\".", e.Message, sessionEntry.Key);
+                }
+                var responseTime = DateTime.Now;
+
+                detectionLogWriter.LogDetectionResult(queryTime, responseTime, detectorResponse);
+            }
         }
-
-        private DetectionLogWriter detectionLogWriter;
     }
 }

@@ -4,11 +4,13 @@ using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Threading;
+using ItsApe.ArtifactDetector.DebugUtilities;
 using ItsApe.ArtifactDetector.Models;
+using Microsoft.Extensions.Logging;
 
 namespace ItsApe.ArtifactDetector.Services
 {
-    internal class DetectionLogWriter
+    internal class DetectionLogWriter : HasLogger, IDisposable
     {
         /// <summary>
         /// File name of the compiled timetable (in the log files directory).
@@ -49,8 +51,10 @@ namespace ItsApe.ArtifactDetector.Services
         public DetectionLogWriter(string workingDirectory, string _artifactName)
         {
             artifactName = _artifactName;
+            Logger.LogDebug("Setting up logging in path {0}.", workingDirectory);
             logFilesDirectory = SetupFilePath(workingDirectory);
 
+            Logger.LogDebug("Creating mutex.");
             logFileWriterMutex = new Mutex(false, "DetectionLogWriter-" + artifactName);
         }
 
@@ -59,9 +63,7 @@ namespace ItsApe.ArtifactDetector.Services
         /// </summary>
         ~DetectionLogWriter()
         {
-            if (logFileWriterMutex.WaitOne())
-                logFileWriter.Close();
-
+            logFileWriter.Close();
             logFileWriterMutex.Close();
         }
 
@@ -72,7 +74,7 @@ namespace ItsApe.ArtifactDetector.Services
         /// <returns>The path of the compiled responses.</returns>
         public string CompileResponses(int errorWindowSize)
         {
-            var timetableFile = File.Create(Path.Combine(logFilesDirectory, CompiledTimetableFile));
+            var timetableFile = File.Create(Uri.UnescapeDataString(Path.Combine(logFilesDirectory, CompiledTimetableFile)));
             var timetableFileName = timetableFile.Name;
             timetableFile.Close();
 
@@ -119,6 +121,11 @@ namespace ItsApe.ArtifactDetector.Services
             }
 
             return timetableFileName;
+        }
+
+        public void Dispose()
+        {
+            logFileWriterMutex.Dispose();
         }
 
         /// <summary>
@@ -187,7 +194,7 @@ namespace ItsApe.ArtifactDetector.Services
 
             // Create new log file to write to.
             var timestamp = DateTime.Now.ToString("yyyyMMddHHmmss");
-            currentLogFile = Path.Combine(filePath, "raw-" + timestamp + ".csv");
+            currentLogFile = Uri.UnescapeDataString(Path.Combine(filePath, "raw-" + timestamp + ".csv"));
             File.Create(currentLogFile).Close();
 
             return filePath;

@@ -326,36 +326,15 @@ namespace ItsApe.ArtifactDetector.Utilities
             public IntPtr iString;
         }
 
-        [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Ansi)]
-        internal struct WtsSessionInfo
+        [StructLayout(LayoutKind.Sequential)]
+        public struct WtsSessionInfo
         {
-            public const int WinStationNameLength = 32;
-            public const int DomainLength = 17;
-            public const int UserNameLength = 20;
+            public int SessionId;
+
+            [MarshalAs(UnmanagedType.LPStr)]
+            public string pWinStationName;
 
             public WtsConnectedState State;
-            public int SessionId;
-            public int IncomingBytes;
-            public int OutgoingBytes;
-            public int IncomingFrames;
-            public int OutgoingFrames;
-            public int IncomingCompressedBytes;
-            public int OutgoingCompressedBytes;
-
-            [MarshalAs(UnmanagedType.ByValArray, SizeConst = WinStationNameLength)]
-            public byte[] WinStationNameRaw;
-
-            [MarshalAs(UnmanagedType.ByValArray, SizeConst = DomainLength)]
-            public byte[] DomainRaw;
-
-            [MarshalAs(UnmanagedType.ByValArray, SizeConst = UserNameLength + 1)]
-            public byte[] UserNameRaw;
-
-            public long ConnectTimeUTC;
-            public long DisconnectTimeUTC;
-            public long LastInputTimeUTC;
-            public long LogonTimeUTC;
-            public long CurrentTimeUTC;
         }
 
         #endregion structs

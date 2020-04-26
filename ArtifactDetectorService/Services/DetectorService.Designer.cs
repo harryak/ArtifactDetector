@@ -18,6 +18,16 @@
                 components.Dispose();
             }
 
+            if (serviceHost != null)
+            {
+                serviceHost.Close();
+            }
+
+            if (detectionLogWriter != null)
+            {
+                detectionLogWriter.Dispose();
+            }
+
             base.Dispose(disposing);
         }
 

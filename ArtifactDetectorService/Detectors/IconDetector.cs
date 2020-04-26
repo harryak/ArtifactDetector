@@ -80,13 +80,8 @@ namespace ItsApe.ArtifactDetector.Detectors
         /// </summary>
         /// <param name="runtimeInformation">Information must contain "possibleIconTitles" for this to work.</param>
         /// <returns>Response based on whether the artifact was found.</returns>
-        public override DetectorResponse FindArtifact(ref ArtifactRuntimeInformation runtimeInformation)
+        public override DetectorResponse FindArtifact(ref ArtifactRuntimeInformation runtimeInformation, int sessionId)
         {
-            if (!IsScreenActive(ref runtimeInformation))
-            {
-                Logger.LogInformation("Not detecting, screen is locked.");
-                return new DetectorResponse { ArtifactPresent = DetectorResponse.ArtifactPresence.Impossible };
-            }
             Logger.LogInformation("Detecting icons now.");
 
             // This error is really unlikely.
