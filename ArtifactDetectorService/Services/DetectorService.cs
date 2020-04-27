@@ -6,7 +6,6 @@ using System.ServiceProcess;
 using System.Threading.Tasks;
 using System.Timers;
 using ItsApe.ArtifactDetector.Converters;
-using ItsApe.ArtifactDetector.DebugUtilities;
 using ItsApe.ArtifactDetector.Detectors;
 using ItsApe.ArtifactDetector.Models;
 using Microsoft.Extensions.Logging;
@@ -137,6 +136,17 @@ namespace ItsApe.ArtifactDetector.Services
         /// </summary>
         public string StopWatch(string jsonEncodedParameters)
         {
+            StopWatchParameters parameters;
+
+            try
+            {
+                parameters = JsonConvert.DeserializeObject<StopWatchParameters>(jsonEncodedParameters);
+            }
+            catch (Exception)
+            {
+                return "";
+            }
+
             // Get the state as fields are not persisted.
             EnsureServiceState();
 
@@ -147,10 +157,6 @@ namespace ItsApe.ArtifactDetector.Services
 
             // Stop detection loop, wait for finishing and collect results.
             detectionTimer.Stop();
-
-            //TODO: Wait for writing stream to finish via mutex and release both them to be safe.
-
-            var parameters = JsonConvert.DeserializeObject<StopWatchParameters>(jsonEncodedParameters);
 
             // Set configuration to null to be empty on next run.
             serviceState.ArtifactConfiguration = null;
@@ -252,7 +258,7 @@ namespace ItsApe.ArtifactDetector.Services
         protected override void OnStart(string[] args)
         {
             // Uncomment this to debug.
-            Debugger.Launch();
+            //Debugger.Launch();
             
             // Get service state from file.
             Logger.LogDebug("Retrieving saved service state.");
@@ -301,9 +307,6 @@ namespace ItsApe.ArtifactDetector.Services
                 serviceState.ArtifactConfiguration.Detector,
                 (ArtifactRuntimeInformation)serviceState.ArtifactConfiguration.RuntimeInformation.Clone(),
                 ref detectionLogWriter));
-
-            //TODO: Remove
-            detectionTimer.Elapsed -= DetectionEventHandler;
         }
 
         /// <summary>
@@ -410,6 +413,7 @@ namespace ItsApe.ArtifactDetector.Services
         /// Method to detect the currently given artifact and write the response to the responses log file.
         /// 
         /// WARNING: This gets executed in a new instance!
+        /// WARNING: No try-catch is done in here to save resources!
         /// </summary>
         private void TriggerDetection(IDetector detector, ArtifactRuntimeInformation runtimeInformation, ref DetectionLogWriter detectionLogWriter)
         {
@@ -424,32 +428,16 @@ namespace ItsApe.ArtifactDetector.Services
                 return;
             }
 
+            var stopwatch = new Stopwatch();
+
             // Loop through all active sessions and detect separately.
             DetectorResponse detectorResponse = null;
             foreach (var sessionEntry in sessionManager.DetectorProcesses)
             {
-                queryTime = DateTime.Now;
-
-                try
-                {
-                    detectorResponse = detector.FindArtifact(ref runtimeInformation, sessionEntry.Key);
-                }
-                catch (Exception e)
-                {
-                    var type = e.GetType();
-                    Logger.LogError("Exception of type {2} calling a detector in session {1}: \"{0}\".", e.Message, sessionEntry.Key, type.ToString());
-                }
-                var responseTime = DateTime.Now;
-
-                try
-                {
-                    detectionLogWriter.LogDetectionResult(queryTime, responseTime, detectorResponse);
-                }
-                catch (Exception e)
-                {
-                    var type = e.GetType();
-                    Logger.LogError("Exeption of type {0} when writing log results.", type.ToString());
-                }
+                stopwatch.Restart();
+                detectorResponse = detector.FindArtifact(ref runtimeInformation, sessionEntry.Key);
+                stopwatch.Stop();
+                detectionLogWriter.LogDetectionResult(queryTime, queryTime.AddMilliseconds(stopwatch.ElapsedMilliseconds), detectorResponse);
             }
         }
     }

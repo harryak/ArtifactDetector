@@ -59,8 +59,7 @@ namespace ItsApe.ArtifactDetector.Services
         public DetectorProcessEndpoint(int _sessionId)
         {
             sessionId = _sessionId;
-            // TODO: Remove "000-"
-            mmfName = @"Global\" + "000-" + ApplicationSetup.GetInstance().ApplicationGuid + "-" + sessionId;
+            mmfName = @"Global\" + ApplicationSetup.GetInstance().ApplicationGuid + "-" + sessionId;
             semaphoreName = mmfName + "-access";
 
             SetupMemoryMappedFile();
