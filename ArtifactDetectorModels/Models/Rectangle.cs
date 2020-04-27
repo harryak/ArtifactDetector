@@ -45,7 +45,7 @@ namespace ItsApe.ArtifactDetector.Models
         /// <summary>
         /// Accessor for the height.
         /// </summary>
-        [Key(4)]
+        [IgnoreMember]
         public int Height
         {
             get { return Bottom - Top; }
@@ -55,7 +55,7 @@ namespace ItsApe.ArtifactDetector.Models
         /// <summary>
         /// Accessor for the width.
         /// </summary>
-        [Key(5)]
+        [IgnoreMember]
         public int Width
         {
             get { return Right - Left; }
@@ -65,13 +65,13 @@ namespace ItsApe.ArtifactDetector.Models
         /// <summary>
         /// Accessor for the total area.
         /// </summary>
-        [Key(6)]
+        [IgnoreMember]
         public int Area
         {
             get { return Width * Height; }
         }
 
-        [Key(7)]
+        [IgnoreMember]
         public System.Drawing.Size Size
         {
             get { return new System.Drawing.Size(Width, Height); }

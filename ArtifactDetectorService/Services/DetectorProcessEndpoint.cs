@@ -16,14 +16,19 @@ namespace ItsApe.ArtifactDetector.Services
     internal class DetectorProcessEndpoint : HasLogger, IDisposable
     {
         /// <summary>
+        /// Size of the memory mapped file. Using MapPack this is more than enough.
+        /// </summary>
+        private const long MemoryMappedFileSize = 512;
+
+        /// <summary>
         /// Name of the memory mapped file.
         /// </summary>
         private readonly string mmfName;
 
         /// <summary>
-        /// Name of the mutex protecting the memory mapped file.
+        /// Name of the semaphore protecting the memory mapped file.
         /// </summary>
-        private readonly string mutexName;
+        private readonly string semaphoreName;
 
         /// <summary>
         /// The session the process runs in.
@@ -41,9 +46,11 @@ namespace ItsApe.ArtifactDetector.Services
         private MemoryMappedFile sharedMemory;
 
         /// <summary>
-        /// Mutex for sharedMemory, used across processes.
+        /// Semaphore for sharedMemory, used across processes.
+        ///
+        /// WARNING: This gets acquired and released in independent threads!
         /// </summary>
-        private Mutex sharedMemoryMutex;
+        private Semaphore sharedMemoryLock;
 
         /// <summary>
         /// Initialize the endpoint for the process by starting the process and storing its ID.
@@ -52,8 +59,9 @@ namespace ItsApe.ArtifactDetector.Services
         public DetectorProcessEndpoint(int _sessionId)
         {
             sessionId = _sessionId;
-            mmfName = @"Global\" + ApplicationConfiguration.MemoryMappedFileName + sessionId;
-            mutexName = @"Global\" + ApplicationConfiguration.MemoryMappedFileName + "-Access-" + sessionId;
+            // TODO: Remove "000-"
+            mmfName = @"Global\" + "000-" + ApplicationSetup.GetInstance().ApplicationGuid + "-" + sessionId;
+            semaphoreName = mmfName + "-access";
 
             SetupMemoryMappedFile();
 
@@ -79,27 +87,13 @@ namespace ItsApe.ArtifactDetector.Services
                 MessagePackSerializer.Serialize(memoryStream, runtimeInformation);
 
                 // Release mutex for short time to let process get it.
-                try
-                {
-                    sharedMemoryMutex.ReleaseMutex();
-                }
-                catch (Exception e)
-                {
-                    var type = e.GetType();
-                }
+                sharedMemoryLock.Release();
 
-                // Wait for Mutex but do not release it.
-                try
+                // Wait for Mutex but do not release it to let the process wait for next call.
+                if (sharedMemoryLock.WaitOne())
                 {
-                    if (sharedMemoryMutex.WaitOne())
-                    {
-                        memoryStream.Position = 0;
-                        runtimeInformation = MessagePackSerializer.Deserialize<ArtifactRuntimeInformation>(memoryStream);
-                    }
-                }
-                catch (Exception e)
-                {
-                    var type = e.GetType();
+                    memoryStream.Position = 0;
+                    runtimeInformation = MessagePackSerializer.Deserialize<ArtifactRuntimeInformation>(memoryStream);
                 }
             }
 
@@ -118,18 +112,6 @@ namespace ItsApe.ArtifactDetector.Services
             fileSecurity.AddAccessRule(
                 new AccessRule<MemoryMappedFileRights>(new SecurityIdentifier(WellKnownSidType.AuthenticatedUserSid, null).Translate(typeof(NTAccount)),
                 MemoryMappedFileRights.FullControl,
-                AccessControlType.Allow));
-        }
-
-        /// <summary>
-        /// Get security identifier for a mutex which allows authenticated local users full control.
-        /// </summary>
-        /// <param name="mutexSecurity">The security object.</param>
-        private void FillMutexSecurityIdentifier(out MutexSecurity mutexSecurity)
-        {
-            mutexSecurity = new MutexSecurity();
-            mutexSecurity.AddAccessRule(new MutexAccessRule(new SecurityIdentifier(WellKnownSidType.AuthenticatedUserSid, null).Translate(typeof(NTAccount)),
-                MutexRights.FullControl,
                 AccessControlType.Allow));
         }
 
@@ -162,13 +144,26 @@ namespace ItsApe.ArtifactDetector.Services
         }
 
         /// <summary>
+        /// Get security identifier for a mutex which allows authenticated local users full control.
+        /// </summary>
+        /// <param name="mutexSecurity">The security object.</param>
+        private void FillSemaphoreSecurityIdentifier(out SemaphoreSecurity mutexSecurity)
+        {
+            mutexSecurity = new SemaphoreSecurity();
+            mutexSecurity.AddAccessRule(new SemaphoreAccessRule(
+                new SecurityIdentifier(WellKnownSidType.AuthenticatedUserSid, null).Translate(typeof(NTAccount)),
+                SemaphoreRights.FullControl,
+                AccessControlType.Allow));
+        }
+
+        /// <summary>
         /// Get the full executable path (in quotes for space characters) of the external process to start.
         /// </summary>
         /// <returns>The full path.</returns>
         private string GetDetectorProcessName()
         {
             var ProcessDirectory = ApplicationSetup.GetInstance().GetExecutingDirectory().FullName;
-            return "\"" + Uri.UnescapeDataString(Path.Combine(ProcessDirectory, ApplicationConfiguration.UserSessionApplicationName)) + "\" " + mmfName + " " + mutexName;
+            return "\"" + Uri.UnescapeDataString(Path.Combine(ProcessDirectory, ApplicationConfiguration.UserSessionApplicationName)) + "\" " + mmfName + " " + semaphoreName;
         }
 
         /// <summary>
@@ -196,17 +191,11 @@ namespace ItsApe.ArtifactDetector.Services
         /// </summary>
         private void SetupMemoryMappedFile()
         {
-            if (sharedMemoryMutex == null)
+            if (sharedMemoryLock == null)
             {
-                // Grab this mutex directly to make process wait for its release.
-                FillMutexSecurityIdentifier(out var mutexSecurity);
-                sharedMemoryMutex = new Mutex(true, mutexName, out bool createdNew, mutexSecurity);
-
-                if (!createdNew)
-                {
-                    Logger.LogDebug("Mutex existed.");
-                    sharedMemoryMutex.WaitOne();
-                }
+                // Aquire this mutex directly to make process wait for its release.
+                FillSemaphoreSecurityIdentifier(out var semaphoreSecurity);
+                sharedMemoryLock = new Semaphore(0, 1, semaphoreName, out bool _, semaphoreSecurity);
             }
             // Prepare shared memory via memory mapped file.
             if (sharedMemory == null)
@@ -214,7 +203,7 @@ namespace ItsApe.ArtifactDetector.Services
                 FillMMFSecurityIdentifier(out var fileSecurity);
 
                 sharedMemory = MemoryMappedFile.CreateOrOpen(
-                   mmfName, 2048,
+                   mmfName, MemoryMappedFileSize,
                    MemoryMappedFileAccess.ReadWrite,
                    MemoryMappedFileOptions.None,
                    fileSecurity, HandleInheritability.Inheritable);
@@ -287,8 +276,12 @@ namespace ItsApe.ArtifactDetector.Services
             {
                 if (disposing)
                 {
-                    sharedMemoryMutex.Close();
-                    sharedMemory.Dispose();
+                    GC.KeepAlive(sharedMemoryLock);
+
+                    if (sharedMemoryLock != null)
+                        sharedMemoryLock.Close();
+                    if (sharedMemory != null)
+                        sharedMemory.Dispose();
                 }
 
                 // No need for disposing the process, it gets killed automatically when the session terminates.

@@ -1,6 +1,7 @@
 ﻿using System;
 using System.IO;
 using System.Reflection;
+using System.Runtime.InteropServices;
 using System.Windows.Forms;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.EventLog;
@@ -23,6 +24,8 @@ namespace ItsApe.ArtifactDetector
             Logger = GetLogger("Setup");
 
             WorkingDirectory = GetExecutingDirectory();
+            ApplicationGuid = ((GuidAttribute)Assembly.GetExecutingAssembly().GetCustomAttributes(
+                typeof(GuidAttribute), false).GetValue(0)).Value.ToString();
 # if DEBUG
             // Setup display of images if being in debug mode.
             Application.EnableVisualStyles();
@@ -45,6 +48,11 @@ namespace ItsApe.ArtifactDetector
         /// The working directory.
         /// </summary>
         public DirectoryInfo WorkingDirectory { get; }
+
+        /// <summary>
+        /// Application UID to identify global associated resources like mutexes.
+        /// </summary>
+        public string ApplicationGuid { get; }
 
         /// <summary>
         /// Logger instance for this setup.

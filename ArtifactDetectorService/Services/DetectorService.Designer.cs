@@ -23,11 +23,6 @@
                 serviceHost.Close();
             }
 
-            if (detectionLogWriter != null)
-            {
-                detectionLogWriter.Dispose();
-            }
-
             base.Dispose(disposing);
         }
 

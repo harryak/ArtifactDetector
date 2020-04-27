@@ -436,11 +436,20 @@ namespace ItsApe.ArtifactDetector.Services
                 }
                 catch (Exception e)
                 {
-                    Logger.LogError("Problem calling a detector in session {1}: \"{0}\".", e.Message, sessionEntry.Key);
+                    var type = e.GetType();
+                    Logger.LogError("Exception of type {2} calling a detector in session {1}: \"{0}\".", e.Message, sessionEntry.Key, type.ToString());
                 }
                 var responseTime = DateTime.Now;
 
-                detectionLogWriter.LogDetectionResult(queryTime, responseTime, detectorResponse);
+                try
+                {
+                    detectionLogWriter.LogDetectionResult(queryTime, responseTime, detectorResponse);
+                }
+                catch (Exception e)
+                {
+                    var type = e.GetType();
+                    Logger.LogError("Exeption of type {0} when writing log results.", type.ToString());
+                }
             }
         }
     }

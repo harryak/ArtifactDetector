@@ -3,14 +3,13 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
-using System.Threading;
 using ItsApe.ArtifactDetector.DebugUtilities;
 using ItsApe.ArtifactDetector.Models;
 using Microsoft.Extensions.Logging;
 
 namespace ItsApe.ArtifactDetector.Services
 {
-    internal class DetectionLogWriter : HasLogger, IDisposable
+    internal class DetectionLogWriter : HasLogger
     {
         /// <summary>
         /// File name of the compiled timetable (in the log files directory).
@@ -21,6 +20,8 @@ namespace ItsApe.ArtifactDetector.Services
         /// Name of the current artifact to use for file names.
         /// </summary>
         private readonly string artifactName;
+
+        private readonly object fileLock = new object();
 
         /// <summary>
         /// File path of the log to write to.
@@ -38,11 +39,6 @@ namespace ItsApe.ArtifactDetector.Services
         private StreamWriter logFileWriter;
 
         /// <summary>
-        /// Mutex for detector response list.
-        /// </summary>
-        private Mutex logFileWriterMutex;
-
-        /// <summary>
         /// Instantiate this writer by supplying the working directory and artifact name.
         /// Will create a subfolder with the artifact name in the working directory.
         /// </summary>
@@ -55,7 +51,6 @@ namespace ItsApe.ArtifactDetector.Services
             logFilesDirectory = SetupFilePath(workingDirectory);
 
             Logger.LogDebug("Creating mutex.");
-            logFileWriterMutex = new Mutex(false, "DetectionLogWriter-" + artifactName);
         }
 
         /// <summary>
@@ -63,8 +58,10 @@ namespace ItsApe.ArtifactDetector.Services
         /// </summary>
         ~DetectionLogWriter()
         {
-            logFileWriter.Close();
-            logFileWriterMutex.Close();
+            if (logFileWriter != null)
+            {
+                logFileWriter.Close();
+            }
         }
 
         /// <summary>
@@ -84,48 +81,51 @@ namespace ItsApe.ArtifactDetector.Services
             long changeTimestamp = 0;
             string[] currentValues;
 
-            using (var writer = new StreamWriter(timetableFileName, true))
+            lock (fileLock)
             {
-                foreach (var logFile in Directory.EnumerateFiles(logFilesDirectory, "*.csv"))
+                using (var writer = new StreamWriter(timetableFileName, true))
                 {
-                    using (var reader = new StreamReader(logFile))
+                    foreach (var logFile in Directory.EnumerateFiles(logFilesDirectory, "*.csv"))
                     {
-                        while (!reader.EndOfStream)
+                        if (!logFile.StartsWith("raw"))
                         {
-                            // First: Keep window at right size. We add one value now, so greater equal is the right choice here.
-                            if (errorWindowValues.Count >= errorWindowSize)
+                            continue;
+                        }
+
+                        using (var reader = new StreamReader(logFile))
+                        {
+                            while (!reader.EndOfStream)
                             {
-                                errorWindowValues.Remove(errorWindowValues.Keys.First());
-                            }
+                                // First: Keep window at right size. We add one value now, so greater equal is the right choice here.
+                                if (errorWindowValues.Count >= errorWindowSize)
+                                {
+                                    errorWindowValues.Remove(errorWindowValues.Keys.First());
+                                }
 
-                            // Then: Add next value to window.
-                            currentValues = reader.ReadLine().Split(',');
-                            errorWindowValues.Add(Convert.ToInt64(currentValues[1]), Convert.ToInt32(currentValues[2]));
+                                // Then: Add next value to window.
+                                currentValues = reader.ReadLine().Split(',');
+                                errorWindowValues.Add(Convert.ToInt64(currentValues[1]), Convert.ToInt32(currentValues[2]));
 
-                            // See if the average of the window changes.
-                            currentMajority = GetMajorityItem(ref errorWindowValues);
+                                // See if the average of the window changes.
+                                currentMajority = GetMajorityItem(ref errorWindowValues);
 
-                            if (currentMajority != previousMajority)
-                            {
-                                // Artifact detection changed.
-                                changeTimestamp = errorWindowValues.SkipWhile(entry => entry.Value != currentMajority).First().Key;
-                                writer.WriteLine("{0},{1}", changeTimestamp, currentMajority);
-                                previousMajority = currentMajority;
+                                if (currentMajority != previousMajority)
+                                {
+                                    // Artifact detection changed.
+                                    changeTimestamp = errorWindowValues.SkipWhile(entry => entry.Value != currentMajority).First().Key;
+                                    writer.WriteLine("{0},{1}", changeTimestamp, currentMajority);
+                                    previousMajority = currentMajority;
+                                }
                             }
                         }
-                    }
 
-                    // Start with fresh values for each log file.
-                    errorWindowValues.Clear();
+                        // Start with fresh values for each log file.
+                        errorWindowValues.Clear();
+                    }
                 }
             }
 
             return timetableFileName;
-        }
-
-        public void Dispose()
-        {
-            logFileWriterMutex.Dispose();
         }
 
         /// <summary>
@@ -137,7 +137,7 @@ namespace ItsApe.ArtifactDetector.Services
         public void LogDetectionResult(DateTime queryTime, DateTime responseTime, DetectorResponse detectorResponse)
         {
             // Save response to timetable.
-            if (logFileWriterMutex.WaitOne())
+            lock (fileLock)
             {
                 // Write response prepended with time to responses file and flush.
                 // Use sortable and tenth-millisecond-precise timestamp for entry.
@@ -147,9 +147,6 @@ namespace ItsApe.ArtifactDetector.Services
                         queryTime, responseTime, (int)detectorResponse.ArtifactPresent);
                     logFileWriter.Flush();
                 }
-
-                // Release mutex and finish.
-                logFileWriterMutex.ReleaseMutex();
             }
         }
 

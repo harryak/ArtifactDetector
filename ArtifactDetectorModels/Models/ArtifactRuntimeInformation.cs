@@ -42,7 +42,7 @@ namespace ItsApe.ArtifactDetector.Models
         /// </summary>
         [JsonProperty("artifact_name")]
         [Key(0)]
-        public string ArtifactName { get; private set; }
+        public string ArtifactName { get; set; }
 
         #region artifact counts
 
@@ -98,7 +98,7 @@ namespace ItsApe.ArtifactDetector.Models
         [JsonProperty("icon_titles")]
         [JsonConverter(typeof(StringToListConverter))]
         [Key(7)]
-        public List<string> PossibleIconSubstrings { get; internal set; } = new List<string>();
+        public List<string> PossibleIconSubstrings { get; set; } = new List<string>();
 
         /// <summary>
         /// Possible names of the processes.
@@ -122,7 +122,7 @@ namespace ItsApe.ArtifactDetector.Models
         [JsonProperty("window_titles")]
         [JsonConverter(typeof(StringToListConverter))]
         [Key(10)]
-        public List<string> PossibleWindowTitleSubstrings { get; internal set; } = new List<string>();
+        public List<string> PossibleWindowTitleSubstrings { get; set; } = new List<string>();
 
         #endregion watch task arguments
 

@@ -20,7 +20,6 @@ namespace ItsApe.ArtifactDetectorProcess
             {
                 if (args.Length != 2)
                 {
-                    logWriter.WriteLine("Tja, keene arjumente, wa. {0}.", args.ToString());
                     return;
                 }
 
@@ -28,23 +27,16 @@ namespace ItsApe.ArtifactDetectorProcess
                 var memoryStreamName = args[0];
                 var memoryStreamMutexName = args[1];
 
-                logWriter.WriteLine("Najaaa, immerhin ma, mutex is {0}.", memoryStreamMutexName);
+                var memoryStreamLock = Semaphore.OpenExisting(memoryStreamMutexName);
 
-                var memoryStreamMutex = Mutex.OpenExisting(memoryStreamMutexName);
-
-                logWriter.WriteLine("Hab dit Mjuteks jefundn.");
-                logWriter.Flush();
-
-                try
+                // This is intentional.
+                while (true)
                 {
-                    // This is intentional.
-                    while (true)
+                    try
                     {
                         // The release of the mutex is the signal to detect.
-                        if (memoryStreamMutex.WaitOne())
+                        if (memoryStreamLock.WaitOne())
                         {
-                            logWriter.WriteLine("Hab dit Mjuteks.");
-                            logWriter.Flush();
                             // Get runtime information from memory mapped file from external process.
                             ArtifactRuntimeInformation runtimeInformation;
                             IDetector detector;
@@ -57,18 +49,18 @@ namespace ItsApe.ArtifactDetectorProcess
 
                                     switch (runtimeInformation.DetectorToRun)
                                     {
-                                        case ExternalDetector.DesktopIconDetector:
+                                        case ExternalDetector.OpenWindowDetector:
                                             detector = new OpenWindowDetector();
                                             break;
+
                                         case ExternalDetector.None:
                                         default:
                                             // Misconfiguration, stop further execution immediately.
-                                            memoryStreamMutex.ReleaseMutex();
-                                            logWriter.WriteLine("Falsche Konfig.");
+                                            memoryStreamLock.Release();
                                             continue;
                                     }
 
-                                    // If we arrive here: 
+                                    // If we arrive here:
                                     detector.FindArtifact(ref runtimeInformation);
 
                                     // Write new runtime information to mmf.
@@ -77,17 +69,14 @@ namespace ItsApe.ArtifactDetectorProcess
                                 }
                             }
 
-                            logWriter.WriteLine("Un tschöö.");
-                            logWriter.Flush();
-                            memoryStreamMutex.ReleaseMutex();
+                            memoryStreamLock.Release();
                             // Runtime information is garbage collected now to get the slimmest process possible.
                         }
                     }
-                }
-                catch (Exception e)
-                {
-                    logWriter.WriteLine("Exception: {0}.", e.Message);
-                    logWriter.Flush();
+                    catch (Exception)
+                    {
+                        memoryStreamLock.Release();
+                    }
                 }
             }
         }

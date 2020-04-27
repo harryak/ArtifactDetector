@@ -53,28 +53,6 @@ namespace ItsApe.ArtifactDetector
         }
 
         /// <summary>
-        /// Name of the memory mapped file used across processes.
-        /// </summary>
-        public static string MemoryMappedFileName
-        {
-            get
-            {
-                return Convert.ToString(ConfigurationManager.AppSettings.Get("MemoryMappedFileName"));
-            }
-        }
-
-        /// <summary>
-        /// Name of the mutex (used across processes) to access the memory mapped file.
-        /// </summary>
-        public static string MemoryMappedMutexName
-        {
-            get
-            {
-                return Convert.ToString(ConfigurationManager.AppSettings.Get("MemoryMappedMutexName"));
-            }
-        }
-
-        /// <summary>
         /// Feature extraction setting: Absolute count of matches needed for a match.
         /// </summary>
         public static int MinimumMatchesRequired
