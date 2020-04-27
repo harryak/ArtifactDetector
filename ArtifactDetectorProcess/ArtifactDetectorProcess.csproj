@@ -80,8 +80,12 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Detectors\BaseDetector.cs" />
+    <Compile Include="Detectors\DesktopIconDetector.cs" />
+    <Compile Include="Detectors\IconDetector.cs" />
     <Compile Include="Detectors\IDetector.cs" />
     <Compile Include="Detectors\OpenWindowDetector.cs" />
+    <Compile Include="Detectors\TrayIconDetector.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Utilities\NativeMethods.cs" />

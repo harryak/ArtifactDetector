@@ -1,10 +1,8 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Runtime.InteropServices;
 using System.Text;
 using ItsApe.ArtifactDetector.Helpers;
 using ItsApe.ArtifactDetector.Models;
-using ItsApe.ArtifactDetector.Utilities;
 using ItsApe.ArtifactDetectorProcess.Utilities;
 
 namespace ItsApe.ArtifactDetectorProcess.Detectors
@@ -15,7 +13,7 @@ namespace ItsApe.ArtifactDetectorProcess.Detectors
     /// Needs:  WindowHandle _or_ WindowTitle
     /// Yields: WindowHandle, WindowTitle
     /// </summary>
-    internal class OpenWindowDetector : IDetector
+    internal class OpenWindowDetector : BaseDetector, IDetector
     {
         /// <summary>
         /// Special window handle to "desktop window".
@@ -29,38 +27,16 @@ namespace ItsApe.ArtifactDetectorProcess.Detectors
         /// <returns>A response object containing information whether the artifact has been found.</returns>
         public void FindArtifact(ref ArtifactRuntimeInformation runtimeInformation)
         {
+            InitializeDetection(ref runtimeInformation);
             // Check whether we have enough data to detect the artifact.
             if (runtimeInformation.PossibleWindowTitleSubstrings.Count < 1 && runtimeInformation.PossibleWindowTitleSubstrings.Count < 1)
             {
-                AnalyzeVisibleWindowsLight(ref runtimeInformation);
+                RetrieveVisibleWindows(ref runtimeInformation);
             }
-
-            AnalyzeVisibleWindows(ref runtimeInformation);
-        }
-
-        /// <summary>
-        /// Calculates how much (percentage) of the queriedWindow is visible other windows above.
-        /// </summary>
-        /// <param name="queriedWindow">Queried window.</param>
-        /// <param name="windowsAbove">The windows above (z-index) the queried window.</param>
-        /// <returns>The percentage of how much of the window is visible.</returns>
-        protected float CalculateWindowVisibility(Rectangle queriedWindow, ICollection<Rectangle> windowsAbove)
-        {
-            // If there are no windows above: Return immediately.
-            if (windowsAbove.Count < 1)
+            else
             {
-                return 100f;
+                AnalyzeVisibleWindows(ref runtimeInformation);
             }
-
-            // If there is no area of the window, return "no visibility".
-            if (queriedWindow.Area < 1)
-            {
-                return 0f;
-            }
-
-            int subtractArea = new RectangleUnionCalculator().CalculateRectangleUnion(queriedWindow, windowsAbove);
-
-            return (float)(queriedWindow.Area - subtractArea) / queriedWindow.Area * 100f;
         }
 
         /// <summary>
@@ -121,28 +97,17 @@ namespace ItsApe.ArtifactDetectorProcess.Detectors
 
         private void AnalyzeVisibleWindows(ref ArtifactRuntimeInformation runtimeInformation)
         {
-            // Access all open windows and analyze each of them.
-            var windowStringsHandle = GCHandle.Alloc(runtimeInformation);
-            try
-            {
-                NativeMethods.EnumWindows(
-                    AnalyzeVisibleWindowDelegate,
-                    GCHandle.ToIntPtr(windowStringsHandle));
-            }
-            finally
-            {
-                windowStringsHandle.Free();
-            }
+            EnumerateWindows(ref runtimeInformation, AnalyzeVisibleWindowDelegate);
         }
 
-        private void AnalyzeVisibleWindowsLight(ref ArtifactRuntimeInformation runtimeInformation)
+        private void EnumerateWindows(ref ArtifactRuntimeInformation runtimeInformation, NativeMethods.EnumWindowsProc enumWindows)
         {
             // Access all open windows and analyze each of them.
             var windowStringsHandle = GCHandle.Alloc(runtimeInformation);
             try
             {
                 NativeMethods.EnumWindows(
-                    GetVisibleWindowDelegate,
+                    enumWindows,
                     GCHandle.ToIntPtr(windowStringsHandle));
             }
             finally
@@ -219,12 +184,14 @@ namespace ItsApe.ArtifactDetectorProcess.Detectors
             }
         }
 
-        /// <summary>
-        /// "Light" version of detection initialization without copying anything from runtime information.
-        /// </summary>
-        private void InitializeDetectionLight()
+        private void InitializeDetection(ref ArtifactRuntimeInformation runtimeInformation)
         {
-            ProgramManagerWindowHandle = GetDesktopWindowHandle();
+            runtimeInformation.CountOpenWindows = 0;
+        }
+
+        private void RetrieveVisibleWindows(ref ArtifactRuntimeInformation runtimeInformation)
+        {
+            EnumerateWindows(ref runtimeInformation, GetVisibleWindowDelegate);
         }
 
         /// <summary>

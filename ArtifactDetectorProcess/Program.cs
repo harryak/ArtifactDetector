@@ -29,6 +29,11 @@ namespace ItsApe.ArtifactDetectorProcess
 
                 var memoryStreamLock = Semaphore.OpenExisting(memoryStreamMutexName);
 
+                // Preemtively instantiate detectors to save time when called.
+                var openWindowDetector = new OpenWindowDetector();
+                var desktopIconDetector = new DesktopIconDetector();
+                var trayIconDetector = new TrayIconDetector();
+
                 // This is intentional.
                 while (true)
                 {
@@ -39,7 +44,6 @@ namespace ItsApe.ArtifactDetectorProcess
                         {
                             // Get runtime information from memory mapped file from external process.
                             ArtifactRuntimeInformation runtimeInformation;
-                            IDetector detector;
                             using (var memoryMappedFile = MemoryMappedFile.OpenExisting(memoryStreamName, MemoryMappedFileRights.ReadWrite))
                             {
                                 using (var memoryStream = memoryMappedFile.CreateViewStream())
@@ -47,10 +51,19 @@ namespace ItsApe.ArtifactDetectorProcess
                                     // Fetch runtime information from mmf.
                                     runtimeInformation = MessagePackSerializer.Deserialize<ArtifactRuntimeInformation>(memoryStream);
 
+                                    // Choose which detector to call.
                                     switch (runtimeInformation.DetectorToRun)
                                     {
                                         case ExternalDetector.OpenWindowDetector:
-                                            detector = new OpenWindowDetector();
+                                            openWindowDetector.FindArtifact(ref runtimeInformation);
+                                            break;
+
+                                        case ExternalDetector.DesktopIconDetector:
+                                            desktopIconDetector.FindArtifact(ref runtimeInformation);
+                                            break;
+
+                                        case ExternalDetector.TrayIconDetector:
+                                            trayIconDetector.FindArtifact(ref runtimeInformation);
                                             break;
 
                                         case ExternalDetector.None:
@@ -59,9 +72,6 @@ namespace ItsApe.ArtifactDetectorProcess
                                             memoryStreamLock.Release();
                                             continue;
                                     }
-
-                                    // If we arrive here:
-                                    detector.FindArtifact(ref runtimeInformation);
 
                                     // Write new runtime information to mmf.
                                     memoryStream.Position = 0;

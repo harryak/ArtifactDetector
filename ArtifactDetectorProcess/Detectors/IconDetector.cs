@@ -4,15 +4,15 @@ using System.Runtime.InteropServices;
 using ItsApe.ArtifactDetector.Helpers;
 using ItsApe.ArtifactDetector.Models;
 using ItsApe.ArtifactDetector.Utilities;
-using Microsoft.Extensions.Logging;
+using ItsApe.ArtifactDetectorProcess.Utilities;
 
-namespace ItsApe.ArtifactDetector.Detectors
+namespace ItsApe.ArtifactDetectorProcess.Detectors
 {
     /// <summary>
     /// Common base class for icon detectors.
     /// <typeparam name="StructType">Type of the struct to fill (for marshalling).</typeparam>
     /// </summary>
-    internal abstract class IconDetector<StructType> : BaseDetector where StructType : struct
+    internal abstract class IconDetector<StructType> : BaseDetector, IDetector where StructType : struct
     {
         /// <summary>
         /// Choose a buffer size which is large enough for the operations in this class.
@@ -80,33 +80,22 @@ namespace ItsApe.ArtifactDetector.Detectors
         /// </summary>
         /// <param name="runtimeInformation">Information must contain "possibleIconTitles" for this to work.</param>
         /// <returns>Response based on whether the artifact was found.</returns>
-        public override DetectorResponse FindArtifact(ref ArtifactRuntimeInformation runtimeInformation, int sessionId)
+        public void FindArtifact(ref ArtifactRuntimeInformation runtimeInformation)
         {
-            Logger.LogInformation("Detecting icons now.");
-
             // This error is really unlikely.
             if (WindowHandle == IntPtr.Zero)
             {
-                Logger.LogError("The window handle is not available.");
-                return new DetectorResponse() { ArtifactPresent = DetectorResponse.ArtifactPresence.Impossible };
+                return;
             }
 
             if (runtimeInformation.PossibleIconSubstrings.Count < 1)
             {
-                Logger.LogInformation("No possible icon titles given for detector. Could not find matching icons.");
-                return new DetectorResponse() { ArtifactPresent = DetectorResponse.ArtifactPresence.Possible };
+                return;
             }
+
+            InitializeDetection(ref runtimeInformation);
 
             AnalizeIcons(ref runtimeInformation);
-
-            if (GetIconCount(ref runtimeInformation) > 0)
-            {
-                Logger.LogInformation("Found {0} matching icons.", GetIconCount(ref runtimeInformation));
-                return new DetectorResponse { ArtifactPresent = DetectorResponse.ArtifactPresence.Certain };
-            }
-
-            Logger.LogInformation("Found no matching icons.");
-            return new DetectorResponse { ArtifactPresent = DetectorResponse.ArtifactPresence.Impossible };
         }
 
         /// <summary>
@@ -214,7 +203,17 @@ namespace ItsApe.ArtifactDetector.Detectors
         /// <returns>The icon title.</returns>
         protected abstract string GetIconTitle(int index, StructType icon);
 
+        /// <summary>
+        /// Ask sub-class to increase their own counter.
+        /// </summary>
+        /// <param name="runtimeInformation"></param>
         protected abstract void IncreaseIconCount(ref ArtifactRuntimeInformation runtimeInformation);
+
+        /// <summary>
+        /// Ask sub-class to initialize detection.
+        /// </summary>
+        /// <param name="runtimeInformation"></param>
+        protected abstract void InitializeDetection(ref ArtifactRuntimeInformation runtimeInformation);
 
         /// <summary>
         /// Return a new (usable) instance of the icon struct.
@@ -229,7 +228,7 @@ namespace ItsApe.ArtifactDetector.Detectors
         /// <returns>The allocated memory's address.</returns>
         private IntPtr AllocateBufferInProcess(IntPtr processHandle)
         {
-            return NativeMethods.VirtualAllocEx(processHandle, IntPtr.Zero, new UIntPtr(BUFFER_SIZE), NativeMethods.MEM.RESERVE | NativeMethods.MEM.COMMIT, NativeMethods.PAGE.READWRITE);
+            return NativeMethods.VirtualAllocEx(processHandle, IntPtr.Zero, new UIntPtr(BUFFER_SIZE), NativeMethods.Memory.RESERVE | NativeMethods.Memory.COMMIT, NativeMethods.Page.READWRITE);
         }
 
         /// <summary>
@@ -286,7 +285,7 @@ namespace ItsApe.ArtifactDetector.Detectors
         {
             foreach (var entry in _bufferPointers)
             {
-                NativeMethods.VirtualFreeEx(entry.Key, entry.Value, UIntPtr.Zero, NativeMethods.MEM.RELEASE);
+                NativeMethods.VirtualFreeEx(entry.Key, entry.Value, UIntPtr.Zero, NativeMethods.Memory.RELEASE);
                 NativeMethods.CloseHandle(entry.Key);
             }
         }
@@ -319,7 +318,7 @@ namespace ItsApe.ArtifactDetector.Detectors
         private IntPtr InitProcessHandle()
         {
             NativeMethods.GetWindowThreadProcessId(WindowHandle, out uint processId);
-            return NativeMethods.OpenProcess(NativeMethods.PROCESS_VM.OPERATION | NativeMethods.PROCESS_VM.READ | NativeMethods.PROCESS_VM.WRITE, false, processId);
+            return NativeMethods.OpenProcess(NativeMethods.ProcessVM.OPERATION | NativeMethods.ProcessVM.READ | NativeMethods.ProcessVM.WRITE, false, processId);
         }
 
         /// <summary>
