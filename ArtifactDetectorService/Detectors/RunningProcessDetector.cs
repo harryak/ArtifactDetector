@@ -25,7 +25,7 @@ namespace ItsApe.ArtifactDetector.Detectors
 
             if (runtimeInformation.ProgramExecutables.Count < 1 && runtimeInformation.PossibleProcessSubstrings.Count < 1)
             {
-                Logger.LogInformation("No matching program executables or possible process names given for detector. Could not find matching runnign processes.");
+                Logger.LogInformation("No matching program executables or possible process names given for detector. Could not find matching running processes.");
                 return new DetectorResponse() { ArtifactPresent = DetectorResponse.ArtifactPresence.Possible };
             }
 
@@ -78,9 +78,9 @@ namespace ItsApe.ArtifactDetector.Detectors
         private void AnalyzeProcesses(ref ArtifactRuntimeInformation runtimeInformation)
         {
             var processes = Process.GetProcesses();
-            foreach (var process in processes)
+            for (var i = 0; i < processes.Length; i++)
             {
-                AnalyzeProcess(process, ref runtimeInformation);
+                AnalyzeProcess(processes[i], ref runtimeInformation);
             }
         }
 

@@ -1,8 +1,10 @@
 ﻿using System;
 using System.Drawing;
+using System.Runtime.InteropServices;
 using Emgu.CV;
 using Emgu.CV.Structure;
 using Emgu.CV.Util;
+using ItsApe.ArtifactDetector.Models;
 
 namespace ItsApe.ArtifactDetector.Detectors.VisualFeatureExtractor.VisualMatchFilter
 {
@@ -27,11 +29,11 @@ namespace ItsApe.ArtifactDetector.Detectors.VisualFeatureExtractor.VisualMatchFi
         /// <param name="inlierRatio">How many previously found matches should support the hypothesis.</param>
         /// <param name="patchSize">Error threshold for applying the hypothesis on the starting set to get to the goal set.</param>
         /// <returns>A transformation matrix from model to query or null.</returns>
-        public override Matrix<float> GetRanSaCTransformationMatrix(VectorOfKeyPoint modelKeyPoints, VectorOfKeyPoint queryKeyPoints, VectorOfVectorOfDMatch matches, ref Mat mask, int iterations, double inlierRatio, int patchSize)
+        public override Matrix<float> GetRanSaCTransformationMatrix(ProcessedImage modelKeyPoints, [In] ref ProcessedImage queryKeyPoints, [In] ref VectorOfVectorOfDMatch matches, ref Mat mask, int iterations, double inlierRatio, int patchSize)
         {
             // Get arrays of key points for easier access.
-            MKeyPoint[] modelKeyPointsArray = modelKeyPoints.ToArray();
-            MKeyPoint[] queryKeyPointsArray  = queryKeyPoints.ToArray();
+            MKeyPoint[] modelKeyPointsArray = modelKeyPoints.KeyPoints.ToArray();
+            MKeyPoint[] queryKeyPointsArray  = queryKeyPoints.KeyPoints.ToArray();
 
             // Setup test variables for return value.
             int bestMatchCount = 0;
@@ -58,7 +60,7 @@ namespace ItsApe.ArtifactDetector.Detectors.VisualFeatureExtractor.VisualMatchFi
             var bestMask    = new Matrix<byte>(maskInitial.Size);
 
             // Get list of masked matches for easier access.
-            var maskedMatchesList = FilterMDMatchArrayOfArray(matches.ToArrayOfArray(), maskInitial);
+            FilterMDMatchArrayOfArray(matches.ToArrayOfArray(), maskInitial, out var maskedMatchesList);
 
             // The core loop for RanSaC.
             for (int i = 0; i < iterations; i++)
@@ -91,14 +93,14 @@ namespace ItsApe.ArtifactDetector.Detectors.VisualFeatureExtractor.VisualMatchFi
                 queryPointsDistance.Height = Math.Abs(queryPoint1.Y - queryPoint2.Y);
 
                 // The distance tells us the scale factor in each direction.
-                GetScaleFactors(modelPointsDistance, queryPointsDistance, ref scaleFactors);
+                GetScaleFactors(ref modelPointsDistance, ref queryPointsDistance, ref scaleFactors);
 
-                GetTranslationVector(modelPoint1, queryPoint1, scaleFactors, ref translationVector);
+                GetTranslationVector(ref modelPoint1, ref queryPoint1, ref scaleFactors, ref translationVector);
 
                 // Count how many matches fit to this model. This also counts the current points.
                 foreach (var indexedMatch in maskedMatchesList)
                 {
-                    if (PointFitsModel(modelKeyPointsArray[indexedMatch.match[0].TrainIdx].Point, queryKeyPointsArray[indexedMatch.match[0].QueryIdx].Point, translationVector, scaleFactors, patchSize))
+                    if (PointFitsModel(ref modelKeyPointsArray[indexedMatch.match[0].TrainIdx].Point, ref queryKeyPointsArray[indexedMatch.match[0].QueryIdx].Point, ref translationVector, ref scaleFactors, patchSize))
                     {
                         matchCount++;
                         // Set the mask at the match's original index to "match".
@@ -145,7 +147,7 @@ namespace ItsApe.ArtifactDetector.Detectors.VisualFeatureExtractor.VisualMatchFi
         /// <param name="modelDistance"></param>
         /// <param name="queryDistance"></param>
         /// <param name="scaleFactors"></param>
-        private void GetScaleFactors(SizeF modelDistance, SizeF queryDistance, ref SizeF scaleFactors)
+        private void GetScaleFactors([In] ref SizeF modelDistance, [In] ref SizeF queryDistance, ref SizeF scaleFactors)
         {
             // Default is a scale factor of "1" if any of the distances are zero.
             scaleFactors.Width = 1;
@@ -164,7 +166,7 @@ namespace ItsApe.ArtifactDetector.Detectors.VisualFeatureExtractor.VisualMatchFi
         /// <param name="queryPoint1"></param>
         /// <param name="scaleFactors"></param>
         /// <param name="translationVector"></param>
-        private void GetTranslationVector(PointF modelPoint1, PointF queryPoint1, SizeF scaleFactors, ref PointF translationVector)
+        private void GetTranslationVector([In] ref PointF modelPoint1, [In] ref PointF queryPoint1, [In] ref SizeF scaleFactors, ref PointF translationVector)
         {
             translationVector.X = queryPoint1.X - scaleFactors.Width * modelPoint1.X;
             translationVector.Y = queryPoint1.Y - scaleFactors.Height * modelPoint1.Y;
@@ -179,7 +181,7 @@ namespace ItsApe.ArtifactDetector.Detectors.VisualFeatureExtractor.VisualMatchFi
         /// <param name="scaleFactors"></param>
         /// <param name="patchSize">Half length of error square around desPoint.</param>
         /// <returns>True or false.</returns>
-        private bool PointFitsModel(PointF srcPoint, PointF desPoint, PointF translationVector, SizeF scaleFactors, int patchSize)
+        private bool PointFitsModel([In] ref PointF srcPoint, [In] ref PointF desPoint, [In] ref PointF translationVector, [In] ref SizeF scaleFactors, [In] int patchSize)
         {
             return IsInTargetPatch(srcPoint.X * scaleFactors.Width + translationVector.X, srcPoint.Y * scaleFactors.Height + translationVector.Y, desPoint, patchSize);
         }

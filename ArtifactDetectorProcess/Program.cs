@@ -3,6 +3,7 @@ using System.IO.MemoryMappedFiles;
 using System.Threading;
 using ItsApe.ArtifactDetector.Models;
 using ItsApe.ArtifactDetectorProcess.Detectors;
+using ItsApe.ArtifactDetectorProcess.Utilities;
 using MessagePack;
 
 namespace ItsApe.ArtifactDetectorProcess
@@ -20,16 +21,32 @@ namespace ItsApe.ArtifactDetectorProcess
                 return;
             }
 
+            #region setup
+
             // Get important information from arguments.
-            var memoryStreamName = args[0];
+            var memoryStreamBaseName = args[0];
             var memoryStreamMutexName = args[1];
 
-            var memoryStreamLock = Semaphore.OpenExisting(memoryStreamMutexName);
+            // Setup mmf for common shared memory. NOTE: This is not actively released here, the service has to do that!
+            var sharedMemoryLock = Semaphore.OpenExisting(memoryStreamMutexName);
+            var sharedMemory = MemoryMappedFile.OpenExisting(memoryStreamBaseName, MemoryMappedFileRights.ReadWrite);
+            var sharedMemoryStream = sharedMemory.CreateViewStream();
+
+            // Setup mmf for screenshot of entire screen. NOTE: This is not actively released here, the service has to do that!
+            var screenshotMemory = MemoryMappedFile.OpenExisting(memoryStreamBaseName + "-screen", MemoryMappedFileRights.ReadWrite);
+            var screenshotMemoryStream = screenshotMemory.CreateViewStream();
 
             // Preemtively instantiate detectors to save time when called.
             var openWindowDetector = new OpenWindowDetector();
             var desktopIconDetector = new DesktopIconDetector();
             var trayIconDetector = new TrayIconDetector();
+
+            // The same for the screenshot tool.
+            var screenshotCapturer = new VisualCapturer();
+
+            bool writeBack = false;
+
+            #endregion setup
 
             // This is intentional.
             while (true)
@@ -37,52 +54,59 @@ namespace ItsApe.ArtifactDetectorProcess
                 try
                 {
                     // The release of the mutex is the signal to detect.
-                    if (memoryStreamLock.WaitOne())
+                    if (sharedMemoryLock.WaitOne())
                     {
                         // Get runtime information from memory mapped file from external process.
                         ArtifactRuntimeInformation runtimeInformation;
-                        using (var memoryMappedFile = MemoryMappedFile.OpenExisting(memoryStreamName, MemoryMappedFileRights.ReadWrite))
+                        // Fetch runtime information from mmf.
+                        sharedMemoryStream.Position = 0;
+                        runtimeInformation = MessagePackSerializer.Deserialize<ArtifactRuntimeInformation>(sharedMemoryStream);
+
+                        // Choose which detector to call.
+                        switch (runtimeInformation.ProcessCommand)
                         {
-                            using (var memoryStream = memoryMappedFile.CreateViewStream())
-                            {
-                                // Fetch runtime information from mmf.
-                                runtimeInformation = MessagePackSerializer.Deserialize<ArtifactRuntimeInformation>(memoryStream);
+                            case ExternalProcessCommand.OpenWindowDetector:
+                                openWindowDetector.FindArtifact(ref runtimeInformation);
+                                writeBack = true;
+                                break;
 
-                                // Choose which detector to call.
-                                switch (runtimeInformation.DetectorToRun)
-                                {
-                                    case ExternalDetector.OpenWindowDetector:
-                                        openWindowDetector.FindArtifact(ref runtimeInformation);
-                                        break;
+                            case ExternalProcessCommand.DesktopIconDetector:
+                                desktopIconDetector.FindArtifact(ref runtimeInformation);
+                                writeBack = true;
+                                break;
 
-                                    case ExternalDetector.DesktopIconDetector:
-                                        desktopIconDetector.FindArtifact(ref runtimeInformation);
-                                        break;
+                            case ExternalProcessCommand.TrayIconDetector:
+                                trayIconDetector.FindArtifact(ref runtimeInformation);
+                                writeBack = true;
+                                break;
 
-                                    case ExternalDetector.TrayIconDetector:
-                                        trayIconDetector.FindArtifact(ref runtimeInformation);
-                                        break;
+                            case ExternalProcessCommand.ScreenshotCapturer:
+                                screenshotCapturer.TakeScreenshots(ref screenshotMemoryStream);
+                                break;
 
-                                    case ExternalDetector.None:
-                                    default:
-                                        // Misconfiguration, stop further execution immediately.
-                                        memoryStreamLock.Release();
-                                        continue;
-                                }
-
-                                // Write new runtime information to mmf.
-                                memoryStream.Position = 0;
-                                MessagePackSerializer.Serialize(memoryStream, runtimeInformation);
-                            }
+                            case ExternalProcessCommand.None:
+                            default:
+                                // Misconfiguration, stop further execution immediately.
+                                sharedMemoryLock.Release();
+                                continue;
                         }
 
-                        memoryStreamLock.Release();
+                        if (writeBack)
+                        {
+                            // Write new runtime information to mmf.
+                            sharedMemoryStream.Position = 0;
+                            MessagePackSerializer.Serialize(sharedMemoryStream, runtimeInformation);
+                            sharedMemoryStream.Flush();
+                            writeBack = false;
+                        }
+
+                        sharedMemoryLock.Release();
                         // Runtime information is garbage collected now to get the slimmest process possible.
                     }
                 }
                 catch (Exception)
                 {
-                    memoryStreamLock.Release();
+                    sharedMemoryLock.Release();
                 }
             }
         }

@@ -3,6 +3,7 @@ using MessagePack;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
+using System.Drawing;
 
 namespace ItsApe.ArtifactDetector.Models
 {
@@ -179,7 +180,7 @@ namespace ItsApe.ArtifactDetector.Models
         /// </summary>
         [JsonIgnore]
         [Key(16)]
-        public ExternalDetector DetectorToRun { get; set; } = ExternalDetector.None;
+        public ExternalProcessCommand ProcessCommand { get; set; } = ExternalProcessCommand.None;
 
         /// <summary>
         /// Possibility to copy settings from another object.

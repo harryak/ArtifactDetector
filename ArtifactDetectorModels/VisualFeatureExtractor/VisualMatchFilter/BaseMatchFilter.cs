@@ -1,8 +1,10 @@
 ﻿using System.Collections.Generic;
 using System.Drawing;
+using System.Runtime.InteropServices;
 using Emgu.CV;
 using Emgu.CV.Structure;
 using Emgu.CV.Util;
+using ItsApe.ArtifactDetector.Models;
 
 namespace ItsApe.ArtifactDetector.Detectors.VisualFeatureExtractor.VisualMatchFilter
 {
@@ -22,7 +24,7 @@ namespace ItsApe.ArtifactDetector.Detectors.VisualFeatureExtractor.VisualMatchFi
         /// <param name="inlierRatio">How many previously found matches should support the hypothesis.</param>
         /// <param name="patchSize">Error threshold for applying the hypothesis on the starting set to get to the goal set.</param>
         /// <returns>A transformation matrix from model to query or null.</returns>
-        public abstract Matrix<float> GetRanSaCTransformationMatrix(VectorOfKeyPoint modelKeyPoints, VectorOfKeyPoint queryKeyPoints, VectorOfVectorOfDMatch matches, ref Mat mask, int iterations, double inlierRatio, int patchSize);
+        public abstract Matrix<float> GetRanSaCTransformationMatrix(ProcessedImage modelKeyPoints, [In] ref ProcessedImage queryKeyPoints, [In] ref VectorOfVectorOfDMatch matches, ref Mat mask, int iterations, double inlierRatio, int patchSize);
 
         /// <summary>
         /// Extract list of indexed matches from inputArray using the given mask.
@@ -30,16 +32,14 @@ namespace ItsApe.ArtifactDetector.Detectors.VisualFeatureExtractor.VisualMatchFi
         /// <param name="inputArray">The 2D input array.</param>
         /// <param name="mask">Mask for the input array.</param>
         /// <returns>List of indexed matches where mask is 1.</returns>
-        protected List<IndexedMDMatch> FilterMDMatchArrayOfArray(MDMatch[][] inputArray, Matrix<byte> mask)
+        protected void FilterMDMatchArrayOfArray(MDMatch[][] inputArray, Matrix<byte> mask, out List<IndexedMDMatch> filteredMatches)
         {
-            var filteredMatches = new List<IndexedMDMatch>();
+            filteredMatches = new List<IndexedMDMatch>();
 
             for (int i = 0; i < inputArray.Length && i < mask.Size.Height; i++)
             {
                 if (mask[i, 0] > 0) filteredMatches.Add(new IndexedMDMatch(i, inputArray[i]));
             }
-
-            return filteredMatches;
         }
 
         /// <summary>

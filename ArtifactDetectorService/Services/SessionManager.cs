@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
+using Emgu.CV;
+using Emgu.CV.Structure;
 using ItsApe.ArtifactDetector.DebugUtilities;
 using ItsApe.ArtifactDetector.Models;
 using ItsApe.ArtifactDetector.Utilities;
@@ -61,23 +63,6 @@ namespace ItsApe.ArtifactDetector.Services
         }
 
         /// <summary>
-        ///
-        /// </summary>
-        /// <param name="sessionId"></param>
-        /// <param name="runtimeInformation"></param>
-        /// <returns></returns>
-        public bool CallDetectorProcess(int sessionId, ref ArtifactRuntimeInformation runtimeInformation)
-        {
-            if (!DetectorProcesses.ContainsKey(sessionId))
-            {
-                Logger.LogError("Session with id {0} not active, can not call detector process.", sessionId);
-                return false;
-            }
-
-            return DetectorProcesses[sessionId].CallProcess(ref runtimeInformation);
-        }
-
-        /// <summary>
         /// Add a session to the pool by its ID. Does nothing if the session ID is already active.
         /// </summary>
         /// <param name="sessionId">The session ID.</param>
@@ -96,6 +81,23 @@ namespace ItsApe.ArtifactDetector.Services
                 catch (Exception)
                 { }
             }
+        }
+
+        /// <summary>
+        /// Wrapper for the stored session's endpoint to call the AD process.
+        /// </summary>
+        /// <param name="sessionId"></param>
+        /// <param name="runtimeInformation"></param>
+        /// <returns></returns>
+        public bool CallDetectorProcess(int sessionId, ref ArtifactRuntimeInformation runtimeInformation)
+        {
+            if (!DetectorProcesses.ContainsKey(sessionId))
+            {
+                Logger.LogError("Session with id {0} not active, can not call detector process.", sessionId);
+                return false;
+            }
+
+            return DetectorProcesses[sessionId].CallProcess(ref runtimeInformation);
         }
 
         /// <summary>
@@ -137,6 +139,22 @@ namespace ItsApe.ArtifactDetector.Services
         {
             AddActiveSession(sessionId);
             sessionActivityCounter[sessionId]++;
+        }
+
+        /// <summary>
+        /// Wrapper for the stored session's endpoint to call the AD process.
+        /// </summary>
+        /// <param name="sessionId"></param>
+        /// <returns></returns>
+        public Image<Rgba, byte> RetrieveSessionScreenshot(int sessionId)
+        {
+            if (!DetectorProcesses.ContainsKey(sessionId))
+            {
+                Logger.LogError("Session with id {0} not active, can not call detector process.", sessionId);
+                return null;
+            }
+
+            return DetectorProcesses[sessionId].RetrieveSessionScreenshot();
         }
 
         /// <summary>

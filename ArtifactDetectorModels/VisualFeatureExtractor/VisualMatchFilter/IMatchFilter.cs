@@ -1,5 +1,7 @@
 ﻿using Emgu.CV;
 using Emgu.CV.Util;
+using ItsApe.ArtifactDetector.Models;
+using System.Runtime.InteropServices;
 
 namespace ItsApe.ArtifactDetector.Detectors.VisualFeatureExtractor.VisualMatchFilter
 {
@@ -19,6 +21,6 @@ namespace ItsApe.ArtifactDetector.Detectors.VisualFeatureExtractor.VisualMatchFi
         /// <param name="inlierRatio">How many previously found matches should support the hypothesis.</param>
         /// <param name="patchSize">Error threshold for applying the hypothesis on the starting set to get to the goal set.</param>
         /// <returns>A transformation matrix from model to query or null.</returns>
-        Matrix<float> GetRanSaCTransformationMatrix(VectorOfKeyPoint modelKeyPoints, VectorOfKeyPoint queryKeyPoints, VectorOfVectorOfDMatch matches, ref Mat mask, int iterations, double inlierRatio, int patchSize);
+        Matrix<float> GetRanSaCTransformationMatrix(ProcessedImage modelKeyPoints, [In] ref ProcessedImage queryKeyPoints, [In] ref VectorOfVectorOfDMatch matches, ref Mat mask, int iterations, double inlierRatio, int patchSize);
     }
 }

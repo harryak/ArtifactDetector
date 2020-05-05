@@ -104,16 +104,16 @@ namespace ItsApe.ArtifactDetector.DetectorConditions
             }
 
             // Go through all the conditions in this set to evaluate them.
-            foreach (IDetectorCondition<ObjectType> condition in Conditions)
+            for (var i = 0; i < Conditions.Count; i++)
             {
                 // Connect the condition by the logical operator.
                 if (Operator == ConditionOperator.AND)
                 {
-                    returnValue &= condition.ObjectMatchesConditions(objectToCheck);
+                    returnValue &= Conditions[i].ObjectMatchesConditions(objectToCheck);
                 }
                 else
                 {
-                    returnValue |= condition.ObjectMatchesConditions(objectToCheck);
+                    returnValue |= Conditions[i].ObjectMatchesConditions(objectToCheck);
                 }
             }
 

@@ -1,10 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Windows.Forms;
-using Emgu.CV.UI;
+﻿using Emgu.CV;
+using Emgu.CV.Structure;
 using ItsApe.ArtifactDetector.Detectors.VisualFeatureExtractor;
 using ItsApe.ArtifactDetector.Models;
-using ItsApe.ArtifactDetector.Utilities;
+using ItsApe.ArtifactDetector.Services;
 using Microsoft.Extensions.Logging;
 
 namespace ItsApe.ArtifactDetector.Detectors
@@ -15,10 +13,6 @@ namespace ItsApe.ArtifactDetector.Detectors
     internal class VisualFeatureDetector : BaseDetector, IDetector
     {
         private bool ArtifactFound;
-
-        private ICollection<ProcessedImage> ReferenceImages;
-
-        private IList<WindowInformation> WindowInformation;
 
         /// <summary>
         /// Instantiate via setting the feature extractor from the configurations.
@@ -48,36 +42,33 @@ namespace ItsApe.ArtifactDetector.Detectors
         {
             Logger.LogInformation("Detecting visual features now.");
 
-            // Shorthand for reference images.
-            ReferenceImages = runtimeInformation.ReferenceImages.GetProcessedImages();
-
             // Do we have reference images?
-            if (ReferenceImages.Count < 1)
+            if (runtimeInformation.ReferenceImages.ImagesCount < 1)
             {
                 Logger.LogInformation("No reference images given for detector. Can not detect visual matches.");
                 return new DetectorResponse() { ArtifactPresent = DetectorResponse.ArtifactPresence.Possible };
             }
 
-            InitializeDetection(ref runtimeInformation);
+            InitializeDetection(sessionId, out var screenshot);
 
-            //TODO: Versions for icons.
-            if (WindowInformation.Count > 0)
+            if (screenshot != null)
             {
-                AnalyzeWindowHandles();
+                Logger.LogInformation("Analyzing screenshot using {0} reference images.", runtimeInformation.ReferenceImages.ImagesCount);
+                AnalyzeScreenshot(ref runtimeInformation, ref screenshot);
             }
             else
             {
-                AnalyzeScreens();
+                return new DetectorResponse() { ArtifactPresent = DetectorResponse.ArtifactPresence.Possible };
             }
 
             if (ArtifactFound)
             {
                 runtimeInformation.CountVisualFeautureMatches = 1;
-                
+
                 Logger.LogInformation("Found a match in reference images.");
                 return new DetectorResponse() { ArtifactPresent = DetectorResponse.ArtifactPresence.Certain };
             }
-            
+
             Logger.LogInformation("Found no matches in reference images.");
             return new DetectorResponse() { ArtifactPresent = DetectorResponse.ArtifactPresence.Impossible };
         }
@@ -86,59 +77,51 @@ namespace ItsApe.ArtifactDetector.Detectors
         /// Initialize (or reset) the detection for FindArtifact.
         /// </summary>
         /// <param name="runtimeInformation">Reference to object to initialize from.</param>
-        public void InitializeDetection(ref ArtifactRuntimeInformation runtimeInformation)
+        public void InitializeDetection(int sessionId, out Image<Rgba, byte> screenshot)
         {
             ArtifactFound = false;
-            WindowInformation = runtimeInformation.WindowsInformation;
+
+            screenshot = SessionManager.GetInstance().RetrieveSessionScreenshot(sessionId);
         }
 
-        private void AnalyzeWindowHandles()
+        private void AnalyzeScreenshot(ref ArtifactRuntimeInformation runtimeInformation, ref Image<Rgba, byte> screenshot)
         {
-            Logger.LogInformation("Analyzing window handles.");
-            foreach (var windowInformation in WindowInformation)
+            ProcessedImage observedImage;
+            if (runtimeInformation.WindowsInformation.Count < 1)
             {
-                // Make screenshot of artifact window and extract the features.
-                var observedImage = FeatureExtractor.ExtractFeatures(VisualCapturer.CaptureRegion(windowInformation.BoundingArea));
+                Logger.LogInformation("Taking entire screen for feature detection.");
+                observedImage = FeatureExtractor.ExtractFeatures(screenshot.Mat);
 
                 if (observedImage == null)
                 {
+                    Logger.LogInformation("Could not get features from screenshot.");
+                    return;
+                }
+
+                // Stop if the artifact was found.
+                ArtifactFound = FeatureExtractor.ImageMatchesReference(observedImage, runtimeInformation.ReferenceImages.GetProcessedImages());
+                return;
+            }
+
+            Logger.LogInformation("Cutting out windows from screenshot.");
+            Mat screenshotCutout;
+            for (var i = 0; i < runtimeInformation.WindowsInformation.Count; i++)
+            {
+                // Cut out area of screenshot that the artifact is in.
+                screenshot.ROI = runtimeInformation.WindowsInformation[i].BoundingArea;
+                screenshotCutout = screenshot.Copy().Mat;
+                observedImage = FeatureExtractor.ExtractFeatures(screenshotCutout);
+
+                if (observedImage == null)
+                {
+                    Logger.LogError("Could not get features from screenshot-cutout.", screenshot);
                     continue;
                 }
 
-                ArtifactFound = FeatureExtractor.ImageMatchesReference(observedImage, ReferenceImages, out var drawingResult, out int matchCount);
-
-#if DEBUG
-                // Show the results in a window.
-                if (drawingResult != null)
-                    Application.Run(new ImageViewer(drawingResult));
-#endif
-
                 // Stop if the artifact was found.
-                if (ArtifactFound)
+                if (FeatureExtractor.ImageMatchesReference(observedImage, runtimeInformation.ReferenceImages.GetProcessedImages()))
                 {
-                    break;
-                }
-            }
-        }
-
-        private void AnalyzeScreens()
-        {
-            Logger.LogInformation("Analyzing screens.");
-            foreach (var screen in Screen.AllScreens)
-            {
-                // Make screenshot of whole screen and extract the features.
-                var observedImage = FeatureExtractor.ExtractFeatures(VisualCapturer.CaptureScreen(screen));
-
-                ArtifactFound = FeatureExtractor.ImageMatchesReference(observedImage, ReferenceImages, out var drawingResult, out int matchCount);
-
-                // Stop if the artifact was found.
-                if (ArtifactFound)
-                {
-#if DEBUG
-                    // Show the results in a window.
-                    if (drawingResult != null)
-                        //Application.Run(new ImageViewer(drawingResult));
-#endif
+                    ArtifactFound = true;
                     break;
                 }
             }

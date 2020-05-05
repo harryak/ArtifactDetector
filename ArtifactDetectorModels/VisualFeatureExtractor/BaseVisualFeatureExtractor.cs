@@ -136,26 +136,14 @@ namespace ItsApe.ArtifactDetector.Detectors.VisualFeatureExtractor
         /// <param name="observedImage">The observed image.</param>
         /// <param name="referenceImages">Reference images for the artifact type.</param>
         /// <param name="drawingResult">The result of the drawing (for Debug).</param>
-        /// <param name="matchCount">Count of matches, if found.</param>
         /// <returns>A homography or null if none was found.</returns>
-        public bool ImageMatchesReference(ProcessedImage observedImage, ICollection<ProcessedImage> referenceImages, out Mat drawingResult, out int matchCount)
+        public bool ImageMatchesReference(ProcessedImage observedImage, ICollection<ProcessedImage> referenceImages)
         {
-            // Only needed for debugging purposes, otherwise will always be null.
-            drawingResult = null;
-
-            // Same for this.
-            var matches = new VectorOfVectorOfDMatch();
-            var matchesMask = new Mat();
-            var homography = new Matrix<float>(3, 3);
-
             // Get a matched artifact image or null.
-            var matchedArtifact = FindMatch(
-                observedImage,
-                referenceImages,
-                out matches,
-                out matchesMask,
-                out homography,
-                out matchCount
+            FindMatch(
+                ref observedImage,
+                ref referenceImages,
+                out Matrix<float>homography
             );
 
             return homography != null;
@@ -166,33 +154,28 @@ namespace ItsApe.ArtifactDetector.Detectors.VisualFeatureExtractor
         /// </summary>
         /// <param name="observedImage">The observed image.</param>
         /// <param name="artifactType">The artifact type containing visual information.</param>
-        /// <param name="matches">Reference to a match vector.</param>
-        /// <param name="matchesMask">Reference to the used result mask.</param>
         /// <param name="homography">Reference to a possible homography.</param>
         /// <returns>A matched artifact image, if available.</returns>
-        private ProcessedImage FindMatch(ProcessedImage observedImage, ICollection<ProcessedImage> referenceImages, out VectorOfVectorOfDMatch goodMatches, out Mat matchesMask, out Matrix<float> homography, out int matchCount)
+        private void FindMatch(ref ProcessedImage observedImage, ref ICollection<ProcessedImage> referenceImages, out Matrix<float> homography)
         {
-            ProcessedImage matchingArtifact = null;
+            // Used variable.
+            VectorOfVectorOfDMatch matches;
 
             // Initialize out variables.
-            goodMatches = new VectorOfVectorOfDMatch();
-
-            VectorOfVectorOfDMatch matches;
-            matchesMask = new Mat();
-            matchCount = 0;
-
-            // Only needed for debugging output, otherwise will always be null.
+            var goodMatches = new VectorOfVectorOfDMatch();
+            var matchesMask = new Mat();
             homography = null;
-
-            int artifactNumber = 0;
-            foreach (var currentArtifactImage in referenceImages)
+            // Clear reference descriptors, just in case.
+            DescriptorMatcher.Clear();
+            
+            foreach (var referenceImage in referenceImages)
             {
                 // Add model descriptors to matcher.
-                DescriptorMatcher.Add(currentArtifactImage.Descriptors);
+                DescriptorMatcher.Add(referenceImage.Descriptors);
 
                 // Match this set with the observed image descriptors.
                 matches = new VectorOfVectorOfDMatch();
-                DescriptorMatcher.KnnMatch(observedImage.Descriptors, matches, 2, null);
+                DescriptorMatcher.KnnMatch(observedImage.Descriptors, matches, 2);
 
                 // Is the best matche's distance below the threshold?
                 // Also: Apply Lowe's ratio test for 0.7 to the matches.
@@ -224,18 +207,19 @@ namespace ItsApe.ArtifactDetector.Detectors.VisualFeatureExtractor
                 // Do we have a minimum amount of unique matches?
                 int nonZeroCount = CvInvoke.CountNonZero(matchesMask);
                 // Calculate the ratio between the reference image and the current artifact image to rule out influence of feature density.
-                double sizeRatio = GetSizeRatio(observedImage.Dimensions, currentArtifactImage.Dimensions);
+                double sizeRatio = GetSizeRatio(observedImage.Dimensions, referenceImage.Dimensions);
 
                 if (nonZeroCount >= MinimumMatchesRequired / sizeRatio)
                 {
                     // Filter further for size and orientation of the matches.
                     try
                     {
-                        nonZeroCount = Features2DToolbox.VoteForSizeAndOrientation(currentArtifactImage.KeyPoints, observedImage.KeyPoints, goodMatches, matchesMask, 1.2, 20);
+                        nonZeroCount = Features2DToolbox.VoteForSizeAndOrientation(referenceImage.KeyPoints, observedImage.KeyPoints, goodMatches, matchesMask, 1.2, 20);
                     }
-                    catch (System.Runtime.InteropServices.SEHException)
+                    catch (System.Runtime.InteropServices.SEHException e)
                     {
-                        Logger.LogWarning("Can not call the voting for size and orientation. Better not continueing.");
+                        Logger.LogWarning("Can not call the voting for size and orientation. Better not continueing: \"{0}\".", e.Message);
+                        DescriptorMatcher.Clear();
                         continue;
                     }
 
@@ -243,24 +227,19 @@ namespace ItsApe.ArtifactDetector.Detectors.VisualFeatureExtractor
                     if (nonZeroCount >= MinimumMatchesRequired / sizeRatio)
                     {
                         // Can we find a homography? Then it's a match.
-                        homography = MatchFilter.GetRanSaCTransformationMatrix(currentArtifactImage.KeyPoints, observedImage.KeyPoints, goodMatches, ref matchesMask, 1000, 0.85, 5);
+                        homography = MatchFilter.GetRanSaCTransformationMatrix(referenceImage, ref observedImage, ref goodMatches, ref matchesMask, 1000, 0.85, 5);
 
                         if (homography != null)
                         {
-                            // Assign the match.
-                            matchingArtifact = currentArtifactImage;
-                            matchCount = CvInvoke.CountNonZero(matchesMask);
                             // Break, we do not need further searching.
+                            DescriptorMatcher.Clear();
                             break;
                         }
                     }
                 }
 
                 DescriptorMatcher.Clear();
-                artifactNumber++;
             }
-
-            return matchingArtifact;
         }
 
         /// <summary>

@@ -104,7 +104,7 @@ namespace ItsApe.ArtifactDetector.Services
 
                                 // Then: Add next value to window.
                                 currentValues = reader.ReadLine().Split(',');
-                                errorWindowValues.Add(Convert.ToInt64(currentValues[1]), Convert.ToInt32(currentValues[2]));
+                                errorWindowValues.Add(Convert.ToInt64(currentValues[0]), Convert.ToInt32(currentValues[2]));
 
                                 // See if the average of the window changes.
                                 currentMajority = GetMajorityItem(ref errorWindowValues);
@@ -134,8 +134,13 @@ namespace ItsApe.ArtifactDetector.Services
         /// <param name="queryTime">Time when the detection was queried.</param>
         /// <param name="responseTime">Time when the detection was finished.</param>
         /// <param name="detectorResponse">The response to log.</param>
-        public void LogDetectionResult(DateTime queryTime, DateTime responseTime, DetectorResponse detectorResponse)
+        public void LogDetectionResult(DateTime queryTime, long? responseTime, DetectorResponse detectorResponse)
         {
+            if (responseTime == null)
+            {
+                responseTime = -1;
+            }
+
             // Save response to timetable.
             lock (fileLock)
             {
@@ -143,7 +148,7 @@ namespace ItsApe.ArtifactDetector.Services
                 // Use sortable and tenth-millisecond-precise timestamp for entry.
                 using (logFileWriter = new StreamWriter(currentLogFile, true))
                 {
-                    logFileWriter.WriteLine("{0:yyMMddHHmmssffff},{1:yyMMddHHmmssffff},{2}",
+                    logFileWriter.WriteLine("{0:yyMMddHHmmssfff},{1},{2}",
                         queryTime, responseTime, (int)detectorResponse.ArtifactPresent);
                     logFileWriter.Flush();
                 }

@@ -57,7 +57,6 @@ namespace ItsApe.ArtifactDetector.Models
         /// <param name="workingDirectoryPath">Where to work in.</param>
         /// <param name="visualFeatureExtrator">A visual feature extractor instance to get features from images.</param>
         /// <param name="logger">Logger to use for logging.</param>
-        /// <param name="stopwatch">Optional, stopwatch for evaluation.</param>
         private ArtifactReferenceImageCache(string artifactType, string workingDirectoryPath, IVisualFeatureExtractor visualFeatureExtrator, ILogger logger)
         {
             _artifactType = artifactType;
@@ -79,6 +78,12 @@ namespace ItsApe.ArtifactDetector.Models
         /// Getter for the artifact type name.
         /// </summary>
         public string ArtifactType { get => _artifactType; }
+
+        /// <summary>
+        /// Accessor for count of processed images.
+        /// </summary>
+        [IgnoreMember]
+        public int ImagesCount => ProcessedImages != null ? ProcessedImages.Count : 0;
 
         /// <summary>
         /// Accessors for the file path. Need to be explicit to omit property from serialization.
@@ -139,7 +144,6 @@ namespace ItsApe.ArtifactDetector.Models
         /// <param name="setup">Setup of this application.</param>
         /// <param name="visualFeatureExtrator">A visual feature extractor instance to get features from images.</param>
         /// <param name="logger">Logger to use for logging.</param>
-        /// <param name="stopwatch">Optional, stopwatch for evaluation.</param>
         /// <returns>A cached or new instance of the cache.</returns>
         public static ArtifactReferenceImageCache GetInstance(string artifactType, ILogger logger, string workingDirectoryName, IVisualFeatureExtractor artifactDetector)
         {

@@ -1,8 +1,10 @@
 ﻿using System;
 using System.Drawing;
+using System.Runtime.InteropServices;
 using Emgu.CV;
 using Emgu.CV.Structure;
 using Emgu.CV.Util;
+using ItsApe.ArtifactDetector.Models;
 
 namespace ItsApe.ArtifactDetector.Detectors.VisualFeatureExtractor.VisualMatchFilter
 {
@@ -27,14 +29,14 @@ namespace ItsApe.ArtifactDetector.Detectors.VisualFeatureExtractor.VisualMatchFi
         /// <param name="inlierRatio">How many previously found matches should support the hypothesis.</param>
         /// <param name="patchSize">Error threshold for applying the hypothesis on the starting set to get to the goal set.</param>
         /// <returns>A transformation matrix from model to query or null.</returns>
-        public override Matrix<float> GetRanSaCTransformationMatrix(VectorOfKeyPoint modelKeyPoints, VectorOfKeyPoint queryKeyPoints, VectorOfVectorOfDMatch matches, ref Mat mask, int iterations, double inlierRatio, int patchSize)
+        public override Matrix<float> GetRanSaCTransformationMatrix(ProcessedImage modelKeyPoints, [In] ref ProcessedImage queryKeyPoints, [In] ref VectorOfVectorOfDMatch matches, ref Mat mask, int iterations, double inlierRatio, int patchSize)
         {
             // Get arrays of key points for easier access.
-            MKeyPoint[] modelKeyPointsArray = modelKeyPoints.ToArray();
-            MKeyPoint[] queryKeyPointsArray  = queryKeyPoints.ToArray();
+            MKeyPoint[] modelKeyPointsArray = modelKeyPoints.KeyPoints.ToArray();
+            MKeyPoint[] queryKeyPointsArray  = queryKeyPoints.KeyPoints.ToArray();
 
             // Get list of masked matches for easier access.
-            var maskedMatchesList = FilterMDMatchArrayOfArray(matches.ToArrayOfArray(), new Matrix<byte>(mask.GetRawData()));
+            FilterMDMatchArrayOfArray(matches.ToArrayOfArray(), new Matrix<byte>(mask.GetRawData()), out var maskedMatchesList);
 
             // Setup test variables for return value.
             int bestMatchCount = 0;
@@ -100,11 +102,11 @@ namespace ItsApe.ArtifactDetector.Detectors.VisualFeatureExtractor.VisualMatchFi
                 queryTriangle[1, 2] = queryKeyPointsArray[maskedMatchesList[matchIndex3].match[0].TrainIdx].Point.Y;
 
                 // We can only find a transformation matrix if the three points are not colinear.
-                if (!IsNonemptyTriangle(modelTriangle) && !IsNonemptyTriangle(queryTriangle))
+                if (!IsNonemptyTriangle(ref modelTriangle) && !IsNonemptyTriangle(ref queryTriangle))
                     continue;
 
                 // Invert model triangle for transformation matrix. If inversion does not exist, continue.
-                if (!Invert(modelTriangle, ref invertedModelTriangle, ref adjunctModelTriangle))
+                if (!Invert(ref modelTriangle, ref invertedModelTriangle, ref adjunctModelTriangle))
                     continue;
 
                 // Try to find applicable transformation matrix for these matches.
@@ -113,7 +115,7 @@ namespace ItsApe.ArtifactDetector.Detectors.VisualFeatureExtractor.VisualMatchFi
                 // Count how many matches fit to this model. This also counts the current points.
                 foreach (var indexedMatch in maskedMatchesList)
                 {
-                    if (PointFitsModel(modelKeyPointsArray[indexedMatch.match[0].TrainIdx].Point, queryKeyPointsArray[indexedMatch.match[0].QueryIdx].Point, transformationMatrix, patchSize))
+                    if (PointFitsModel(ref modelKeyPointsArray[indexedMatch.match[0].TrainIdx].Point, ref queryKeyPointsArray[indexedMatch.match[0].QueryIdx].Point, ref transformationMatrix, patchSize))
                     {
                         matchCount++;
                     }
@@ -185,7 +187,7 @@ namespace ItsApe.ArtifactDetector.Detectors.VisualFeatureExtractor.VisualMatchFi
         /// <param name="invertedMatrix">Reference to the inverted matrix memory.</param>
         /// <param name="adjunctMatrix">Reference to the adjunct matrix memory.</param>
         /// <returns>False if input matrix is not 3x3 or not invertible.</returns>
-        private bool Invert(Matrix<float> matrix, ref Matrix<float> invertedMatrix, ref Matrix<float> adjunctMatrix)
+        private bool Invert([In] ref Matrix<float> matrix, ref Matrix<float> invertedMatrix, ref Matrix<float> adjunctMatrix)
         {
             if (matrix.Cols != 3 || matrix.Rows != 3)
                 return false;
@@ -210,7 +212,7 @@ namespace ItsApe.ArtifactDetector.Detectors.VisualFeatureExtractor.VisualMatchFi
         /// </summary>
         /// <param name="matrix">3 x 2 matrix with coordinates of points.</param>
         /// <returns>Whether the area is larger than zero.</returns>
-        private bool IsNonemptyTriangle(Matrix<float> matrix)
+        private bool IsNonemptyTriangle([In] ref Matrix<float> matrix)
         {
             // Try skipping rest of calculation as soon as possible.
             if (matrix[0, 0] * (matrix[1, 1] - matrix[1, 2]) > 0)
@@ -234,7 +236,7 @@ namespace ItsApe.ArtifactDetector.Detectors.VisualFeatureExtractor.VisualMatchFi
         /// <param name="transformationMatrix">Speaks for itself.</param>
         /// <param name="patchSize">Half length of error square around desPoint.</param>
         /// <returns>True or false.</returns>
-        private bool PointFitsModel(PointF srcPoint, PointF desPoint, Matrix<float> transformationMatrix, int patchSize)
+        private bool PointFitsModel([In] ref PointF srcPoint, [In] ref PointF desPoint, [In] ref Matrix<float> transformationMatrix, int patchSize)
         {
             var srcPointMat = new Matrix<float>(3, 1);
             srcPointMat.SetValue(1f);

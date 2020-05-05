@@ -258,7 +258,7 @@ namespace ItsApe.ArtifactDetector.Services
         protected override void OnStart(string[] args)
         {
             // Uncomment this to debug.
-            //Debugger.Launch();
+            // Debugger.Launch();
             
             // Get service state from file.
             Logger.LogDebug("Retrieving saved service state.");
@@ -307,6 +307,9 @@ namespace ItsApe.ArtifactDetector.Services
                 serviceState.ArtifactConfiguration.Detector,
                 (ArtifactRuntimeInformation)serviceState.ArtifactConfiguration.RuntimeInformation.Clone(),
                 ref detectionLogWriter));
+
+            // Uncomment for debugging purposes, if needed.
+            // detectionTimer.Elapsed -= DetectionEventHandler;
         }
 
         /// <summary>
@@ -413,7 +416,7 @@ namespace ItsApe.ArtifactDetector.Services
         /// Method to detect the currently given artifact and write the response to the responses log file.
         /// 
         /// WARNING: This gets executed in a new instance!
-        /// WARNING: No try-catch is done in here to save resources!
+        /// WARNING: Almost no try-catch is done in here to save resources!
         /// </summary>
         private void TriggerDetection(IDetector detector, ArtifactRuntimeInformation runtimeInformation, ref DetectionLogWriter detectionLogWriter)
         {
@@ -423,8 +426,9 @@ namespace ItsApe.ArtifactDetector.Services
             if (!sessionManager.HasActiveSessions())
             {
                 // No active user sessions, no artifacts can be present.
+                Logger.LogInformation("No session active, no detection necessary.");
                 detectionLogWriter.LogDetectionResult(
-                    queryTime, queryTime, new DetectorResponse { ArtifactPresent = DetectorResponse.ArtifactPresence.Impossible });
+                    queryTime, null, new DetectorResponse { ArtifactPresent = DetectorResponse.ArtifactPresence.Impossible });
                 return;
             }
 
@@ -434,10 +438,19 @@ namespace ItsApe.ArtifactDetector.Services
             DetectorResponse detectorResponse = null;
             foreach (var sessionEntry in sessionManager.DetectorProcesses)
             {
-                stopwatch.Restart();
-                detectorResponse = detector.FindArtifact(ref runtimeInformation, sessionEntry.Key);
-                stopwatch.Stop();
-                detectionLogWriter.LogDetectionResult(queryTime, queryTime.AddMilliseconds(stopwatch.ElapsedMilliseconds), detectorResponse);
+                try
+                {
+                    stopwatch.Restart();
+                    detectorResponse = detector.FindArtifact(ref runtimeInformation, sessionEntry.Key);
+                    stopwatch.Stop();
+                    detectionLogWriter.LogDetectionResult(queryTime, stopwatch.ElapsedMilliseconds, detectorResponse);
+                }
+                catch (Exception e)
+                {
+                    Logger.LogError("Could not execute FindArtifact: \"{0}\" \"{1}\"", e.Message, e.InnerException.Message);
+                    detectionLogWriter.LogDetectionResult(
+                        queryTime, null, new DetectorResponse { ArtifactPresent = DetectorResponse.ArtifactPresence.Possible });
+                }
             }
         }
     }

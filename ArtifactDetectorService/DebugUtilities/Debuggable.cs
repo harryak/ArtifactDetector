@@ -8,7 +8,7 @@ namespace ItsApe.ArtifactDetector.DebugUtilities
     internal abstract class HasLogger
     {
         /// <summary>
-        /// Debuggable classes have a logger and a stopwatch.
+        /// Debuggable classes have a logger.
         /// </summary>
         /// <param name="setup">The current execution's setup.</param>
         internal HasLogger()

@@ -1,10 +1,13 @@
 ﻿using System;
+using System.Drawing;
 using System.IO;
 using System.IO.MemoryMappedFiles;
 using System.Runtime.InteropServices;
 using System.Security.AccessControl;
 using System.Security.Principal;
 using System.Threading;
+using Emgu.CV;
+using Emgu.CV.Structure;
 using ItsApe.ArtifactDetector.DebugUtilities;
 using ItsApe.ArtifactDetector.Models;
 using ItsApe.ArtifactDetector.Utilities;
@@ -19,6 +22,11 @@ namespace ItsApe.ArtifactDetector.Services
         /// Size of the memory mapped file. Using MapPack this is more than enough.
         /// </summary>
         private const long MemoryMappedFileSize = 512;
+
+        /// <summary>
+        /// Size of the memory mapped file for sharing screenshots. These 50MB are a lot, but can not be resized afterwards.
+        /// </summary>
+        private const long ScreenshotMemoryMappedFileSize = 0x3200000;
 
         /// <summary>
         /// Name of the memory mapped file.
@@ -41,6 +49,11 @@ namespace ItsApe.ArtifactDetector.Services
         private int processId;
 
         /// <summary>
+        /// Memory region(s) for every screen to share screenshots.
+        /// </summary>
+        private MemoryMappedFile screenshotMemory;
+
+        /// <summary>
         /// Memory region for sharing data with other processes.
         /// </summary>
         private MemoryMappedFile sharedMemory;
@@ -51,6 +64,20 @@ namespace ItsApe.ArtifactDetector.Services
         /// WARNING: This gets acquired and released in independent threads!
         /// </summary>
         private Semaphore sharedMemoryLock;
+
+        /// <summary>
+        /// Stream to the shared memory.
+        /// 
+        /// WARNING: Make sure this is disposed.
+        /// </summary>
+        private MemoryMappedViewStream sharedMemoryStream;
+
+        /// <summary>
+        /// Stream to the screenshot memory.
+        /// 
+        /// WARNING: Make sure this is disposed.
+        /// </summary>
+        private MemoryMappedViewStream screenshotMemoryStream;
 
         /// <summary>
         /// Initialize the endpoint for the process by starting the process and storing its ID.
@@ -68,6 +95,8 @@ namespace ItsApe.ArtifactDetector.Services
             {
                 throw new Exception("Could not start process in session " + sessionId + ".");
             }
+
+            GetScreenshotMemory();
         }
 
         /// <summary>
@@ -77,28 +106,62 @@ namespace ItsApe.ArtifactDetector.Services
         /// <returns>True on success.</returns>
         public bool CallProcess(ref ArtifactRuntimeInformation runtimeInformation)
         {
+            Logger.LogInformation("Calling process in session {0}.", sessionId);
+
             // Backup non-serialized property.
             var referenceImageBackup = runtimeInformation.ReferenceImages;
 
             // Use memory stream to call process.
-            using (var memoryStream = sharedMemory.CreateViewStream())
+            sharedMemoryStream.Position = 0;
+            MessagePackSerializer.Serialize(sharedMemoryStream, runtimeInformation);
+            sharedMemoryStream.Flush();
+
+            // Release mutex for short time to let process get it.
+            sharedMemoryLock.Release();
+
+            // Wait for Mutex but do not release it to let the process wait for next call.
+            if (sharedMemoryLock.WaitOne())
             {
-                MessagePackSerializer.Serialize(memoryStream, runtimeInformation);
-
-                // Release mutex for short time to let process get it.
-                sharedMemoryLock.Release();
-
-                // Wait for Mutex but do not release it to let the process wait for next call.
-                if (sharedMemoryLock.WaitOne())
-                {
-                    memoryStream.Position = 0;
-                    runtimeInformation = MessagePackSerializer.Deserialize<ArtifactRuntimeInformation>(memoryStream);
-                }
+                sharedMemoryStream.Position = 0;
+                runtimeInformation = MessagePackSerializer.Deserialize<ArtifactRuntimeInformation>(sharedMemoryStream);
             }
 
             // Restore backed up non-serialized property.
             runtimeInformation.ReferenceImages = referenceImageBackup;
             return true;
+        }
+
+        /// <summary>
+        /// Retrieve a screenshot of the entire virtual desktop in the session.
+        /// </summary>
+        /// <returns>EmguCV Mat of the screenshot.</returns>
+        public Image<Rgba, byte> RetrieveSessionScreenshot()
+        {
+            Image<Rgba, byte> screenshot = null;
+
+            Logger.LogInformation("Retrieve screenshot from session {0}.", sessionId);
+            var triggerObject = new ArtifactRuntimeInformation
+            {
+                ProcessCommand = ExternalProcessCommand.ScreenshotCapturer
+            };
+
+            // Use the sharedMemory to send the screenshot command.
+            sharedMemoryStream.Position = 0;
+            MessagePackSerializer.Serialize(sharedMemoryStream, triggerObject);
+            sharedMemoryStream.Flush();
+
+            // Release mutex for short time to let process get it.
+            sharedMemoryLock.Release();
+
+            // Wait for Mutex but do not release it to let the process wait for next call.
+            if (sharedMemoryLock.WaitOne())
+            {
+                screenshotMemoryStream.Position = 0;
+                screenshot = new Bitmap(screenshotMemoryStream).ToImage<Rgba, byte>();
+                Logger.LogInformation("Got screenshot from process.");
+            }
+
+            return screenshot;
         }
 
         /// <summary>
@@ -166,6 +229,14 @@ namespace ItsApe.ArtifactDetector.Services
         }
 
         /// <summary>
+        /// Get handle of memory for screenshots.
+        /// </summary>
+        private void GetScreenshotMemory()
+        {
+            screenshotMemory = MemoryMappedFile.OpenExisting(mmfName + "-screen", MemoryMappedFileRights.ReadWrite);
+        }
+
+        /// <summary>
         /// Get a duplicate of a user token for creation of session processes.
         /// </summary>
         /// <param name="userToken">The token to duplicate.</param>
@@ -196,16 +267,34 @@ namespace ItsApe.ArtifactDetector.Services
                 FillSemaphoreSecurityIdentifier(out var semaphoreSecurity);
                 sharedMemoryLock = new Semaphore(0, 1, semaphoreName, out bool _, semaphoreSecurity);
             }
+
             // Prepare shared memory via memory mapped file.
+            MemoryMappedFileSecurity fileSecurity = null;
             if (sharedMemory == null)
             {
-                FillMMFSecurityIdentifier(out var fileSecurity);
+                FillMMFSecurityIdentifier(out fileSecurity);
 
                 sharedMemory = MemoryMappedFile.CreateOrOpen(
                    mmfName, MemoryMappedFileSize,
                    MemoryMappedFileAccess.ReadWrite,
                    MemoryMappedFileOptions.None,
                    fileSecurity, HandleInheritability.Inheritable);
+                sharedMemoryStream = sharedMemory.CreateViewStream();
+            }
+
+            if (screenshotMemory == null)
+            {
+                if (fileSecurity == null)
+                {
+                    FillMMFSecurityIdentifier(out fileSecurity);
+                }
+
+                screenshotMemory = MemoryMappedFile.CreateOrOpen(
+                    mmfName + "-screen", ScreenshotMemoryMappedFileSize,
+                    MemoryMappedFileAccess.ReadWrite, MemoryMappedFileOptions.None,
+                    fileSecurity, HandleInheritability.Inheritable);
+
+                screenshotMemoryStream = screenshotMemory.CreateViewStream();
             }
         }
 
@@ -276,11 +365,19 @@ namespace ItsApe.ArtifactDetector.Services
                 if (disposing)
                 {
                     GC.KeepAlive(sharedMemoryLock);
+                    GC.KeepAlive(sharedMemoryStream);
 
                     if (sharedMemoryLock != null)
                         sharedMemoryLock.Close();
+
                     if (sharedMemory != null)
                         sharedMemory.Dispose();
+
+                    if (sharedMemoryStream != null)
+                        sharedMemoryStream.Dispose();
+
+                    if (screenshotMemory != null)
+                        screenshotMemory.Dispose();
                 }
 
                 // No need for disposing the process, it gets killed automatically when the session terminates.

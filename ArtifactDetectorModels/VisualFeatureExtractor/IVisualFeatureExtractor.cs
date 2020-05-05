@@ -28,9 +28,7 @@ namespace ItsApe.ArtifactDetector.Detectors.VisualFeatureExtractor
         /// </summary>
         /// <param name="observedImage">The observed image.</param>
         /// <param name="referenceImages">Reference images for this artifact type.</param>
-        /// <param name="drawingResult">The resulting image to draw in a window.</param>
-        /// <param name="matchCount">Count of matches, if one was found.</param>
         /// <returns>Whether a match was found.</returns>
-        bool ImageMatchesReference(ProcessedImage observedImage, ICollection<ProcessedImage> referenceImages, out Mat drawingResult, out int matchCount);
+        bool ImageMatchesReference(ProcessedImage observedImage, ICollection<ProcessedImage> referenceImages);
     }
 }

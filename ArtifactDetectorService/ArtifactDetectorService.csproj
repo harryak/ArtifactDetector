@@ -11,6 +11,7 @@
     <TargetFrameworkVersion>v4.8</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
+    <GenerateBindingRedirectsOutputType>true</GenerateBindingRedirectsOutputType>
     <Deterministic>true</Deterministic>
     <NuGetPackageImportStamp>
     </NuGetPackageImportStamp>
@@ -66,7 +67,7 @@
     <CodeAnalysisRuleSet>MinimumRecommendedRules.ruleset</CodeAnalysisRuleSet>
     <Prefer32Bit>true</Prefer32Bit>
     <RunCodeAnalysis>true</RunCodeAnalysis>
-    <LangVersion>latest</LangVersion>
+    <LangVersion>default</LangVersion>
     <Optimize>false</Optimize>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|x86'">
@@ -278,7 +279,6 @@
     <Compile Include="Services\SessionManager.cs" />
     <Compile Include="Utilities\DefaultApplicationFinder.cs" />
     <Compile Include="Utilities\NativeMethods.cs" />
-    <Compile Include="Utilities\VisualCapturer.cs" />
     <Compile Include="Models\DetectorConditions\DetectorConditionSet.cs" />
     <Compile Include="Models\DetectorResponse.cs" />
     <Compile Include="Detectors\VisualFeatureDetector.cs" />
@@ -298,6 +298,7 @@
     <None Include=".editorconfig" />
     <None Include="App.config">
       <SubType>Designer</SubType>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
     <Content Include="face-monkey.ico" />
     <Content Include="License-LGPL.txt" />

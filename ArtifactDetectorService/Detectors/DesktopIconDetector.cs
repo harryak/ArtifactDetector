@@ -1,5 +1,6 @@
 ﻿using ItsApe.ArtifactDetector.Models;
 using ItsApe.ArtifactDetector.Services;
+using Microsoft.Extensions.Logging;
 
 namespace ItsApe.ArtifactDetector.Detectors
 {
@@ -17,17 +18,23 @@ namespace ItsApe.ArtifactDetector.Detectors
         {
             if (runtimeInformation.PossibleIconSubstrings.Count < 1)
             {
+                Logger.LogInformation("No possible icon titles given. Could not find matching desktop icons.");
                 return new DetectorResponse { ArtifactPresent = DetectorResponse.ArtifactPresence.Possible };
             }
 
-            runtimeInformation.DetectorToRun = ExternalDetector.DesktopIconDetector;
-            SessionManager.GetInstance().CallDetectorProcess(sessionId, ref runtimeInformation);
+            runtimeInformation.ProcessCommand = ExternalProcessCommand.DesktopIconDetector;
+            if (!SessionManager.GetInstance().CallDetectorProcess(sessionId, ref runtimeInformation))
+            {
+                Logger.LogInformation("Could not call detector process to find matching desktop icons.");
+            }
 
             if (runtimeInformation.CountDesktopIcons > 0)
             {
+                Logger.LogInformation("Found {0} matching desktop icons.", runtimeInformation.CountDesktopIcons);
                 return new DetectorResponse { ArtifactPresent = DetectorResponse.ArtifactPresence.Certain };
             }
 
+            Logger.LogInformation("No matching desktop icons found.");
             return new DetectorResponse { ArtifactPresent = DetectorResponse.ArtifactPresence.Impossible };
         }
     }

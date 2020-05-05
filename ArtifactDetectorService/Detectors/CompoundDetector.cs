@@ -55,7 +55,7 @@ namespace ItsApe.ArtifactDetector.Detectors
                 }
 
                 // Get the new chain element's response.
-                entry.Value.FindArtifact(ref runtimeInformation, sessionId);
+                response = entry.Value.FindArtifact(ref runtimeInformation, sessionId);
 
                 // If there is an artifact or there is none with 100% certainty, break.
                 if (entry.Value.HasTargetConditions() && !entry.Value.TargetConditionsMatch(ref response))

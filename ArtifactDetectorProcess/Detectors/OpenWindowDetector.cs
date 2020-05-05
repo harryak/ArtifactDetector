@@ -28,8 +28,9 @@ namespace ItsApe.ArtifactDetectorProcess.Detectors
         public void FindArtifact(ref ArtifactRuntimeInformation runtimeInformation)
         {
             InitializeDetection(ref runtimeInformation);
+
             // Check whether we have enough data to detect the artifact.
-            if (runtimeInformation.PossibleWindowTitleSubstrings.Count < 1 && runtimeInformation.PossibleWindowTitleSubstrings.Count < 1)
+            if (runtimeInformation.WindowHandles.Count < 1 && runtimeInformation.PossibleWindowTitleSubstrings.Count < 1)
             {
                 RetrieveVisibleWindows(ref runtimeInformation);
             }
@@ -49,10 +50,10 @@ namespace ItsApe.ArtifactDetectorProcess.Detectors
         {
             // If we already found enough windows or the window is invisible, skip.
             // This includes windows which title can not be retrieved.
-            if (!NativeMethods.IsWindowVisible(windowHandle)
+            if (windowHandle == ProgramManagerWindowHandle
+                || !NativeMethods.IsWindowVisible(windowHandle)
                 || NativeMethods.IsIconic(windowHandle)
-                || !GetWindowTitle(windowHandle, out var windowTitle)
-                || windowHandle == ProgramManagerWindowHandle)
+                || !GetWindowTitle(windowHandle, out var windowTitle))
             {
                 return true;
             }
@@ -103,16 +104,16 @@ namespace ItsApe.ArtifactDetectorProcess.Detectors
         private void EnumerateWindows(ref ArtifactRuntimeInformation runtimeInformation, NativeMethods.EnumWindowsProc enumWindows)
         {
             // Access all open windows and analyze each of them.
-            var windowStringsHandle = GCHandle.Alloc(runtimeInformation);
+            var runtimeInformationHandle = GCHandle.Alloc(runtimeInformation);
             try
             {
                 NativeMethods.EnumWindows(
                     enumWindows,
-                    GCHandle.ToIntPtr(windowStringsHandle));
+                    GCHandle.ToIntPtr(runtimeInformationHandle));
             }
             finally
             {
-                windowStringsHandle.Free();
+                runtimeInformationHandle.Free();
             }
         }
 
@@ -187,6 +188,7 @@ namespace ItsApe.ArtifactDetectorProcess.Detectors
         private void InitializeDetection(ref ArtifactRuntimeInformation runtimeInformation)
         {
             runtimeInformation.CountOpenWindows = 0;
+            ProgramManagerWindowHandle = GetDesktopWindowHandle();
         }
 
         private void RetrieveVisibleWindows(ref ArtifactRuntimeInformation runtimeInformation)
