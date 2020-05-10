@@ -8,7 +8,7 @@
         /// <summary>
         /// The current configuration of artifact to be looked for.
         /// </summary>
-        public ArtifactConfiguration ArtifactConfiguration { get; set; } = null;
+        public DetectorConfiguration DetectorConfiguration { get; set; } = null;
 
         /// <summary>
         /// Flag to tell if the watch task is currently running.

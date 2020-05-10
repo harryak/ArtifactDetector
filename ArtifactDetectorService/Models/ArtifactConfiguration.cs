@@ -1,4 +1,5 @@
 ﻿using ItsApe.ArtifactDetector.Converters;
+using ItsApe.ArtifactDetector.DetectorConditions;
 using ItsApe.ArtifactDetector.Detectors;
 using Newtonsoft.Json;
 
@@ -7,7 +8,7 @@ namespace ItsApe.ArtifactDetector.Models
     /// <summary>
     /// Data class (serializable as JSON) to hold information about an artifact.
     /// </summary>
-    internal class ArtifactConfiguration
+    internal class DetectorConfiguration
     {
         /// <summary>
         /// Interval for the detector service to try to detect this artifact.
@@ -28,5 +29,12 @@ namespace ItsApe.ArtifactDetector.Models
         [JsonProperty("runtime_information")]
         [JsonConverter(typeof(ArtifactRuntimeInformationConverter))]
         public ArtifactRuntimeInformation RuntimeInformation { get; private set; }
+
+        /// <summary>
+        /// Global target conditions to define whether an artifact was found in a detection run.
+        /// </summary>
+        [JsonProperty("match_condition")]
+        [JsonConverter(typeof(DetectorConditionConverter<ArtifactRuntimeInformation>))]
+        public IDetectorCondition<ArtifactRuntimeInformation> MatchConditions { get; private set; }
     }
 }

@@ -1,6 +1,5 @@
 ﻿using ItsApe.ArtifactDetector.DetectorConditions;
 using ItsApe.ArtifactDetector.Models;
-using ItsApe.ArtifactDetector.Services;
 
 namespace ItsApe.ArtifactDetector.Detectors
 {
@@ -13,8 +12,21 @@ namespace ItsApe.ArtifactDetector.Detectors
         /// Find the artifact defined in the artifactConfiguration given some runtime information and a previous detector's response.
         /// </summary>
         /// <param name="runtimeInformation">Information about the artifact.</param>
+        /// <param name="MatchConditions">Condition to determine whether the detector's output yields a match.</param>
         /// <param name="sessionId">ID of the session to detect in (if appliccable).</param>
-        DetectorResponse FindArtifact(ref ArtifactRuntimeInformation runtimeInformation, int sessionId);
+        DetectorResponse FindArtifact(ref ArtifactRuntimeInformation runtimeInformation, IDetectorCondition<ArtifactRuntimeInformation> MatchConditions, int sessionId);
+
+        /// <summary>
+        /// Retrieve the conditions previously set.
+        /// </summary>
+        /// <returns></returns>
+        IDetectorCondition<ArtifactRuntimeInformation> GetPreConditions();
+
+        /// <summary>
+        /// Retrieve the conditions previously set.
+        /// </summary>
+        /// <returns></returns>
+        IDetectorCondition<DetectorResponse> GetTargetConditions();
 
         /// <summary>
         /// Tells whether this detector has preconditions.

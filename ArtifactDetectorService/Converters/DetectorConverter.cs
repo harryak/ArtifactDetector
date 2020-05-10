@@ -66,15 +66,20 @@ namespace ItsApe.ArtifactDetector.Converters
             var jsonObject = new JObject();
             if (value.GetType() == typeof(CompoundDetector))
             {
+                string conditionString;
                 var compoundDetector = value as CompoundDetector;
                 foreach (var detector in compoundDetector.GetDetectors())
                 {
-                    jsonObject.Add(detector.Key.ToString(), detector.Value.GetType().Name + ";;");
+                    conditionString = ";" + detector.Value.GetPreConditions().ToString()
+                        + ";" + detector.Value.GetTargetConditions().ToString();
+                    jsonObject.Add(detector.Key.ToString(), detector.Value.GetType().Name + conditionString);
                 }
             }
             else
             {
-                jsonObject.Add("0", value.GetType().Name + ";;");
+                string conditionString = ";" + value.GetPreConditions().ToString()
+                    + ";" + value.GetTargetConditions().ToString();
+                jsonObject.Add("0", value.GetType().Name + conditionString);
             }
             jsonObject.WriteTo(writer);
         }

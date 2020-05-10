@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using ItsApe.ArtifactDetector.DetectorConditions;
 using ItsApe.ArtifactDetector.Helpers;
 using ItsApe.ArtifactDetector.Models;
 using Microsoft.Extensions.Logging;
@@ -21,11 +22,12 @@ namespace ItsApe.ArtifactDetector.Detectors
         };
 
         /// <summary>
-        /// Detect installed programs by the info given.
+        /// Find the artifact defined in the artifactConfiguration given some runtime information and a previous detector's response.
         /// </summary>
-        /// <param name="runtimeInformation">Data object with possible program names set.</param>
-        /// <returns>A DetectorResponse based on the success of detection.</returns>
-        public override DetectorResponse FindArtifact(ref ArtifactRuntimeInformation runtimeInformation, int sessionId)
+        /// <param name="runtimeInformation">Information about the artifact.</param>
+        /// <param name="matchConditions">Condition to determine whether the detector's output yields a match.</param>
+        /// <param name="sessionId">ID of the session to detect in (if appliccable).</param>
+        public override DetectorResponse FindArtifact(ref ArtifactRuntimeInformation runtimeInformation, IDetectorCondition<ArtifactRuntimeInformation> matchConditions, int sessionId)
         {
             Logger.LogInformation("Detecting installed programs now.");
 
@@ -33,7 +35,7 @@ namespace ItsApe.ArtifactDetector.Detectors
             if (runtimeInformation.PossibleProgramSubstrings.Count < 1)
             {
                 Logger.LogWarning("No possible program names given for detector. Could not find matching installed programs.");
-                return new DetectorResponse() { ArtifactPresent = DetectorResponse.ArtifactPresence.Possible };
+                return DetectorResponse.PresencePossible;
             }
 
             InitializeDetection(ref runtimeInformation);
@@ -41,12 +43,26 @@ namespace ItsApe.ArtifactDetector.Detectors
 
             if (runtimeInformation.CountInstalledPrograms > 0)
             {
+                if (matchConditions != null)
+                {
+                    if (matchConditions.ObjectMatchesConditions(ref runtimeInformation))
+                    {
+                        Logger.LogInformation("Found {0} matching installed programs and conditions for a match are met.", runtimeInformation.CountInstalledPrograms);
+                        return DetectorResponse.PresenceCertain;
+                    }
+                    else
+                    {
+                        Logger.LogInformation("Found {0} matching installed programs, but conditions for a match are not met.", runtimeInformation.CountInstalledPrograms);
+                        return DetectorResponse.PresenceImpossible;
+                    }
+                }
+
                 Logger.LogInformation("Found {0} matching installed programs.", runtimeInformation.CountInstalledPrograms);
-                return new DetectorResponse() { ArtifactPresent = DetectorResponse.ArtifactPresence.Certain };
+                return DetectorResponse.PresenceCertain;
             }
             
             Logger.LogInformation("Found no matching installed programs.");
-            return new DetectorResponse() { ArtifactPresent = DetectorResponse.ArtifactPresence.Impossible };
+            return DetectorResponse.PresenceImpossible;
         }
 
         /// <summary>

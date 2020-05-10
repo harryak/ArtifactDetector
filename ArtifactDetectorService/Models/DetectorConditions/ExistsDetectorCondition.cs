@@ -11,5 +11,14 @@ namespace ItsApe.ArtifactDetector.DetectorConditions
         public ExistsDetectorCondition(string aspectToCheck) : base(aspectToCheck, (object aspect, Type t) => aspect != null)
         {
         }
+
+        /// <summary>
+        /// Converts the condition to a string.
+        /// </summary>
+        /// <returns>A string, that can be parsed back into this condition using the DetectorConditionParser.</returns>
+        public override string ToString()
+        {
+            return AspectToCheck;
+        }
     }
 }

@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using ItsApe.ArtifactDetector.DetectorConditions;
 using ItsApe.ArtifactDetector.Models;
 using Microsoft.Extensions.Logging;
 
@@ -38,8 +39,9 @@ namespace ItsApe.ArtifactDetector.Detectors
         /// Find the artifact defined in the artifactConfiguration given some runtime information and a previous detector's response.
         /// </summary>
         /// <param name="runtimeInformation">Information about the artifact.</param>
-        /// <returns>A response object containing information whether the artifact has been found.</returns>
-        public override DetectorResponse FindArtifact(ref ArtifactRuntimeInformation runtimeInformation, int sessionId)
+        /// <param name="matchConditions">Condition to determine whether the detector's output yields a match.</param>
+        /// <param name="sessionId">ID of the session to detect in (if appliccable).</param>
+        public override DetectorResponse FindArtifact(ref ArtifactRuntimeInformation runtimeInformation, IDetectorCondition<ArtifactRuntimeInformation> matchConditions, int sessionId)
         {
             Logger.LogInformation("Compound detector started.");
 
@@ -48,19 +50,25 @@ namespace ItsApe.ArtifactDetector.Detectors
 
             foreach (var entry in DetectorList)
             {
-                // Check if previous certainty meets required level.
+                // Check if previously found information meets the required level.
                 if (previousResponse != null && entry.Value.HasPreConditions() && !entry.Value.PreConditionsMatch(ref runtimeInformation))
                 {
-                    return new DetectorResponse { ArtifactPresent = DetectorResponse.ArtifactPresence.Impossible };
+                    return DetectorResponse.PresenceImpossible;
                 }
 
-                // Get the new chain element's response.
-                response = entry.Value.FindArtifact(ref runtimeInformation, sessionId);
+                // Find the artifact with the next detector in the chain.
+                response = entry.Value.FindArtifact(ref runtimeInformation, null, sessionId);
 
-                // If there is an artifact or there is none with 100% certainty, break.
+                // Test the global conditions for a match, return success if they are met.
+                if (matchConditions != null && matchConditions.ObjectMatchesConditions(ref runtimeInformation))
+                {
+                    return DetectorResponse.PresenceCertain;
+                }
+
+                // Check whether the response meets the target conditions.
                 if (entry.Value.HasTargetConditions() && !entry.Value.TargetConditionsMatch(ref response))
                 {
-                    return new DetectorResponse { ArtifactPresent = DetectorResponse.ArtifactPresence.Impossible };
+                    return DetectorResponse.PresenceImpossible;
                 }
 
                 // Copy to right variable for next run.

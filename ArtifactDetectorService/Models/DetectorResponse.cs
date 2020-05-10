@@ -5,6 +5,21 @@
     /// </summary>
     internal class DetectorResponse
     {
+        /// <summary>
+        /// Shorthand for a response with the presence set to "certain".
+        /// </summary>
+        public static DetectorResponse PresenceCertain    = new DetectorResponse { ArtifactPresent = ArtifactPresence.Certain };
+
+        /// <summary>
+        /// Shorthand for a response with the presence set to "impossible".
+        /// </summary>
+        public static DetectorResponse PresenceImpossible = new DetectorResponse { ArtifactPresent = ArtifactPresence.Impossible };
+
+        /// <summary>
+        /// Shorthand for a response with the presence set to "possible".
+        /// </summary>
+        public static DetectorResponse PresencePossible   = new DetectorResponse { ArtifactPresent = ArtifactPresence.Possible };
+
         public enum ArtifactPresence
         {
             Impossible,

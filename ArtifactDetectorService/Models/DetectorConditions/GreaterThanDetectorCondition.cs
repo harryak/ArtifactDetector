@@ -12,6 +12,21 @@ namespace ItsApe.ArtifactDetector.DetectorConditions
             : base(aspectToCheck, (IComparable aspect, Type aspectType) => aspect.CompareTo(Convert(greaterThan, aspectType)) > 0)
         {
             AspectToCheck = aspectToCheck;
+            GreaterThan = greaterThan;
+        }
+
+        /// <summary>
+        /// Contains the value this condition compares to.
+        /// </summary>
+        private IComparable GreaterThan { get; set; }
+
+        /// <summary>
+        /// Converts the condition to a string.
+        /// </summary>
+        /// <returns>A string, that can be parsed back into this condition using the DetectorConditionParser.</returns>
+        public override string ToString()
+        {
+            return AspectToCheck + ">" + GreaterThan.ToString();
         }
     }
 }

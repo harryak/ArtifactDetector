@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Diagnostics;
+using ItsApe.ArtifactDetector.DetectorConditions;
 using ItsApe.ArtifactDetector.Helpers;
 using ItsApe.ArtifactDetector.Models;
 using Microsoft.Extensions.Logging;
@@ -18,15 +19,16 @@ namespace ItsApe.ArtifactDetector.Detectors
         /// Find the artifact defined in the artifactConfiguration given some runtime information and a previous detector's response.
         /// </summary>
         /// <param name="runtimeInformation">Information about the artifact.</param>
-        /// <returns>A response object containing information whether the artifact has been found.</returns>
-        public override DetectorResponse FindArtifact(ref ArtifactRuntimeInformation runtimeInformation, int sessionId)
+        /// <param name="matchConditions">Condition to determine whether the detector's output yields a match.</param>
+        /// <param name="sessionId">ID of the session to detect in (if appliccable).</param>
+        public override DetectorResponse FindArtifact(ref ArtifactRuntimeInformation runtimeInformation, IDetectorCondition<ArtifactRuntimeInformation> matchConditions, int sessionId)
         {
             Logger.LogInformation("Detecting running processes now.");
 
             if (runtimeInformation.ProgramExecutables.Count < 1 && runtimeInformation.PossibleProcessSubstrings.Count < 1)
             {
                 Logger.LogInformation("No matching program executables or possible process names given for detector. Could not find matching running processes.");
-                return new DetectorResponse() { ArtifactPresent = DetectorResponse.ArtifactPresence.Possible };
+                return DetectorResponse.PresencePossible;
             }
 
             InitializeDetection(ref runtimeInformation);
@@ -34,12 +36,26 @@ namespace ItsApe.ArtifactDetector.Detectors
 
             if (runtimeInformation.CountRunningProcesses > 0)
             {
+                if (matchConditions != null)
+                {
+                    if (matchConditions.ObjectMatchesConditions(ref runtimeInformation))
+                    {
+                        Logger.LogInformation("Found {0} matching running processes and conditions for a match are met.", runtimeInformation.CountRunningProcesses);
+                        return DetectorResponse.PresenceCertain;
+                    }
+                    else
+                    {
+                        Logger.LogInformation("Found {0} matching running processes, but conditions for a match are not met.", runtimeInformation.CountRunningProcesses);
+                        return DetectorResponse.PresenceImpossible;
+                    }
+                }
+
                 Logger.LogInformation("Found {0} matching running processes.", runtimeInformation.CountRunningProcesses);
-                return new DetectorResponse() { ArtifactPresent = DetectorResponse.ArtifactPresence.Certain };
+                return DetectorResponse.PresenceCertain;
             }
 
             Logger.LogInformation("Found no matching running processes.");
-            return new DetectorResponse() { ArtifactPresent = DetectorResponse.ArtifactPresence.Impossible };
+            return DetectorResponse.PresenceImpossible;
         }
 
         public void InitializeDetection(ref ArtifactRuntimeInformation runtimeInformation)

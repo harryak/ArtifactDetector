@@ -1,11 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Runtime.InteropServices;
-using ItsApe.ArtifactDetector.DebugUtilities;
+﻿using ItsApe.ArtifactDetector.DebugUtilities;
 using ItsApe.ArtifactDetector.DetectorConditions;
 using ItsApe.ArtifactDetector.Models;
-using ItsApe.ArtifactDetector.Utilities;
-using Microsoft.Extensions.Logging;
 
 namespace ItsApe.ArtifactDetector.Detectors
 {
@@ -28,9 +23,27 @@ namespace ItsApe.ArtifactDetector.Detectors
         /// Find the artifact defined in the artifactConfiguration given some runtime information and a previous detector's response.
         /// </summary>
         /// <param name="runtimeInformation">Information about the artifact.</param>
-        ///
-        /// <returns>A response object containing information whether the artifact has been found.</returns>
-        public abstract DetectorResponse FindArtifact(ref ArtifactRuntimeInformation runtimeInformation, int sessionId);
+        /// <param name="MatchConditions">Condition to determine whether the detector's output yields a match.</param>
+        /// <param name="sessionId">ID of the session to detect in (if appliccable).</param>
+        public abstract DetectorResponse FindArtifact(ref ArtifactRuntimeInformation runtimeInformation, IDetectorCondition<ArtifactRuntimeInformation> MatchConditions, int sessionId);
+
+        /// <summary>
+        /// Wrapper for the pre-conditions.
+        /// </summary>
+        /// <returns>The currently set pre-conditions of the detector.</returns>
+        public IDetectorCondition<ArtifactRuntimeInformation> GetPreConditions()
+        {
+            return PreConditions;
+        }
+
+        /// <summary>
+        /// Wrapper for the target conditions.
+        /// </summary>
+        /// <returns>The currently set target conditions of the detector.</returns>
+        public IDetectorCondition<DetectorResponse> GetTargetConditions()
+        {
+            return TargetConditions;
+        }
 
         /// <summary>
         /// Tells whether this detector has preconditions.
@@ -61,7 +74,7 @@ namespace ItsApe.ArtifactDetector.Detectors
         /// <returns>True if the conditions are met.</returns>
         public bool PreConditionsMatch(ref ArtifactRuntimeInformation runtimeInformation)
         {
-            return PreConditions.ObjectMatchesConditions(runtimeInformation);
+            return PreConditions.ObjectMatchesConditions(ref runtimeInformation);
         }
 
         /// <summary>
@@ -89,7 +102,7 @@ namespace ItsApe.ArtifactDetector.Detectors
         /// <returns>True if the conditions are met.</returns>
         public bool TargetConditionsMatch(ref DetectorResponse response)
         {
-            return TargetConditions.ObjectMatchesConditions(response);
+            return TargetConditions.ObjectMatchesConditions(ref response);
         }
     }
 }

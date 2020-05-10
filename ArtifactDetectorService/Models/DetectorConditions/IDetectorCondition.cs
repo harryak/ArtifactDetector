@@ -11,6 +11,12 @@
         /// </summary>
         /// <param name="objectToCheck">The object's instance to check.</param>
         /// <returns>True if the object matches this condition.</returns>
-        bool ObjectMatchesConditions(ObjectType objectToCheck);
+        bool ObjectMatchesConditions(ref ObjectType objectToCheck);
+
+        /// <summary>
+        /// Converts the condition to a string.
+        /// </summary>
+        /// <returns>A string, that can be parsed back into this condition using the DetectorConditionParser.</returns>
+        string ToString();
     }
 }

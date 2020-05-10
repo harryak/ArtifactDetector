@@ -1,5 +1,6 @@
 ﻿using Emgu.CV;
 using Emgu.CV.Structure;
+using ItsApe.ArtifactDetector.DetectorConditions;
 using ItsApe.ArtifactDetector.Detectors.VisualFeatureExtractor;
 using ItsApe.ArtifactDetector.Models;
 using ItsApe.ArtifactDetector.Services;
@@ -34,19 +35,20 @@ namespace ItsApe.ArtifactDetector.Detectors
         private IVisualFeatureExtractor FeatureExtractor { get; set; }
 
         /// <summary>
-        /// Main function of this detector: Find the artifact provided by the configuration.
+        /// Find the artifact defined in the artifactConfiguration given some runtime information and a previous detector's response.
         /// </summary>
         /// <param name="runtimeInformation">Information about the artifact.</param>
-        /// <returns>A response object containing information whether the artifact has been found.</returns>
-        public override DetectorResponse FindArtifact(ref ArtifactRuntimeInformation runtimeInformation, int sessionId)
+        /// <param name="matchConditions">Condition to determine whether the detector's output yields a match.</param>
+        /// <param name="sessionId">ID of the session to detect in (if appliccable).</param>
+        public override DetectorResponse FindArtifact(ref ArtifactRuntimeInformation runtimeInformation, IDetectorCondition<ArtifactRuntimeInformation> matchConditions, int sessionId)
         {
             Logger.LogInformation("Detecting visual features now.");
 
             // Do we have reference images?
             if (runtimeInformation.ReferenceImages.ImagesCount < 1)
             {
-                Logger.LogInformation("No reference images given for detector. Can not detect visual matches.");
-                return new DetectorResponse() { ArtifactPresent = DetectorResponse.ArtifactPresence.Possible };
+                Logger.LogWarning("No reference images given for detector. Can not detect visual matches.");
+                return DetectorResponse.PresencePossible;
             }
 
             InitializeDetection(sessionId, out var screenshot);
@@ -58,19 +60,34 @@ namespace ItsApe.ArtifactDetector.Detectors
             }
             else
             {
-                return new DetectorResponse() { ArtifactPresent = DetectorResponse.ArtifactPresence.Possible };
+                Logger.LogWarning("Could not make screenshot. Can not detect visual matches.");
+                return DetectorResponse.PresencePossible;
             }
 
             if (ArtifactFound)
             {
                 runtimeInformation.CountVisualFeautureMatches = 1;
 
+                if (matchConditions != null)
+                {
+                    if (matchConditions.ObjectMatchesConditions(ref runtimeInformation))
+                    {
+                        Logger.LogInformation("Found a match in reference images and conditions for a match are met.");
+                        return DetectorResponse.PresenceCertain;
+                    }
+                    else
+                    {
+                        Logger.LogInformation("Found a match in reference images, but conditions for a match are not met.");
+                        return DetectorResponse.PresenceImpossible;
+                    }
+                }
+
                 Logger.LogInformation("Found a match in reference images.");
-                return new DetectorResponse() { ArtifactPresent = DetectorResponse.ArtifactPresence.Certain };
+                return DetectorResponse.PresenceCertain;
             }
 
             Logger.LogInformation("Found no matches in reference images.");
-            return new DetectorResponse() { ArtifactPresent = DetectorResponse.ArtifactPresence.Impossible };
+            return DetectorResponse.PresenceImpossible;
         }
 
         /// <summary>
@@ -84,6 +101,11 @@ namespace ItsApe.ArtifactDetector.Detectors
             screenshot = SessionManager.GetInstance().RetrieveSessionScreenshot(sessionId);
         }
 
+        /// <summary>
+        /// Analyze the given screenshot in respect to the artifact reference images.
+        /// </summary>
+        /// <param name="runtimeInformation"></param>
+        /// <param name="screenshot"></param>
         private void AnalyzeScreenshot(ref ArtifactRuntimeInformation runtimeInformation, ref Image<Rgba, byte> screenshot)
         {
             ProcessedImage observedImage;
@@ -104,12 +126,10 @@ namespace ItsApe.ArtifactDetector.Detectors
             }
 
             Logger.LogInformation("Cutting out windows from screenshot.");
-            Mat screenshotCutout;
             for (var i = 0; i < runtimeInformation.WindowsInformation.Count; i++)
             {
                 // Cut out area of screenshot that the artifact is in.
-                screenshot.ROI = runtimeInformation.WindowsInformation[i].BoundingArea;
-                screenshotCutout = screenshot.Copy().Mat;
+                GetScreenshotCutout(ref runtimeInformation, ref screenshot, i, out var screenshotCutout);
                 observedImage = FeatureExtractor.ExtractFeatures(screenshotCutout);
 
                 if (observedImage == null)
@@ -125,6 +145,35 @@ namespace ItsApe.ArtifactDetector.Detectors
                     break;
                 }
             }
+        }
+
+        /// <summary>
+        /// Get a cutout from the given screenshot with all overlaying windows filled as white rectangles.
+        /// </summary>
+        /// <param name="runtimeInformation"></param>
+        /// <param name="screenshot"></param>
+        /// <param name="windowIndex"></param>
+        /// <param name="screenshotCutout"></param>
+        private void GetScreenshotCutout(ref ArtifactRuntimeInformation runtimeInformation, ref Image<Rgba, byte> screenshot, int windowIndex, out Mat screenshotCutout)
+        {
+            // Cutout the region of interest from the "whole screenshot".
+            screenshot.ROI = runtimeInformation.WindowsInformation[windowIndex].BoundingArea;
+            var screenshotCutoutImg = screenshot.Copy();
+
+            // Now fill every overlay with white color to devoid the area of any features.
+            foreach (var overlays in runtimeInformation.VisibleWindowOutlines)
+            {
+                if (overlays.Key >= runtimeInformation.WindowsInformation[windowIndex].ZIndex)
+                {
+                    // Only consider overlays with zindex lower than the current window.
+                    break;
+                }
+                // Fill the current overlay with white.
+                screenshotCutoutImg.Draw(overlays.Value, new Rgba(255, 255, 255, 1), 0);
+            }
+
+            // Get Mat from Image<Rgba, byte>.
+            screenshotCutout = screenshotCutoutImg.Mat;
         }
     }
 }

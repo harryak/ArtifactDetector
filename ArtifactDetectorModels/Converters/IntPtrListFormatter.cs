@@ -9,14 +9,14 @@ namespace ItsApe.ArtifactDetector.Converters
     {
         List<IntPtr> IMessagePackFormatter<List<IntPtr>>.Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options)
         {
+            var outputList = new List<IntPtr>();
+
             if (reader.TryReadNil())
             {
-                return null;
+                return outputList;
             }
 
             options.Security.DepthStep(ref reader);
-
-            var outputList = new List<IntPtr>();
             var intPtrFormatter = new IntPtrFormatter();
             var count = reader.ReadArrayHeader();
 
@@ -37,7 +37,7 @@ namespace ItsApe.ArtifactDetector.Converters
 
         public void Serialize(ref MessagePackWriter writer, List<IntPtr> value, MessagePackSerializerOptions options)
         {
-            if (value == null)
+            if (value == null || value.Count == 0)
             {
                 writer.WriteNil();
                 return;

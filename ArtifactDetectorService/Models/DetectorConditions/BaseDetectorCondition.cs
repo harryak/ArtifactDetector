@@ -48,7 +48,7 @@ namespace ItsApe.ArtifactDetector.DetectorConditions
         /// </summary>
         /// <param name="objectToCheck">The object of type ObjectType to get the aspect from and check it.</param>
         /// <returns>True if the checking function yields true given the object's aspect.</returns>
-        public bool ObjectMatchesConditions(ObjectType objectToCheck)
+        public bool ObjectMatchesConditions(ref ObjectType objectToCheck)
         {
             var property = objectToCheck.GetType().GetProperty(AspectToCheck);
 

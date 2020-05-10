@@ -6,6 +6,7 @@ using System.ServiceProcess;
 using System.Threading.Tasks;
 using System.Timers;
 using ItsApe.ArtifactDetector.Converters;
+using ItsApe.ArtifactDetector.DetectorConditions;
 using ItsApe.ArtifactDetector.Detectors;
 using ItsApe.ArtifactDetector.Models;
 using Microsoft.Extensions.Logging;
@@ -93,7 +94,7 @@ namespace ItsApe.ArtifactDetector.Services
             PersistServiceState();
 
             // Check parameters for validity.
-            if ((jsonEncodedParameters == null || jsonEncodedParameters == "") && serviceState.ArtifactConfiguration == null)
+            if ((jsonEncodedParameters == null || jsonEncodedParameters == "") && serviceState.DetectorConfiguration == null)
             {
                 Logger.LogError("Invalid or empty argument for StartWatch. Not going to execute watch task.");
                 serviceState.IsRunning = false;
@@ -104,7 +105,7 @@ namespace ItsApe.ArtifactDetector.Services
             // Only have to do this if we got parameters.
             try
             {
-                serviceState.ArtifactConfiguration = JsonConvert.DeserializeObject<ArtifactConfiguration>(jsonEncodedParameters);
+                serviceState.DetectorConfiguration = JsonConvert.DeserializeObject<DetectorConfiguration>(jsonEncodedParameters);
             }
             catch (Exception e)
             {
@@ -116,13 +117,13 @@ namespace ItsApe.ArtifactDetector.Services
 
             Logger.LogDebug("Creating new detection log writer.");
             detectionLogWriter = new DetectionLogWriter(
-                Setup.WorkingDirectory.FullName, serviceState.ArtifactConfiguration.RuntimeInformation.ArtifactName);
+                Setup.WorkingDirectory.FullName, serviceState.DetectorConfiguration.RuntimeInformation.ArtifactName);
 
             // Start detection loop.
-            Logger.LogInformation("Starting watch task now with interval of {0}ms.", serviceState.ArtifactConfiguration.DetectionInterval);
+            Logger.LogInformation("Starting watch task now with interval of {0}ms.", serviceState.DetectorConfiguration.DetectionInterval);
             detectionTimer = new System.Timers.Timer
             {
-                Interval = serviceState.ArtifactConfiguration.DetectionInterval,
+                Interval = serviceState.DetectorConfiguration.DetectionInterval,
             };
             detectionTimer.Elapsed += DetectionEventHandler;
             detectionTimer.Start();
@@ -159,7 +160,7 @@ namespace ItsApe.ArtifactDetector.Services
             detectionTimer.Stop();
 
             // Set configuration to null to be empty on next run.
-            serviceState.ArtifactConfiguration = null;
+            serviceState.DetectorConfiguration = null;
 
             // Make ready for next watch task.
             serviceState.IsRunning = false;
@@ -304,8 +305,9 @@ namespace ItsApe.ArtifactDetector.Services
         {
             // Fire detection with a new runtime information copy to work with and forget the task.
             Task.Factory.StartNew(() => TriggerDetection(
-                serviceState.ArtifactConfiguration.Detector,
-                (ArtifactRuntimeInformation)serviceState.ArtifactConfiguration.RuntimeInformation.Clone(),
+                serviceState.DetectorConfiguration.Detector,
+                (ArtifactRuntimeInformation)serviceState.DetectorConfiguration.RuntimeInformation.Clone(),
+                serviceState.DetectorConfiguration.MatchConditions,
                 ref detectionLogWriter));
 
             // Uncomment for debugging purposes, if needed.
@@ -418,7 +420,7 @@ namespace ItsApe.ArtifactDetector.Services
         /// WARNING: This gets executed in a new instance!
         /// WARNING: Almost no try-catch is done in here to save resources!
         /// </summary>
-        private void TriggerDetection(IDetector detector, ArtifactRuntimeInformation runtimeInformation, ref DetectionLogWriter detectionLogWriter)
+        private void TriggerDetection(IDetector detector, ArtifactRuntimeInformation runtimeInformation, IDetectorCondition<ArtifactRuntimeInformation> matchConditions, ref DetectionLogWriter detectionLogWriter)
         {
             sessionManager = SessionManager.GetInstance();
 
@@ -441,7 +443,7 @@ namespace ItsApe.ArtifactDetector.Services
                 try
                 {
                     stopwatch.Restart();
-                    detectorResponse = detector.FindArtifact(ref runtimeInformation, sessionEntry.Key);
+                    detectorResponse = detector.FindArtifact(ref runtimeInformation, matchConditions, sessionEntry.Key);
                     stopwatch.Stop();
                     detectionLogWriter.LogDetectionResult(queryTime, stopwatch.ElapsedMilliseconds, detectorResponse);
                 }

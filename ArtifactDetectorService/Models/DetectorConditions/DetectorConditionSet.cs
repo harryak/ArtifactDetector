@@ -1,14 +1,20 @@
 ﻿using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 using System.Linq;
 
 namespace ItsApe.ArtifactDetector.DetectorConditions
 {
     /// <summary>
     /// Representation of the logical connector for a DetectorConditionSet.
+    /// 
+    /// Use the Display.Name as "friendly name" for ToString() of this condition set.
     /// </summary>
     internal enum ConditionOperator
     {
+        [Display(Name = "&")]
         AND,
+
+        [Display(Name = "|")]
         OR
     }
 
@@ -82,7 +88,7 @@ namespace ItsApe.ArtifactDetector.DetectorConditions
         /// </summary>
         /// <param name="response">The detector response to evaluate.</param>
         /// <returns>True if the conditions in this set apply to the response or this is an empty set.</returns>
-        public bool ObjectMatchesConditions(ObjectType objectToCheck)
+        public bool ObjectMatchesConditions(ref ObjectType objectToCheck)
         {
             // Empty set of conditions means "matches".
             if (Conditions.Count < 1)
@@ -109,15 +115,42 @@ namespace ItsApe.ArtifactDetector.DetectorConditions
                 // Connect the condition by the logical operator.
                 if (Operator == ConditionOperator.AND)
                 {
-                    returnValue &= Conditions[i].ObjectMatchesConditions(objectToCheck);
+                    returnValue &= Conditions[i].ObjectMatchesConditions(ref objectToCheck);
                 }
                 else
                 {
-                    returnValue |= Conditions[i].ObjectMatchesConditions(objectToCheck);
+                    returnValue |= Conditions[i].ObjectMatchesConditions(ref objectToCheck);
                 }
             }
 
             return returnValue;
+        }
+
+        /// <summary>
+        /// Converts the condition set to a string.
+        /// </summary>
+        /// <returns>A string, that can be parsed back into this condition using the DetectorConditionParser.</returns>
+        public override string ToString()
+        {
+            if (Conditions.Count < 1)
+            {
+                return "";
+            }
+
+            string output = "(";
+
+            for (var i = 0; i < Conditions.Count; i++)
+            {
+                output += Conditions[i].ToString();
+
+                // Add the Operator by its "friendly name".
+                if (i < Conditions.Count - 1)
+                {
+                    output += Operator.GetType().GetMember(Operator.ToString()).First().Name;
+                }
+            }
+
+            return output + ")";
         }
     }
 }
