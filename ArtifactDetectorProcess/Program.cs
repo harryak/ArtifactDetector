@@ -1,4 +1,5 @@
 ﻿using System;
+using System.IO;
 using System.IO.MemoryMappedFiles;
 using System.Threading;
 using ItsApe.ArtifactDetector.Models;
@@ -96,17 +97,21 @@ namespace ItsApe.ArtifactDetectorProcess
                             // Write new runtime information to mmf.
                             sharedMemoryStream.Position = 0;
                             MessagePackSerializer.Serialize(sharedMemoryStream, runtimeInformation);
+                            sharedMemoryStream.WriteByte(0);
                             sharedMemoryStream.Flush();
                             writeBack = false;
                         }
 
                         sharedMemoryLock.Release();
+                        Thread.Sleep(1);
                         // Runtime information is garbage collected now to get the slimmest process possible.
                     }
                 }
-                catch (Exception)
+                catch (Exception e)
                 {
+                    File.WriteAllLines(@"C:\Users\Master\Desktop\log.lol", new string[] { e.Message, e.InnerException.Message, e.InnerException.StackTrace });
                     sharedMemoryLock.Release();
+                    Thread.Sleep(1);
                 }
             }
         }

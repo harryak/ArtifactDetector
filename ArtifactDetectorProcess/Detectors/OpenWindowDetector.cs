@@ -30,7 +30,7 @@ namespace ItsApe.ArtifactDetectorProcess.Detectors
             InitializeDetection(ref runtimeInformation);
 
             // Check whether we have enough data to detect the artifact.
-            if (runtimeInformation.WindowHandles.Count < 1 && runtimeInformation.PossibleWindowTitleSubstrings.Count < 1)
+            if (runtimeInformation.PossibleWindowTitleSubstrings.Count < 1)
             {
                 RetrieveVisibleWindows(ref runtimeInformation);
             }
@@ -204,8 +204,14 @@ namespace ItsApe.ArtifactDetectorProcess.Detectors
         /// <returns>True if the window matches.</returns>
         private bool WindowMatchesConstraints(string windowTitle, IntPtr windowHandle, ref ArtifactRuntimeInformation runtimeInformation)
         {
-            return runtimeInformation.WindowHandles.Contains(windowHandle)
-                || windowTitle.ContainsAny(runtimeInformation.PossibleWindowTitleSubstrings);
+            // If there are process IDs stored, check if they match the window's process ID.
+            if (runtimeInformation.ProcessIds.Count > 0)
+            {
+                NativeMethods.GetWindowThreadProcessId(windowHandle, out uint processId);
+                return runtimeInformation.ProcessIds.Contains(processId)
+                    && windowTitle.ContainsAny(runtimeInformation.PossibleWindowTitleSubstrings);
+            }
+            return windowTitle.ContainsAny(runtimeInformation.PossibleWindowTitleSubstrings);
         }
     }
 }

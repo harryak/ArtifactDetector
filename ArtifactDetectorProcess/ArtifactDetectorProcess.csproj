@@ -7,7 +7,7 @@
     <ProjectGuid>{AFF75345-8D35-4B4E-A0E9-CA5B91BB0861}</ProjectGuid>
     <OutputType>WinExe</OutputType>
     <RootNamespace>ItsApe.ArtifactDetectorProcess</RootNamespace>
-    <AssemblyName>OpenWindowDetector</AssemblyName>
+    <AssemblyName>ArtifactDetectorProcess</AssemblyName>
     <TargetFrameworkVersion>v4.8</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
@@ -102,6 +102,7 @@
     <Compile Include="Detectors\IDetector.cs" />
     <Compile Include="Detectors\OpenWindowDetector.cs" />
     <Compile Include="Detectors\TrayIconDetector.cs" />
+    <Compile Include="GlobalSuppressions.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Utilities\NativeMethods.cs" />

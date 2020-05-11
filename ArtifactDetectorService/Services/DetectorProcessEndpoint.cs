@@ -114,10 +114,12 @@ namespace ItsApe.ArtifactDetector.Services
             // Use memory stream to call process.
             sharedMemoryStream.Position = 0;
             MessagePackSerializer.Serialize(sharedMemoryStream, runtimeInformation);
+            sharedMemoryStream.WriteByte(0);
             sharedMemoryStream.Flush();
 
             // Release mutex for short time to let process get it.
             sharedMemoryLock.Release();
+            Thread.Sleep(1);
 
             // Wait for Mutex but do not release it to let the process wait for next call.
             if (sharedMemoryLock.WaitOne())
@@ -152,6 +154,7 @@ namespace ItsApe.ArtifactDetector.Services
 
             // Release mutex for short time to let process get it.
             sharedMemoryLock.Release();
+            Thread.Sleep(1);
 
             // Wait for Mutex but do not release it to let the process wait for next call.
             if (sharedMemoryLock.WaitOne())

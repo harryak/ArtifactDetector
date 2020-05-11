@@ -120,7 +120,6 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Converters\IntPtrFormatter.cs" />
-    <Compile Include="Converters\IntPtrListFormatter.cs" />
     <Compile Include="Converters\StringToListConverter.cs" />
     <Compile Include="Helpers\FileHelper.cs" />
     <Compile Include="Helpers\StringExtensions.cs" />

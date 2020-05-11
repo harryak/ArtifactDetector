@@ -144,6 +144,13 @@ namespace ItsApe.ArtifactDetector.Models
         public List<string> ProgramExecutables { get; set; } = new List<string>();
 
         /// <summary>
+        /// Process IDs found by RunningProcessDetector.
+        /// </summary>
+        [JsonIgnore]
+        [Key(13)]
+        public List<uint> ProcessIds { get; set; } = new List<uint>();
+
+        /// <summary>
         /// Image cache for reference image.
         /// </summary>
         [JsonIgnore]
@@ -155,16 +162,8 @@ namespace ItsApe.ArtifactDetector.Models
         /// Index is the z-index (order) with 1 being the topmost.
         /// </summary>
         [JsonIgnore]
-        [Key(13)]
-        public Dictionary<int, Rectangle> VisibleWindowOutlines { get; set; } = new Dictionary<int, Rectangle>();
-
-        /// <summary>
-        /// Window handles to look for.
-        /// </summary>
-        [JsonIgnore]
         [Key(14)]
-        [MessagePackFormatter(typeof(IntPtrListFormatter))]
-        public List<IntPtr> WindowHandles { get; set; } = new List<IntPtr>();
+        public Dictionary<int, Rectangle> VisibleWindowOutlines { get; set; } = new Dictionary<int, Rectangle>();
 
         /// <summary>
         /// For each matching window stores the handle and its visibility.

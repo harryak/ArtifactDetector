@@ -18,9 +18,9 @@ namespace ItsApe.ArtifactDetector.Detectors
         /// <param name="sessionId">ID of the session to detect in (if appliccable).</param>
         public override DetectorResponse FindArtifact(ref ArtifactRuntimeInformation runtimeInformation, IDetectorCondition<ArtifactRuntimeInformation> matchConditions, int sessionId)
         {
-            if (runtimeInformation.WindowHandles.Count < 1 && runtimeInformation.PossibleWindowTitleSubstrings.Count < 1)
+            if (runtimeInformation.PossibleWindowTitleSubstrings.Count < 1)
             {
-                Logger.LogInformation("No windows information or possible window titles given. Could not find matching open windows.");
+                Logger.LogInformation("No possible window titles given. Could not find matching open windows.");
                 return DetectorResponse.PresencePossible;
             }
 

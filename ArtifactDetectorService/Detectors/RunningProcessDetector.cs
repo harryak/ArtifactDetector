@@ -1,5 +1,4 @@
-﻿using System;
-using System.Diagnostics;
+﻿using System.Diagnostics;
 using ItsApe.ArtifactDetector.DetectorConditions;
 using ItsApe.ArtifactDetector.Helpers;
 using ItsApe.ArtifactDetector.Models;
@@ -66,12 +65,12 @@ namespace ItsApe.ArtifactDetector.Detectors
         /// <summary>
         /// If the main window handle is set add it to the list.
         /// </summary>
-        /// <param name="windowHandle">Main window handle to use.</param>
-        private void AddMainWindowHandle(IntPtr windowHandle, ref ArtifactRuntimeInformation runtimeInformation)
+        /// <param name="processHandle">Process handle to add.</param>
+        private void AddProcessId(uint processId, ref ArtifactRuntimeInformation runtimeInformation)
         {
-            if (windowHandle != IntPtr.Zero)
+            if (processId > 0)
             {
-                runtimeInformation.WindowHandles.Add(windowHandle);
+                runtimeInformation.ProcessIds.Add(processId);
             }
         }
 
@@ -84,7 +83,7 @@ namespace ItsApe.ArtifactDetector.Detectors
             if (ProcessMatchesConstraints(process.ProcessName, ref runtimeInformation))
             {
                 runtimeInformation.CountRunningProcesses++;
-                AddMainWindowHandle(process.MainWindowHandle, ref runtimeInformation);
+                AddProcessId((uint)process.Id, ref runtimeInformation);
             }
         }
 
