@@ -132,6 +132,17 @@ namespace ItsApe.ArtifactDetector.Services
         }
 
         /// <summary>
+        /// Perform health check on all processes, i.e. ensure they are running.
+        /// </summary>
+        public void HealthCheckProcesses()
+        {
+            foreach (var process in DetectorProcesses)
+            {
+                process.Value.HealthCheckProcess();
+            }
+        }
+
+        /// <summary>
         /// Use this if a user has logged in to a session.
         /// </summary>
         /// <param name="sessionId">Global session ID.</param>

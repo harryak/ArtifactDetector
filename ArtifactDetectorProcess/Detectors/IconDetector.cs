@@ -12,7 +12,7 @@ namespace ItsApe.ArtifactDetectorProcess.Detectors
     /// Common base class for icon detectors.
     /// <typeparam name="StructType">Type of the struct to fill (for marshalling).</typeparam>
     /// </summary>
-    internal abstract class IconDetector<StructType> : BaseDetector, IDetector where StructType : struct
+    internal abstract class IconDetector<StructType> : BaseDetector, IDetector, IDisposable where StructType : struct
     {
         /// <summary>
         /// Choose a buffer size which is large enough for the operations in this class.
@@ -28,6 +28,11 @@ namespace ItsApe.ArtifactDetectorProcess.Detectors
         /// Default zIndex for icons.
         /// </summary>
         protected int IconZIndex = 9999;
+
+        /// <summary>
+        /// Boundaries of the parent, do not change so initialize early.
+        /// </summary>
+        protected NativeStructures.RectangularOutline ParentWindowRectangle;
 
         /// <summary>
         /// Pointers to other processes' buffers-
@@ -63,6 +68,8 @@ namespace ItsApe.ArtifactDetectorProcess.Detectors
 
             WindowHandle = windowHandle;
             ProcessHandle = InitProcessHandle();
+            ParentWindowRectangle = new NativeStructures.RectangularOutline();
+            NativeMethods.GetWindowRect(WindowHandle, ref ParentWindowRectangle);
         }
 
         /// <summary>
@@ -134,14 +141,11 @@ namespace ItsApe.ArtifactDetectorProcess.Detectors
         /// <param name="structToFill">Reference of a struct to fill.</param>
         protected void FillIconStruct(int iconIndex, ref StructType structToFill)
         {
-            if (!_bufferPointers.ContainsKey(ProcessHandle))
-            {
-                _bufferPointers.Add(ProcessHandle, AllocateBufferInProcess(ProcessHandle));
-            }
+            var bufferPointer = GetBufferPointer(ProcessHandle);
 
             uint bytesRead = 0;
-            NativeMethods.SendMessage(WindowHandle, _getIconsCode, new IntPtr(iconIndex), _bufferPointers[ProcessHandle]);
-            NativeMethods.ReadProcessMemory(ProcessHandle, _bufferPointers[ProcessHandle], Marshal.UnsafeAddrOfPinnedArrayElement(_buffer, 0), new UIntPtr((uint)Marshal.SizeOf(structToFill)), ref bytesRead);
+            NativeMethods.SendMessage(WindowHandle, _getIconsCode, new IntPtr(iconIndex), bufferPointer);
+            NativeMethods.ReadProcessMemory(ProcessHandle, bufferPointer, Marshal.UnsafeAddrOfPinnedArrayElement(_buffer, 0), new UIntPtr((uint)Marshal.SizeOf(structToFill)), ref bytesRead);
 
             if (bytesRead != Marshal.SizeOf(structToFill))
             {
@@ -159,14 +163,11 @@ namespace ItsApe.ArtifactDetectorProcess.Detectors
         protected virtual Rectangle GetAbsoluteIconRectangle(int iconIndex)
         {
             var rectangle = new Rectangle();
-            if (!_bufferPointers.ContainsKey(ProcessHandle))
-            {
-                _bufferPointers.Add(ProcessHandle, AllocateBufferInProcess(ProcessHandle));
-            }
+            var bufferPointer = GetBufferPointer(ProcessHandle);
 
             uint bytesRead = 0;
-            NativeMethods.SendMessage(WindowHandle, _getIconRectCode, new IntPtr(iconIndex), _bufferPointers[ProcessHandle]);
-            NativeMethods.ReadProcessMemory(ProcessHandle, _bufferPointers[ProcessHandle], Marshal.UnsafeAddrOfPinnedArrayElement(_buffer, 0), new UIntPtr((uint)Marshal.SizeOf(rectangle)), ref bytesRead);
+            NativeMethods.SendMessage(WindowHandle, _getIconRectCode, new IntPtr(iconIndex), bufferPointer);
+            NativeMethods.ReadProcessMemory(ProcessHandle, bufferPointer, Marshal.UnsafeAddrOfPinnedArrayElement(_buffer, 0), new UIntPtr((uint)Marshal.SizeOf(rectangle)), ref bytesRead);
 
             if (bytesRead != Marshal.SizeOf(rectangle))
             {
@@ -236,44 +237,34 @@ namespace ItsApe.ArtifactDetectorProcess.Detectors
         /// </summary>
         private void AnalizeIcons(ref ArtifactRuntimeInformation runtimeInformation)
         {
-            // Get the desktop window's process to enumerate child windows.
-            ProcessHandle = InitProcessHandle();
             // Count subwindows of window => count of icons.
             int iconCount = GetIconCount();
 
             var icon = InitIconStruct();
 
-            try
+            // Loop through available desktop icons.
+            for (int i = 0; i < iconCount; i++)
             {
-                // Loop through available desktop icons.
-                for (int i = 0; i < iconCount; i++)
+                string currentIconTitle = GetIconTitle(i, icon);
+
+                if (IconTitleMatches(currentIconTitle, ref runtimeInformation))
                 {
-                    string currentIconTitle = GetIconTitle(i, icon);
                     var iconRectangle = GetAbsoluteIconRectangle(i);
-
-                    if (IconTitleMatches(currentIconTitle, ref runtimeInformation))
+                    var visibility = CalculateWindowVisibility(iconRectangle, runtimeInformation.VisibleWindowOutlines.Values);
+                    runtimeInformation.WindowsInformation.Add(new WindowInformation
                     {
-                        float visibility = CalculateWindowVisibility(iconRectangle, runtimeInformation.VisibleWindowOutlines.Values);
-                        runtimeInformation.WindowsInformation.Add(new WindowInformation
-                        {
-                            BoundingArea = iconRectangle,
-                            Title = currentIconTitle,
-                            Visibility = visibility,
-                            ZIndex = IconZIndex
-                        });
-                        IncreaseIconCount(ref runtimeInformation);
+                        BoundingArea = iconRectangle,
+                        Title = currentIconTitle,
+                        Visibility = visibility,
+                        ZIndex = IconZIndex
+                    });
+                    IncreaseIconCount(ref runtimeInformation);
 
-                        if (runtimeInformation.MaxWindowVisibilityPercentage < visibility)
-                        {
-                            runtimeInformation.MaxWindowVisibilityPercentage = visibility;
-                        }
+                    if (runtimeInformation.MaxWindowVisibilityPercentage < visibility)
+                    {
+                        runtimeInformation.MaxWindowVisibilityPercentage = visibility;
                     }
                 }
-            }
-            finally
-            {
-                // Clean up unmanaged memory.
-                CleanUnmanagedMemory();
             }
         }
 
@@ -327,12 +318,45 @@ namespace ItsApe.ArtifactDetectorProcess.Detectors
         /// <param name="rectangle"></param>
         private void OffsetIconRectangleByParent(ref Rectangle rectangle)
         {
-            var rect = new NativeStructures.RectangularOutline();
-            NativeMethods.GetWindowRect(WindowHandle, ref rect);
-            rectangle.Left += rect.left;
-            rectangle.Right += rect.left;
-            rectangle.Top += rect.top;
-            rectangle.Bottom += rect.top;
+            rectangle.Left += ParentWindowRectangle.left;
+            rectangle.Right += ParentWindowRectangle.left;
+            rectangle.Top += ParentWindowRectangle.top;
+            rectangle.Bottom += ParentWindowRectangle.top;
         }
+
+        #region IDisposable Support
+
+        private bool disposedValue = false; // To detect redundant calls
+
+        ~IconDetector()
+        {
+            // Do not change this code. Put cleanup code in Dispose(bool disposing) above.
+            Dispose(false);
+        }
+
+        // This code added to correctly implement the disposable pattern.
+        public void Dispose()
+        {
+            // Do not change this code. Put cleanup code in Dispose(bool disposing) above.
+            Dispose(true);
+            GC.SuppressFinalize(this);
+        }
+
+        protected virtual void Dispose(bool disposing)
+        {
+            if (!disposedValue)
+            {
+                if (disposing)
+                {
+                }
+
+                // Clean up unmanaged memory.
+                CleanUnmanagedMemory();
+
+                disposedValue = true;
+            }
+        }
+
+        #endregion IDisposable Support
     }
 }

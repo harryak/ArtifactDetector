@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
@@ -104,7 +105,7 @@ namespace ItsApe.ArtifactDetector.Services
 
                                 // Then: Add next value to window.
                                 currentValues = reader.ReadLine().Split(',');
-                                errorWindowValues.Add(Convert.ToInt64(currentValues[0]), Convert.ToInt32(currentValues[2]));
+                                errorWindowValues.Add(Convert.ToInt64(currentValues[0]), Convert.ToInt32(currentValues[1]));
 
                                 // See if the average of the window changes.
                                 currentMajority = GetMajorityItem(ref errorWindowValues);
@@ -134,25 +135,43 @@ namespace ItsApe.ArtifactDetector.Services
         /// <param name="queryTime">Time when the detection was queried.</param>
         /// <param name="responseTime">Time when the detection was finished.</param>
         /// <param name="detectorResponse">The response to log.</param>
-        public void LogDetectionResult(DateTime queryTime, long? responseTime, DetectorResponse detectorResponse)
+        public void LogDetectionResult(DateTime queryTime, DetectorResponse detectorResponse)
         {
-            if (responseTime == null)
-            {
-                responseTime = -1;
-            }
-
             // Save response to timetable.
             lock (fileLock)
             {
+                string evaluationTimes = GetEvaluationTimes(ref detectorResponse);
                 // Write response prepended with time to responses file and flush.
-                // Use sortable and tenth-millisecond-precise timestamp for entry.
                 using (logFileWriter = new StreamWriter(currentLogFile, true))
                 {
-                    logFileWriter.WriteLine("{0:yyMMddHHmmssfff},{1},{2}",
-                        queryTime, responseTime, (int)detectorResponse.ArtifactPresent);
+                    logFileWriter.WriteLine("{0:yyMMddHHmmssfff},{1}{2}",
+                        queryTime, (int)detectorResponse.ArtifactPresent, evaluationTimes);
                     logFileWriter.Flush();
                 }
             }
+        }
+
+        /// <summary>
+        /// Parse the timestamps given in the response to CSV.
+        /// </summary>
+        /// <param name="detectorResponse"></param>
+        /// <returns></returns>
+        private string GetEvaluationTimes(ref DetectorResponse detectorResponse)
+        {
+            string output = "";
+
+            if (detectorResponse.timestamps != null)
+            {
+                double frequencyMiliseconds = Stopwatch.Frequency / 1000;
+                long timestampDiff;
+                for (int i = 0; i < detectorResponse.timestamps.Length; i += 2)
+                {
+                    timestampDiff = detectorResponse.timestamps[i + 1] - detectorResponse.timestamps[i];
+                    output += "," + (int)(timestampDiff / frequencyMiliseconds);
+                }
+            }
+
+            return output;
         }
 
         /// <summary>

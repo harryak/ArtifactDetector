@@ -31,5 +31,12 @@
         /// A ternary value.
         /// </summary>
         public ArtifactPresence ArtifactPresent { get; set; }
+
+        /// <summary>
+        /// Timestamps for evaluation of runtime.
+        /// 
+        /// TODO: Remove this after evaluation.
+        /// </summary>
+        public long[] timestamps;
     }
 }

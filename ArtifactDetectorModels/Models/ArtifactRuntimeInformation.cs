@@ -18,27 +18,6 @@ namespace ItsApe.ArtifactDetector.Models
         private ArtifactReferenceImageCache _referenceImages;
 
         /// <summary>
-        /// Empty constructor for setting the properties later on.
-        /// </summary>
-        public ArtifactRuntimeInformation()
-        { }
-
-        /// <summary>
-        /// Constructor taking the arguments that can be known on first instantiation.
-        /// </summary>
-        /// <param name="artifactName">Name of the artifact type.</param>
-        /// <param name="possibleProcessNames"></param>
-        /// <param name="possibleWindowTitles"></param>
-        /// <param name="referenceImages"></param>
-        public ArtifactRuntimeInformation(string artifactName, List<string> possibleProcessNames, List<string> possibleWindowTitles, ArtifactReferenceImageCache referenceImages)
-        {
-            ArtifactName = artifactName;
-            PossibleProcessSubstrings = possibleProcessNames;
-            PossibleWindowTitleSubstrings = possibleWindowTitles;
-            ReferenceImages = referenceImages;
-        }
-
-        /// <summary>
         /// Name of the artifact type, immutable once created.
         /// </summary>
         [JsonProperty("artifact_name")]
@@ -134,7 +113,7 @@ namespace ItsApe.ArtifactDetector.Models
         /// </summary>
         [JsonIgnore]
         [Key(11)]
-        public float MaxWindowVisibilityPercentage { get; set; } = 0f;
+        public int MaxWindowVisibilityPercentage { get; set; } = 0;
 
         /// <summary>
         /// Information about the matching executables.
@@ -187,7 +166,14 @@ namespace ItsApe.ArtifactDetector.Models
         /// <param name="runtimeInformation">The object to get arguments from.</param>
         public object Clone()
         {
-            return new ArtifactRuntimeInformation(ArtifactName, PossibleProcessSubstrings, PossibleWindowTitleSubstrings, ReferenceImages);
+            return new ArtifactRuntimeInformation
+            {
+                ArtifactName = ArtifactName,
+                PossibleIconSubstrings = PossibleIconSubstrings,
+                PossibleProcessSubstrings = PossibleProcessSubstrings,
+                PossibleProgramSubstrings = PossibleProgramSubstrings,
+                PossibleWindowTitleSubstrings = PossibleWindowTitleSubstrings
+            };
         }
     }
 }

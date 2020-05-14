@@ -36,6 +36,11 @@ namespace ItsApe.ArtifactDetector.Services
         private Timer detectionTimer = null;
 
         /// <summary>
+        /// Timer to do health checks for process.
+        /// </summary>
+        private Timer healthCheckTimer = null;
+
+        /// <summary>
         /// Host for this service to be callable.
         /// </summary>
         private ServiceHost serviceHost = null;
@@ -121,7 +126,7 @@ namespace ItsApe.ArtifactDetector.Services
 
             // Start detection loop.
             Logger.LogInformation("Starting watch task now with interval of {0}ms.", serviceState.DetectorConfiguration.DetectionInterval);
-            detectionTimer = new System.Timers.Timer
+            detectionTimer = new Timer
             {
                 Interval = serviceState.DetectorConfiguration.DetectionInterval,
             };
@@ -260,7 +265,7 @@ namespace ItsApe.ArtifactDetector.Services
         {
             // Uncomment this to debug.
             // Debugger.Launch();
-            
+
             // Get service state from file.
             Logger.LogDebug("Retrieving saved service state.");
             EnsureServiceState();
@@ -271,6 +276,11 @@ namespace ItsApe.ArtifactDetector.Services
 
             RestartSavedState();
             Logger.LogInformation("Detector service started.");
+
+            // Check if process is running every 60 seconds.
+            healthCheckTimer = new Timer(30 * 1000);
+            healthCheckTimer.Elapsed += HealthCheckProcesses;
+            healthCheckTimer.Start();
         }
 
         /// <summary>
@@ -345,6 +355,16 @@ namespace ItsApe.ArtifactDetector.Services
         }
 
         /// <summary>
+        /// Ensure all processes are running, called by Timer.Elapsed.
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void HealthCheckProcesses(object sender, ElapsedEventArgs e)
+        {
+            sessionManager.HealthCheckProcesses();
+        }
+
+        /// <summary>
         /// "Pause" the service state: Either temporarily or for a shutdown etc.
         /// </summary>
         private void PauseCurrentState()
@@ -377,9 +397,10 @@ namespace ItsApe.ArtifactDetector.Services
         {
             // Save configuration to file.
             string jsonEncodedConfig = JsonConvert.SerializeObject(
-            serviceState,
-            new ArtifactRuntimeInformationConverter(),
-            new DetectorConverter());
+                serviceState,
+                new ArtifactRuntimeInformationConverter(),
+                new DetectorConverter(),
+                new DetectorConditionConverter<ArtifactRuntimeInformation>());
 
             string fileName = Uri.UnescapeDataString(
             Path.Combine(Setup.WorkingDirectory.FullName, ConfigurationFile));
@@ -416,7 +437,7 @@ namespace ItsApe.ArtifactDetector.Services
 
         /// <summary>
         /// Method to detect the currently given artifact and write the response to the responses log file.
-        /// 
+        ///
         /// WARNING: This gets executed in a new instance!
         /// WARNING: Almost no try-catch is done in here to save resources!
         /// </summary>
@@ -430,11 +451,9 @@ namespace ItsApe.ArtifactDetector.Services
                 // No active user sessions, no artifacts can be present.
                 Logger.LogInformation("No session active, no detection necessary.");
                 detectionLogWriter.LogDetectionResult(
-                    queryTime, null, new DetectorResponse { ArtifactPresent = DetectorResponse.ArtifactPresence.Impossible });
+                    queryTime, new DetectorResponse { ArtifactPresent = DetectorResponse.ArtifactPresence.Impossible });
                 return;
             }
-
-            var stopwatch = new Stopwatch();
 
             // Loop through all active sessions and detect separately.
             DetectorResponse detectorResponse = null;
@@ -442,16 +461,14 @@ namespace ItsApe.ArtifactDetector.Services
             {
                 try
                 {
-                    stopwatch.Restart();
                     detectorResponse = detector.FindArtifact(ref runtimeInformation, matchConditions, sessionEntry.Key);
-                    stopwatch.Stop();
-                    detectionLogWriter.LogDetectionResult(queryTime, stopwatch.ElapsedMilliseconds, detectorResponse);
+                    detectionLogWriter.LogDetectionResult(queryTime, detectorResponse);
                 }
                 catch (Exception e)
                 {
                     Logger.LogError("Could not execute FindArtifact: \"{0}\" \"{1}\"", e.Message, e.InnerException.Message);
                     detectionLogWriter.LogDetectionResult(
-                        queryTime, null, new DetectorResponse { ArtifactPresent = DetectorResponse.ArtifactPresence.Possible });
+                        queryTime, new DetectorResponse { ArtifactPresent = DetectorResponse.ArtifactPresence.Possible });
                 }
             }
         }

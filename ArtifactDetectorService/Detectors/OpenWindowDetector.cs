@@ -20,7 +20,13 @@ namespace ItsApe.ArtifactDetector.Detectors
         {
             if (runtimeInformation.PossibleWindowTitleSubstrings.Count < 1)
             {
-                Logger.LogInformation("No possible window titles given. Could not find matching open windows.");
+                Logger.LogInformation("No possible window titles given. Looking for outlines.");
+
+                runtimeInformation.ProcessCommand = ExternalProcessCommand.OpenWindowDetector;
+                if (!SessionManager.GetInstance().CallDetectorProcess(sessionId, ref runtimeInformation))
+                {
+                    Logger.LogInformation("Could not call detector process to find window outlines.");
+                }
                 return DetectorResponse.PresencePossible;
             }
 

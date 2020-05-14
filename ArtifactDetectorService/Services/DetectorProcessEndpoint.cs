@@ -1,7 +1,9 @@
 ﻿using System;
+using System.Diagnostics;
 using System.Drawing;
 using System.IO;
 using System.IO.MemoryMappedFiles;
+using System.Linq;
 using System.Runtime.InteropServices;
 using System.Security.AccessControl;
 using System.Security.Principal;
@@ -89,6 +91,11 @@ namespace ItsApe.ArtifactDetector.Services
             mmfName = @"Global\" + ApplicationSetup.GetInstance().ApplicationGuid + "-" + sessionId;
             semaphoreName = mmfName + "-access";
 
+            SetupProcess();
+        }
+
+        private void SetupProcess()
+        {
             SetupMemoryMappedFile();
 
             if (!StartSessionProcess())
@@ -348,6 +355,31 @@ namespace ItsApe.ArtifactDetector.Services
             Logger.LogDebug("Created process with ID {0} in session {1}.", processInformation.dwProcessID, sessionId);
 
             return true;
+        }
+
+        /// <summary>
+        /// Check if the process is still running, if not: Restart it.
+        /// </summary>
+        public void HealthCheckProcess()
+        {
+            if (!ProcessIsRunning(processId))
+            {
+                // Process has somehow ended. Restart!
+                processId = -1;
+                Logger.LogWarning("Detector process not running in session {0}. Restarting it!", sessionId);
+                SetupProcess();
+            }
+        }
+
+        /// <summary>
+        /// Check if the process with given ID is running.
+        /// </summary>
+        /// <param name="processId"></param>
+        /// <returns>True, if it is running.</returns>
+        public bool ProcessIsRunning(int processId)
+        {
+            Process[] processlist = Process.GetProcesses();
+            return processlist.FirstOrDefault(process => process.Id == processId) != null;
         }
 
         #region IDisposable Support

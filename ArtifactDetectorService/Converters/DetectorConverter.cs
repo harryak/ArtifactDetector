@@ -62,6 +62,12 @@ namespace ItsApe.ArtifactDetector.Converters
         /// <param name="serializer"></param>
         public override void WriteJson(JsonWriter writer, IDetector value, JsonSerializer serializer)
         {
+            if (value == null)
+            {
+                writer.WriteNull();
+                return;
+            }
+
             //TODO: Add condition strings!
             var jsonObject = new JObject();
             if (value.GetType() == typeof(CompoundDetector))

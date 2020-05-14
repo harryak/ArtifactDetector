@@ -48,7 +48,7 @@ namespace ItsApe.ArtifactDetectorProcess.Detectors
         /// <returns>True, always.</returns>
         private bool AnalyzeVisibleWindowDelegate(IntPtr windowHandle, IntPtr lParam)
         {
-            // If we already found enough windows or the window is invisible, skip.
+            // If the window is invisible, skip. Skip "desktop" window always.
             // This includes windows which title can not be retrieved.
             if (windowHandle == ProgramManagerWindowHandle
                 || !NativeMethods.IsWindowVisible(windowHandle)
@@ -62,13 +62,18 @@ namespace ItsApe.ArtifactDetectorProcess.Detectors
             var visualInformation = new NativeMethods.WindowVisualInformation();
             NativeMethods.GetWindowInfo(windowHandle, ref visualInformation);
 
+            if (!IsWindowRendered(visualInformation.dwStyle, visualInformation.dwExStyle))
+            {
+                return true;
+            }
+
             var handle = GCHandle.FromIntPtr(lParam);
             var runtimeInformation = (ArtifactRuntimeInformation)handle.Target;
 
             // If it is one of the windows we want to find: Add to that list.
             if (WindowMatchesConstraints(windowTitle, windowHandle, ref runtimeInformation))
             {
-                float visibility = CalculateWindowVisibility(
+                var visibility = CalculateWindowVisibility(
                             visualInformation.rcClient,
                             runtimeInformation.VisibleWindowOutlines.Values);
                 runtimeInformation.WindowsInformation.Add(
@@ -96,11 +101,20 @@ namespace ItsApe.ArtifactDetectorProcess.Detectors
             return true;
         }
 
+        /// <summary>
+        /// Detect matching windows in all visible windows.
+        /// </summary>
+        /// <param name="runtimeInformation"></param>
         private void AnalyzeVisibleWindows(ref ArtifactRuntimeInformation runtimeInformation)
         {
             EnumerateWindows(ref runtimeInformation, AnalyzeVisibleWindowDelegate);
         }
 
+        /// <summary>
+        /// Enumerate over all (top-level) windows with the given function.
+        /// </summary>
+        /// <param name="runtimeInformation"></param>
+        /// <param name="enumWindows"></param>
         private void EnumerateWindows(ref ArtifactRuntimeInformation runtimeInformation, NativeMethods.EnumWindowsProc enumWindows)
         {
             // Access all open windows and analyze each of them.
@@ -134,11 +148,12 @@ namespace ItsApe.ArtifactDetectorProcess.Detectors
         /// <returns>True, always.</returns>
         private bool GetVisibleWindowDelegate(IntPtr windowHandle, IntPtr lParam)
         {
-            // If we already found enough windows or the window is invisible, skip.
+            // If the window is invisible, skip. Skip "desktop" window always.
             // This includes windows which title can not be retrieved.
-            if (!NativeMethods.IsWindowVisible(windowHandle)
-                || !GetWindowTitle(windowHandle, out string windowTitle)
-                || windowHandle == ProgramManagerWindowHandle)
+            if (windowHandle == ProgramManagerWindowHandle
+                || !NativeMethods.IsWindowVisible(windowHandle)
+                || NativeMethods.IsIconic(windowHandle)
+                || !GetWindowTitle(windowHandle, out var windowTitle))
             {
                 return true;
             }
@@ -146,6 +161,11 @@ namespace ItsApe.ArtifactDetectorProcess.Detectors
             // Get visual information about the current window.
             var visualInformation = new NativeMethods.WindowVisualInformation();
             NativeMethods.GetWindowInfo(windowHandle, ref visualInformation);
+
+            if (!IsWindowRendered(visualInformation.dwStyle, visualInformation.dwExStyle))
+            {
+                return true;
+            }
 
             var handle = GCHandle.FromIntPtr(lParam);
             var runtimeInformation = (ArtifactRuntimeInformation)handle.Target;
@@ -185,15 +205,37 @@ namespace ItsApe.ArtifactDetectorProcess.Detectors
             }
         }
 
+        /// <summary>
+        /// Reset counter and initialize desktop window handle.
+        /// </summary>
+        /// <param name="runtimeInformation"></param>
         private void InitializeDetection(ref ArtifactRuntimeInformation runtimeInformation)
         {
             runtimeInformation.CountOpenWindows = 0;
             ProgramManagerWindowHandle = GetDesktopWindowHandle();
         }
 
+        /// <summary>
+        /// Store all visible window outlines.
+        /// </summary>
+        /// <param name="runtimeInformation"></param>
         private void RetrieveVisibleWindows(ref ArtifactRuntimeInformation runtimeInformation)
         {
             EnumerateWindows(ref runtimeInformation, GetVisibleWindowDelegate);
+        }
+
+        /// <summary>
+        /// Check whether the current window actually displays anything.
+        /// </summary>
+        /// <param name="dwStyle"></param>
+        /// <param name="dwExStyle"></param>
+        /// <returns></returns>
+        private bool IsWindowRendered(uint dwStyle, uint dwExStyle)
+        {
+            // The 0x00200000 flag (WS_EX_NOREDIRECTIONBITMAP) is the important one: It tells that there is no content visible.
+            // The minimized flag should have been checked by "IsIconic", but I found this in very rare cases to be not reliable
+            return (dwStyle & NativeMethods.WindowStyles.WS_MINIMIZE) != NativeMethods.WindowStyles.WS_MINIMIZE
+                && (dwExStyle & NativeMethods.WindowStyles.WS_EX_NOREDIRECTIONBITMAP) != NativeMethods.WindowStyles.WS_EX_NOREDIRECTIONBITMAP;
         }
 
         /// <summary>

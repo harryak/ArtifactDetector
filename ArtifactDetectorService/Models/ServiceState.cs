@@ -14,10 +14,5 @@
         /// Flag to tell if the watch task is currently running.
         /// </summary>
         public bool IsRunning { get; set; } = false;
-
-        /// <summary>
-        /// Path to collect all detector responses.
-        /// </summary>
-        public string DetectionLogDirectory { get; set; }
     }
 }

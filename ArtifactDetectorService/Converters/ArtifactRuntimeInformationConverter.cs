@@ -74,10 +74,19 @@ namespace ItsApe.ArtifactDetector.Converters
         /// <param name="serializer"></param>
         public override void WriteJson(JsonWriter writer, ArtifactRuntimeInformation value, JsonSerializer serializer)
         {
+            if (value == null)
+            {
+                writer.WriteNull();
+                return;
+            }
+
             var jObject = JObject.FromObject(value);
-            jObject.Add("reference_images_cache", JToken.FromObject(
-                Uri.UnescapeDataString(value.ReferenceImages.PersistentFilePath.FullName),
-                serializer));
+            if (value.ReferenceImages != null)
+            {
+                jObject.Add("reference_images_cache", JToken.FromObject(
+                    Uri.UnescapeDataString(value.ReferenceImages.PersistentFilePath.FullName),
+                    serializer));
+            }
             jObject.WriteTo(writer);
         }
     }

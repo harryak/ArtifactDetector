@@ -308,6 +308,7 @@ namespace ItsApe.ArtifactDetectorProcess.Utilities
             public const uint WS_EX_NOACTIVATE        = 0x08000000;
             public const uint WS_EX_NOINHERITLAYOUT   = 0x00100000;
             public const uint WS_EX_NOPARENTNOTIFY    = 0x00000004;
+            public const uint WS_EX_NOREDIRECTIONBITMAP = 0x00200000;
             public const uint WS_EX_OVERLAPPEDWINDOW  = (WS_EX_WINDOWEDGE | WS_EX_CLIENTEDGE);
             public const uint WS_EX_PALETTEWINDOW     = (WS_EX_WINDOWEDGE | WS_EX_TOOLWINDOW | WS_EX_TOPMOST);
             public const uint WS_EX_RIGHT             = 0x00001000;

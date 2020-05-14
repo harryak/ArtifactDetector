@@ -44,6 +44,12 @@ namespace ItsApe.ArtifactDetector.Converters
 
         public override void WriteJson(JsonWriter writer, IDetectorCondition<ObjectType> value, JsonSerializer serializer)
         {
+            if (value == null)
+            {
+                writer.WriteNull();
+                return;
+            }
+
             writer.WriteValue(value.ToString());
         }
     }

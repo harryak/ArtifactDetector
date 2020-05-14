@@ -109,7 +109,8 @@ namespace ItsApe.ArtifactDetectorProcess
                 }
                 catch (Exception e)
                 {
-                    File.WriteAllLines(@"C:\Users\Master\Desktop\log.lol", new string[] { e.Message, e.InnerException.Message, e.InnerException.StackTrace });
+                    //TODO: Remove debug
+                    File.AppendAllLines(@"C:\Users\Master\Desktop\log.lol", new string[] { e.Message, e.InnerException.Message, e.InnerException.StackTrace });
                     sharedMemoryLock.Release();
                     Thread.Sleep(1);
                 }

@@ -33,8 +33,8 @@ namespace ItsApe.ArtifactDetector.Models
         /// <summary>
         /// Global target conditions to define whether an artifact was found in a detection run.
         /// </summary>
-        [JsonProperty("match_condition")]
+        [JsonProperty("match_conditions")]
         [JsonConverter(typeof(DetectorConditionConverter<ArtifactRuntimeInformation>))]
-        public IDetectorCondition<ArtifactRuntimeInformation> MatchConditions { get; private set; }
+        public IDetectorCondition<ArtifactRuntimeInformation> MatchConditions { get; private set; } = null;
     }
 }
