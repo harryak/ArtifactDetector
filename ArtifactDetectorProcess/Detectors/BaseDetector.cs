@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.IO;
 using ItsApe.ArtifactDetector.Models;
 using ItsApe.ArtifactDetector.Utilities;
 
@@ -28,7 +29,7 @@ namespace ItsApe.ArtifactDetectorProcess.Detectors
 
             int subtractArea = new RectangleUnionCalculator().CalculateRectangleUnion(queriedWindow, windowsAbove);
             // Calculate ratio as exactly as possible, force double division here.
-            double visibleAreaRatio = 100d * ((queriedWindow.Area - subtractArea) / queriedWindow.Area);
+            double visibleAreaRatio = (queriedWindow.Area - subtractArea) / (double)queriedWindow.Area * 100d;
             // Cut everything to integer.
             return (int)visibleAreaRatio;
         }
