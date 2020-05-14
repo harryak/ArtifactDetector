@@ -50,8 +50,6 @@ namespace ItsApe.ArtifactDetector.Services
             artifactName = _artifactName;
             Logger.LogDebug("Setting up logging in path {0}.", workingDirectory);
             logFilesDirectory = SetupFilePath(workingDirectory);
-
-            Logger.LogDebug("Creating mutex.");
         }
 
         /// <summary>

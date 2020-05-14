@@ -172,7 +172,8 @@ namespace ItsApe.ArtifactDetector.Models
                 PossibleIconSubstrings = PossibleIconSubstrings,
                 PossibleProcessSubstrings = PossibleProcessSubstrings,
                 PossibleProgramSubstrings = PossibleProgramSubstrings,
-                PossibleWindowTitleSubstrings = PossibleWindowTitleSubstrings
+                PossibleWindowTitleSubstrings = PossibleWindowTitleSubstrings,
+                ReferenceImages = ReferenceImages
             };
         }
     }

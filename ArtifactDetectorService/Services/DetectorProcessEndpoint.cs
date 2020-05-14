@@ -137,6 +137,7 @@ namespace ItsApe.ArtifactDetector.Services
 
             // Restore backed up non-serialized property.
             runtimeInformation.ReferenceImages = referenceImageBackup;
+
             return true;
         }
 

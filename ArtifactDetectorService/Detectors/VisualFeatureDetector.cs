@@ -45,7 +45,7 @@ namespace ItsApe.ArtifactDetector.Detectors
             Logger.LogInformation("Detecting visual features now.");
 
             // Do we have reference images?
-            if (runtimeInformation.ReferenceImages.ImagesCount < 1)
+            if (runtimeInformation.ReferenceImages == null || runtimeInformation.ReferenceImages.ImagesCount < 1)
             {
                 Logger.LogWarning("No reference images given for detector. Can not detect visual matches.");
                 return DetectorResponse.PresencePossible;
@@ -97,7 +97,6 @@ namespace ItsApe.ArtifactDetector.Detectors
         public void InitializeDetection(int sessionId, out Image<Rgba, byte> screenshot)
         {
             ArtifactFound = false;
-
             screenshot = SessionManager.GetInstance().RetrieveSessionScreenshot(sessionId);
         }
 
