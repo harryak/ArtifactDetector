@@ -75,7 +75,7 @@ namespace ItsApe.ArtifactDetector.Services
             timetableFile.Close();
 
             // Buffer the values inside the current error window.
-            var errorWindowValues = new SortedDictionary<long, int>();
+            var errorWindowValues = new List<KeyValuePair<long, int>>();
             int currentMajority = -1, previousMajority = -1;
             long changeTimestamp = 0;
             string[] currentValues;
@@ -86,7 +86,7 @@ namespace ItsApe.ArtifactDetector.Services
                 {
                     foreach (var logFile in Directory.EnumerateFiles(logFilesDirectory, "*.csv"))
                     {
-                        if (!logFile.StartsWith("raw"))
+                        if (!logFile.Contains("raw-"))
                         {
                             continue;
                         }
@@ -98,12 +98,12 @@ namespace ItsApe.ArtifactDetector.Services
                                 // First: Keep window at right size. We add one value now, so greater equal is the right choice here.
                                 if (errorWindowValues.Count >= errorWindowSize)
                                 {
-                                    errorWindowValues.Remove(errorWindowValues.Keys.First());
+                                    errorWindowValues.Remove(errorWindowValues.First());
                                 }
 
                                 // Then: Add next value to window.
                                 currentValues = reader.ReadLine().Split(',');
-                                errorWindowValues.Add(Convert.ToInt64(currentValues[0]), Convert.ToInt32(currentValues[1]));
+                                errorWindowValues.Add(new KeyValuePair<long, int>(Convert.ToInt64(currentValues[0]), Convert.ToInt32(currentValues[1])));
 
                                 // See if the average of the window changes.
                                 currentMajority = GetMajorityItem(ref errorWindowValues);
@@ -176,18 +176,18 @@ namespace ItsApe.ArtifactDetector.Services
         /// Boyer-Moore majority vote algorithm.
         /// </summary>
         /// <param name="dictionary">Get majority of this dictionaries entries.</param>
-        private int GetMajorityItem([In] ref SortedDictionary<long, int> dictionary)
+        private int GetMajorityItem([In] ref List<KeyValuePair<long, int>> dictionary)
         {
             int majorityItem = -1, counter = 0;
 
-            for (var i = 0; i < dictionary.Count; i++)
+            foreach (var entry in dictionary)
             {
                 if (counter == 0)
                 {
-                    majorityItem = dictionary[i];
+                    majorityItem = entry.Value;
                     counter++;
                 }
-                else if (dictionary[i] == majorityItem)
+                else if (entry.Value == majorityItem)
                 {
                     counter++;
                 }
